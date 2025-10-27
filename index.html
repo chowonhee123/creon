@@ -1175,14 +1175,14 @@
       
       <!-- Image Studio Text Generation Modal -->
       <div id="image-studio-text-modal" class="image-modal-overlay hidden">
-        <div class="image-modal-content" style="width: 800px; height: 600px; max-width: 800px; max-height: 600px; padding: var(--spacing-6); background-color: var(--surface-color); border-radius: var(--border-radius-lg);">
+        <div class="image-modal-content" style="width: 800px; height: 600px; max-width: 800px; max-height: 600px; padding: var(--spacing-6); background-color: var(--surface-color); border-radius: var(--border-radius-lg); display: flex; flex-direction: column;">
           <header class="image-studio-modal-header">
             <h3 style="font-size: 18px; font-weight: 700; color: var(--text-primary);">이미지 생성</h3>
             <button id="image-studio-text-modal-close-btn" class="icon-button" aria-label="Close">
               <span class="material-symbols-outlined">close</span>
             </button>
           </header>
-          <textarea id="image-studio-text-input" placeholder="이미지 생성 프롬프트를 입력하세요..." rows="6" style="width: 100%; padding: var(--spacing-3); margin-bottom: var(--spacing-4); border-radius: var(--border-radius-md); border: 1px solid var(--border-color); font-family: var(--font-family); resize: vertical; background-color: var(--bg-color); color: var(--text-primary); font-size: 14px;"></textarea>
+          <textarea id="image-studio-text-input" placeholder="이미지 생성 프롬프트를 입력하세요..." style="flex: 1; width: 100%; padding: var(--spacing-3); margin-bottom: var(--spacing-4); border-radius: var(--border-radius-md); border: 1px solid var(--border-color); font-family: var(--font-family); resize: none; background-color: var(--bg-color); color: var(--text-primary); font-size: 14px; min-height: 0;"></textarea>
           <div style="display: flex; justify-content: flex-end; gap: var(--spacing-2);">
             <button id="image-studio-text-cancel-btn" class="secondary-btn">취소</button>
             <button id="image-studio-text-generate-btn" class="primary-btn">생성</button>
