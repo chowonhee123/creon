@@ -1770,7 +1770,7 @@ a.secondary-btn[disabled] {
 
 /* Image Studio details panel padding */
 #image-details-panel-image .details-panel-body {
-    padding: var(--spacing-5);
+    padding: 0;
     gap: var(--spacing-4);
 }
 
