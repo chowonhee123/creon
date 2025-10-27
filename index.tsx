@@ -1464,13 +1464,21 @@ window.addEventListener('DOMContentLoaded', () => {
           if (promptDisplay) promptDisplay.value = "Subject placed in scene";
           
           // Save to history
-          currentGeneratedImageStudio = { data, mimeType };
+          const timestamp = Date.now();
+          currentGeneratedImageStudio = { 
+            id: `img_${timestamp}`,
+            data, 
+            mimeType,
+            subject: imageStudioSubjectImage?.file.name || '',
+            styleConstraints: imageStudioSceneImage?.file.name || '',
+            timestamp
+          };
           imageStudioHistory.push(currentGeneratedImageStudio);
           
           // Show details panel
           const detailsPanel = $('#image-details-panel-image');
           const detailsPreview = $('#details-preview-image-image') as HTMLImageElement;
-          const detailsDownload = $('#details-download-btn-image');
+          const detailsDownload = $('#details-download-btn-image') as HTMLAnchorElement;
           
           if (detailsPreview) detailsPreview.src = dataUrl;
           if (detailsDownload) detailsDownload.href = dataUrl;
