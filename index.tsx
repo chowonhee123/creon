@@ -1413,6 +1413,9 @@ window.addEventListener('DOMContentLoaded', () => {
     const promptDisplay = $('#image-prompt-display-image') as HTMLTextAreaElement;
 
     loaderModal?.classList.remove('hidden');
+    resultPlaceholder?.classList.add('hidden');
+    resultIdlePlaceholder?.classList.add('hidden');
+    resultImage?.classList.add('hidden');
     updateButtonLoadingState(generateBtn, true);
 
     try {
@@ -1466,6 +1469,7 @@ window.addEventListener('DOMContentLoaded', () => {
           resultImage.classList.remove('hidden');
           resultIdlePlaceholder?.classList.add('hidden');
           resultPlaceholder?.classList.add('hidden');
+          loaderModal?.classList.add('hidden');
           
           if (promptDisplay) promptDisplay.value = "Subject placed in scene";
           
@@ -1522,6 +1526,7 @@ window.addEventListener('DOMContentLoaded', () => {
           resultImage.classList.remove('hidden');
           resultIdlePlaceholder?.classList.add('hidden');
           resultPlaceholder?.classList.add('hidden');
+          loaderModal?.classList.add('hidden');
           
           if (promptDisplay) promptDisplay.value = promptText;
           
