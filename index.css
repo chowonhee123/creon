@@ -1358,6 +1358,13 @@ a.secondary-btn[disabled] {
     pointer-events: auto;
 }
 
+/* Hide original content when hovering */
+.subject-drop-zone:hover .drop-zone-content:not(.has-image),
+.scene-drop-zone:hover .drop-zone-content:not(.has-image) {
+    opacity: 0;
+    pointer-events: none;
+}
+
 .subject-drop-zone .drop-zone-content.has-image + .drop-zone-overlay,
 .scene-drop-zone .drop-zone-content.has-image + .drop-zone-overlay {
     opacity: 0 !important;
