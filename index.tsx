@@ -2747,7 +2747,21 @@ Return the 5 suggestions as a JSON array.`;
                 
                 // Save to reference images
                 imageStudioReferenceImages[currentImageStudioSlotIndex] = { file, dataUrl };
-                updateUI(dataUrl);
+                const dropZone = document.querySelector(`.image-studio-drop-zone[data-index="${currentImageStudioSlotIndex}"]`);
+                if (dropZone) {
+                  const previewImg = dropZone.querySelector('.drop-zone-preview') as HTMLImageElement;
+                  const content = dropZone.querySelector('.drop-zone-content');
+                  const removeBtn = dropZone.querySelector('.remove-style-image-btn') as HTMLButtonElement;
+                  const promptLarge = content?.querySelector('.drop-zone-prompt-large');
+                  
+                  if (previewImg && content) {
+                    previewImg.src = dataUrl;
+                    previewImg.classList.remove('hidden');
+                    if (promptLarge) promptLarge.classList.add('hidden');
+                    if (removeBtn) removeBtn.classList.remove('hidden');
+                    content.classList.add('has-image');
+                  }
+                }
                 
                 showToast({ type: 'success', title: 'Generated!', body: 'Image generated from text.' });
               }
