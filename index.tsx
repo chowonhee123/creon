@@ -1323,10 +1323,10 @@ window.addEventListener('DOMContentLoaded', () => {
     loaderModal?.classList.remove('hidden');
 
     try {
-      // Use a placeholder approach for now - generate a simple image from text
+      // Generate image from text using imagen
       const response = await ai.models.generateContent({
-        model: 'gemini-2.0-flash-exp',
-        contents: [{ parts: [{ text: `Create a high-quality image of: ${promptText}` }] }],
+        model: 'imagen-3.0-generate-001',
+        contents: [{ parts: [{ text: promptText }] }],
         config: {
           responseModalities: [Modality.IMAGE],
         },
@@ -1368,10 +1368,10 @@ window.addEventListener('DOMContentLoaded', () => {
     loaderModal?.classList.remove('hidden');
 
     try {
-      // Use a placeholder approach for now - generate a simple image from text
+      // Generate image from text using imagen
       const response = await ai.models.generateContent({
-        model: 'gemini-2.0-flash-exp',
-        contents: [{ parts: [{ text: `Create a high-quality scene of: ${promptText}` }] }],
+        model: 'imagen-3.0-generate-001',
+        contents: [{ parts: [{ text: promptText }] }],
         config: {
           responseModalities: [Modality.IMAGE],
         },
