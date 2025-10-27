@@ -1420,8 +1420,8 @@ a.secondary-btn[disabled] {
     position: absolute;
     top: var(--spacing-2);
     right: var(--spacing-2);
-    z-index: 3;
-    background-color: rgba(220, 38, 38, 0.8);
+    z-index: 5;
+    background-color: rgba(220, 38, 38, 0.9);
     color: white;
     width: 32px;
     height: 32px;
@@ -1432,12 +1432,24 @@ a.secondary-btn[disabled] {
     justify-content: center;
     cursor: pointer;
     opacity: 0;
-    transition: all 0.2s ease;
+    transition: opacity 0.2s ease;
+    pointer-events: auto;
 }
 
-.remove-style-image-btn:hover {
+.remove-style-image-btn.hidden {
+    pointer-events: none;
+}
+
+.remove-style-image-btn:not(.hidden):hover {
     background-color: rgba(220, 38, 38, 1);
     transform: scale(1.1);
+}
+
+/* Show on hover for Image Studio */
+.subject-drop-zone:hover .remove-style-image-btn:not(.hidden),
+.scene-drop-zone:hover .remove-style-image-btn:not(.hidden) {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .remove-style-image-btn .material-symbols-outlined {
@@ -1446,7 +1458,9 @@ a.secondary-btn[disabled] {
 
 /* Show delete button on hover for Image Studio drop zones */
 .subject-drop-zone .drop-zone-content.has-image:hover .remove-style-image-btn,
-.scene-drop-zone .drop-zone-content.has-image:hover .remove-style-image-btn {
+.scene-drop-zone .drop-zone-content.has-image:hover .remove-style-image-btn,
+.subject-drop-zone:hover .drop-zone-preview:not(.hidden) ~ .remove-style-image-btn,
+.scene-drop-zone:hover .drop-zone-preview:not(.hidden) ~ .remove-style-image-btn {
     opacity: 1;
 }
 
