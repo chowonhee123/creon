@@ -1756,6 +1756,22 @@ a.secondary-btn[disabled] {
     flex-direction: column;
     flex-grow: 1;
     min-height: 0;
+    padding: var(--spacing-5);
+    gap: var(--spacing-5);
+    overflow-y: auto;
+}
+
+/* Image Studio details panel padding */
+#image-details-panel-image .details-panel-body {
+    padding: var(--spacing-5);
+    gap: var(--spacing-4);
+}
+
+#image-details-panel-image .details-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+    margin-top: auto;
 }
 
 #explore-details-panel .details-panel-body {
