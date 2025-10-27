@@ -528,6 +528,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const detailsDownloadBtn = $('#details-download-btn') as HTMLAnchorElement;
   const detailsCopyBtn = $('#details-copy-btn');
   const detailsDeleteBtn = $('#details-delete-btn');
+  const detailsUpscaleBtn = $('#details-upscale-btn');
   const shadowToggleIcons = $('#shadow-toggle-icons') as HTMLInputElement;
   const shadowToggle3d = $('#shadow-toggle-3d') as HTMLInputElement;
   const toggleDetailsPanelBtn = $('#toggle-details-panel-btn');
@@ -2036,6 +2037,68 @@ Return the 5 suggestions as a JSON array.`;
       }
   };
 
+  const handleUpscaleImage = async () => {
+      if (!currentGeneratedImage) return;
+      
+      const upscaleBtn = $('#details-upscale-btn');
+      updateButtonLoadingState(upscaleBtn, true);
+      imageGenerationLoaderModal?.classList.remove('hidden');
+      
+      try {
+          // Use the current image as reference and upscale to 4K
+          const parts: any[] = [
+              {
+                  text: "Upscale this image to 4k resolution (3840x3840), maintaining all details and quality, with enhanced sharpness and clarity."
+              }
+          ];
+          
+          // Add current image as reference
+          parts.push({
+              inlineData: {
+                  data: currentGeneratedImage.data,
+                  mimeType: currentGeneratedImage.mimeType,
+              }
+          });
+          
+          const response = await ai.models.generateContent({
+              model: 'gemini-2.5-flash-image',
+              contents: { parts },
+              config: {
+                  responseModalities: ['IMAGE'],
+              },
+          });
+          
+          const part = response.candidates?.[0]?.content?.parts?.[0];
+          if (part && part.inlineData) {
+              const { data, mimeType } = part.inlineData;
+              
+              // Update current image
+              currentGeneratedImage.data = data;
+              currentGeneratedImage.mimeType = mimeType;
+              
+              // Update history
+              const historyItem = imageHistory.find(item => item.id === currentGeneratedImage!.id);
+              if (historyItem) {
+                  historyItem.data = data;
+                  historyItem.mimeType = mimeType;
+              }
+              
+              // Update UI
+              update3dViewFromState();
+              
+              showToast({ type: 'success', title: 'Upscaled!', body: 'Image has been upscaled to 4K resolution.' });
+          } else {
+              throw new Error('No image data in response');
+          }
+      } catch (error) {
+          console.error('Upscale failed:', error);
+          showToast({ type: 'error', title: 'Upscale Failed', body: 'Failed to upscale image.' });
+      } finally {
+          updateButtonLoadingState(upscaleBtn, false);
+          imageGenerationLoaderModal?.classList.add('hidden');
+      }
+  };
+
   const updateIconStudio3dPrompt = () => {
     if (!selectedIcon || !promptDisplay3d || !shadowToggleIcons) return;
     try {
@@ -2894,7 +2957,12 @@ Return the 5 suggestions as a JSON array.`;
         detailsPanel?.classList.remove('is-open');
     });
 
+    detailsUpscaleBtn?.addEventListener('click', () => {
+        handleUpscaleImage();
+    });
+
     resultImage?.addEventListener('click', () => {
+
         if (!currentGeneratedImage) return;
         detailsPanel?.classList.remove('hidden');
         detailsPanel?.classList.add('is-open');
