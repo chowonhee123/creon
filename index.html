@@ -907,61 +907,23 @@
                     </div>
                     <div class="control-card">
                         <div class="prompt-card-header">
-                            <h3>피사체</h3>
+                            <h3>Reference Images</h3>
                         </div>
-                        <div class="subject-drop-zone" id="subject-drop-zone-image">
-                            <div class="drop-zone-content">
-                                <div class="drop-zone-prompt-large">
-                                    <span class="material-symbols-outlined">person_add</span>
-                                    <p>Add subject</p>
-                                </div>
-                                <img class="drop-zone-preview hidden" alt="Subject preview">
-                                <button class="remove-style-image-btn hidden" aria-label="Remove subject">
-                                    <span class="material-symbols-outlined">close</span>
-                                </button>
+                        <div id="image-studio-reference-container" class="reference-image-container">
+                            <div class="image-drop-zone reference-drop-zone" data-index="0">
+                                <span class="slot-title">Image 1</span>
+                                <div class="drop-zone-prompt"><span class="material-symbols-outlined">add_photo_alternate</span><p>Drop or click</p></div>
+                                <img class="style-image-preview hidden" alt="Reference image 1">
+                                <button class="remove-style-image-btn icon-button hidden" aria-label="Remove image 1"><span class="material-symbols-outlined">delete</span></button>
                             </div>
-                            <div class="drop-zone-overlay">
-                                <button class="generate-text-btn">
-                                    <span class="material-symbols-outlined">text_fields</span>
-                                    <span class="overlay-text-label">Generate with Text</span>
-                                </button>
-                                <div class="overlay-divider"></div>
-                                <button class="attach-image-btn">
-                                    <span class="material-symbols-outlined">attach_file</span>
-                                    <span class="overlay-text-label">Attach Image</span>
-                                </button>
+                            <div class="image-drop-zone reference-drop-zone" data-index="1">
+                                <span class="slot-title">Image 2</span>
+                                <div class="drop-zone-prompt"><span class="material-symbols-outlined">add_photo_alternate</span><p>Drop or click</p></div>
+                                <img class="style-image-preview hidden" alt="Reference image 2">
+                                <button class="remove-style-image-btn icon-button hidden" aria-label="Remove image 2"><span class="material-symbols-outlined">delete</span></button>
                             </div>
                         </div>
-                        <input type="file" id="subject-image-input" class="hidden" accept="image/*">
-                    </div>
-                    <div class="control-card">
-                        <div class="prompt-card-header">
-                            <h3>장면</h3>
-                        </div>
-                        <div class="scene-drop-zone" id="scene-drop-zone-image">
-                            <div class="drop-zone-content">
-                                <div class="drop-zone-prompt-large">
-                                    <span class="material-symbols-outlined">place</span>
-                                    <p>Add scene</p>
-                                </div>
-                                <img class="drop-zone-preview hidden" alt="Scene preview">
-                                <button class="remove-style-image-btn hidden" aria-label="Remove scene">
-                                    <span class="material-symbols-outlined">close</span>
-                                </button>
-                            </div>
-                            <div class="drop-zone-overlay">
-                                <button class="generate-text-btn">
-                                    <span class="material-symbols-outlined">text_fields</span>
-                                    <span class="overlay-text-label">Generate with Text</span>
-                                </button>
-                                <div class="overlay-divider"></div>
-                                <button class="attach-image-btn">
-                                    <span class="material-symbols-outlined">attach_file</span>
-                                    <span class="overlay-text-label">Attach Image</span>
-                                </button>
-                            </div>
-                        </div>
-                        <input type="file" id="scene-image-input" class="hidden" accept="image/*">
+                        <input type="file" id="image-studio-reference-input" class="hidden" accept="image/*">
                     </div>
                 </div>
                 <div class="image-gen-footer">

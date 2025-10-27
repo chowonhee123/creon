@@ -75,13 +75,9 @@ window.addEventListener('DOMContentLoaded', () => {
   let imageLibrary: {id: string, dataUrl: string, mimeType: string}[] = [];
 
   // Image Studio state
-  let imageStudioSubjectImage: { file: File; dataUrl: string; } | null = null;
-  let imageStudioSceneImage: { file: File; dataUrl: string; } | null = null;
+  let imageStudioReferenceImages: ({ file: File; dataUrl: string; } | null)[] = [null, null];
   let currentGeneratedImageStudio: GeneratedImageData | null = null;
   let imageStudioHistory: GeneratedImageData[] = [];
-  let imageStudioSubjectPrompt: string = '';
-  let imageStudioScenePrompt: string = '';
-  let currentImageStudioModalType: 'subject' | 'scene' | null = null;
 
   // --- CONSTANTS ---
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -1419,27 +1415,27 @@ window.addEventListener('DOMContentLoaded', () => {
     updateButtonLoadingState(generateBtn, true);
 
     try {
-      if (imageStudioSubjectImage && imageStudioSceneImage) {
+      const hasTwoImages = imageStudioReferenceImages[0] && imageStudioReferenceImages[1];
+      
+      if (hasTwoImages) {
         // Blend mode - use gemini-2.5-flash-image to blend two images
         const blendPrompt = promptText 
           ? `${promptText}`
-          : "Create a composite image by placing the subject from the first image into the scene from the second image. Blend them naturally and seamlessly.";
+          : "Create a composite image by blending these two reference images naturally and seamlessly.";
         
-        const parts: any[] = [
-          { text: blendPrompt },
-          {
-            inlineData: {
-              data: await blobToBase64(imageStudioSubjectImage.file),
-              mimeType: imageStudioSubjectImage.file.type,
-            }
-          },
-          {
-            inlineData: {
-              data: await blobToBase64(imageStudioSceneImage.file),
-              mimeType: imageStudioSceneImage.file.type,
-            }
+        const parts: any[] = [{ text: blendPrompt }];
+        
+        // Add both reference images
+        for (const refImg of imageStudioReferenceImages) {
+          if (refImg) {
+            parts.push({
+              inlineData: {
+                data: await blobToBase64(refImg.file),
+                mimeType: refImg.file.type,
+              }
+            });
           }
-        ];
+        }
 
         const response = await ai.models.generateContent({
           model: 'gemini-2.5-flash-image',
@@ -1467,8 +1463,8 @@ window.addEventListener('DOMContentLoaded', () => {
             id: `img_${timestamp}`,
             data, 
             mimeType,
-            subject: imageStudioSubjectImage?.file.name || '',
-            styleConstraints: imageStudioSceneImage?.file.name || '',
+            subject: imageStudioReferenceImages[0]?.file.name || '',
+            styleConstraints: imageStudioReferenceImages[1]?.file.name || '',
             timestamp
           };
           imageStudioHistory.push(currentGeneratedImageStudio);
@@ -2555,99 +2551,7 @@ Return the 5 suggestions as a JSON array.`;
   };
 
   const setupImageStudioDropZones = () => {
-    const subjectZone = $('#subject-drop-zone-image');
-    const sceneZone = $('#scene-drop-zone-image');
-    const subjectInput = $('#subject-image-input') as HTMLInputElement;
-    const sceneInput = $('#scene-image-input') as HTMLInputElement;
-
-    if (!subjectZone || !sceneZone || !subjectInput || !sceneInput) return;
-
-    const setupZone = (zone: HTMLElement, input: HTMLInputElement, isSubject: boolean) => {
-      const content = zone.querySelector('.drop-zone-content');
-      const previewImg = zone.querySelector('.drop-zone-preview') as HTMLImageElement;
-      const removeBtn = zone.querySelector('.remove-style-image-btn') as HTMLButtonElement;
-      const attachBtn = zone.querySelector('.attach-image-btn') as HTMLButtonElement;
-      const generateBtn = zone.querySelector('.generate-text-btn') as HTMLButtonElement;
-
-      const updateUI = (dataUrl: string | null) => {
-        if (dataUrl && previewImg && content) {
-          previewImg.src = dataUrl;
-          previewImg.classList.remove('hidden');
-          removeBtn?.classList.remove('hidden');
-          content.classList.add('has-image');
-        } else if (content) {
-          previewImg.src = '';
-          previewImg.classList.add('hidden');
-          removeBtn?.classList.add('hidden');
-          content.classList.remove('has-image');
-        }
-      };
-
-      const handleFile = (file: File | undefined) => {
-        if (!file || !file.type.startsWith('image/')) return;
-        
-        const reader = new FileReader();
-        reader.onload = e => {
-          const dataUrl = e.target?.result as string;
-          const imageData = { file, dataUrl };
-          
-          if (isSubject) {
-            imageStudioSubjectImage = imageData;
-          } else {
-            imageStudioSceneImage = imageData;
-          }
-          
-          updateUI(dataUrl);
-        };
-        reader.readAsDataURL(file);
-      };
-
-      input.addEventListener('change', () => {
-        const file = input.files?.[0];
-        if (file) handleFile(file);
-        input.value = '';
-      });
-
-      zone.addEventListener('dragover', (e) => { e.preventDefault(); });
-      zone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        const file = e.dataTransfer?.files[0];
-        handleFile(file);
-      });
-
-      if (removeBtn) {
-        removeBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          if (isSubject) {
-            imageStudioSubjectImage = null;
-            imageStudioSubjectPrompt = '';
-          } else {
-            imageStudioSceneImage = null;
-            imageStudioScenePrompt = '';
-          }
-          updateUI(null);
-        });
-      }
-
-      if (attachBtn) {
-        attachBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          input.click();
-        });
-      }
-
-      if (generateBtn) {
-        generateBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          currentImageStudioModalType = isSubject ? 'subject' : 'scene';
-          const modal = $('#image-studio-text-modal');
-          modal?.classList.remove('hidden');
-        });
-      }
-    };
-
-    setupZone(subjectZone, subjectInput, true);
-    setupZone(sceneZone, sceneInput, false);
+    setupDropZoneListeners('#image-studio-reference-container', '#image-studio-reference-input', imageStudioReferenceImages);
   };
   
   // --- EVENT LISTENERS ---
