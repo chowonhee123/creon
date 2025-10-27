@@ -1055,7 +1055,8 @@ a.secondary-btn[disabled] {
 }
 
 #image-prompt-subject-input,
-#p2d-image-prompt-subject-input {
+#p2d-image-prompt-subject-input,
+#image-prompt-subject-input-image {
   background: var(--input-bg);
   border: 1px solid transparent;
   border-radius: var(--border-radius-md);
@@ -1064,7 +1065,8 @@ a.secondary-btn[disabled] {
   color: var(--text-primary);
 }
 #image-prompt-subject-input:focus,
-#p2d-image-prompt-subject-input:focus {
+#p2d-image-prompt-subject-input:focus,
+#image-prompt-subject-input-image:focus {
   outline: none;
   border-color: var(--accent-color);
   background: var(--surface-color);
