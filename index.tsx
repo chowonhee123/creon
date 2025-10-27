@@ -1420,13 +1420,14 @@ window.addEventListener('DOMContentLoaded', () => {
 
     try {
       if (imageStudioSubjectImage && imageStudioSceneImage) {
-        // Composition mode - use gemini-2.5-flash-image with user prompt
-        const compositionPrompt = promptText 
-          ? `Using the subject from the first image and the scene from the second image, create an image where: ${promptText}. Make it natural and seamless.`
-          : "Combine these two images: place the subject from the first image into the scene from the second image. Create a natural, seamless composition.";
+        // Blend mode - use gemini-2.5-flash-image to blend two images
+        const blendPrompt = promptText 
+          ? `${promptText}. Blend the subject from the first image with the scene from the second image naturally and seamlessly.`
+          : "Blend these two images: integrate the subject from the first image into the scene from the second image naturally and seamlessly.";
         
-        const parts: any[] = [{ text: compositionPrompt }];
+        const parts: any[] = [{ text: blendPrompt }];
 
+        // Subject image (first)
         const subjectBlob = await blobToBase64(imageStudioSubjectImage.file);
         parts.push({
           inlineData: {
@@ -1435,6 +1436,7 @@ window.addEventListener('DOMContentLoaded', () => {
           }
         });
 
+        // Scene image (second)
         const sceneBlob = await blobToBase64(imageStudioSceneImage.file);
         parts.push({
           inlineData: {
