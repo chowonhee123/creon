@@ -2064,7 +2064,7 @@ Return the 5 suggestions as a JSON array.`;
               model: 'gemini-2.5-flash-image',
               contents: { parts },
               config: {
-                  responseModalities: ['IMAGE'],
+                  responseModalities: [Modality.IMAGE],
               },
           });
           
