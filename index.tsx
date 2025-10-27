@@ -1420,12 +1420,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
     try {
       if (imageStudioSubjectImage && imageStudioSceneImage) {
-        // Composition mode - use gemini-2.5-flash-image
-        const parts: any[] = [
-          {
-            text: "Combine these two images: place the subject from the first image into the scene from the second image. Create a natural, seamless composition."
-          }
-        ];
+        // Composition mode - use gemini-2.5-flash-image with user prompt
+        const compositionPrompt = promptText 
+          ? `Using the subject from the first image and the scene from the second image, create an image where: ${promptText}. Make it natural and seamless.`
+          : "Combine these two images: place the subject from the first image into the scene from the second image. Create a natural, seamless composition.";
+        
+        const parts: any[] = [{ text: compositionPrompt }];
 
         const subjectBlob = await blobToBase64(imageStudioSubjectImage.file);
         parts.push({
