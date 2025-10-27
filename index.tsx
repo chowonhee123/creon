@@ -1488,9 +1488,9 @@ window.addEventListener('DOMContentLoaded', () => {
           showToast({ type: 'success', title: 'Composed!', body: 'Image composition completed.' });
         }
       } else if (promptText) {
-        // Single image generation mode - use gemini-2.5-flash-image (imagine4 equivalent)
+        // Single image generation mode - use imagen for text-to-image
         const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash-image',
+          model: 'imagen-3.0-generate-001',
           contents: [{ parts: [{ text: promptText }] }],
           config: {
             responseModalities: [Modality.IMAGE],
