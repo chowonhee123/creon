@@ -881,7 +881,7 @@ a.secondary-btn[disabled] {
   background: transparent;
 }
 
-#image-generate-btn, #p2d-image-generate-btn {
+#image-generate-btn, #p2d-image-generate-btn, #image-generate-btn-image {
   width: 100%;
 }
 
@@ -1384,6 +1384,10 @@ a.secondary-btn[disabled] {
 
 .drop-zone-overlay button .material-symbols-outlined {
     font-size: 32px;
+}
+
+.drop-zone-overlay button span.overlay-text-label {
+    display: none;
 }
 
 .drop-zone-overlay button span {
