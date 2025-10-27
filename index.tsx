@@ -1421,22 +1421,33 @@ window.addEventListener('DOMContentLoaded', () => {
       if (hasTwoImages) {
         // Blend mode - use gemini-2.5-flash-image to blend two images
         const blendPrompt = promptText 
-          ? `${promptText}`
-          : "Create a composite image by blending these two reference images naturally and seamlessly.";
+          ? `Take the character/subject from the first image and place them into the scene from the second image. ${promptText}`
+          : "Take the character/subject from the first image and place them into the scene from the second image.";
         
-        const parts: any[] = [{ text: blendPrompt }];
+        const parts: any[] = [];
         
-        // Add both reference images
-        for (const refImg of imageStudioReferenceImages) {
-          if (refImg) {
-            parts.push({
-              inlineData: {
-                data: await blobToBase64(refImg.file),
-                mimeType: refImg.file.type,
-              }
-            });
-          }
+        // Add first reference image (subject)
+        if (imageStudioReferenceImages[0]) {
+          parts.push({
+            inlineData: {
+              data: await blobToBase64(imageStudioReferenceImages[0].file),
+              mimeType: imageStudioReferenceImages[0].file.type,
+            }
+          });
         }
+        
+        // Add second reference image (scene)
+        if (imageStudioReferenceImages[1]) {
+          parts.push({
+            inlineData: {
+              data: await blobToBase64(imageStudioReferenceImages[1].file),
+              mimeType: imageStudioReferenceImages[1].file.type,
+            }
+          });
+        }
+        
+        // Add prompt text last
+        parts.push({ text: blendPrompt });
 
         const response = await ai.models.generateContent({
           model: 'gemini-2.5-flash-image',
