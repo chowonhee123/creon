@@ -1483,7 +1483,9 @@ window.addEventListener('DOMContentLoaded', () => {
           if (detailsPreview) detailsPreview.src = dataUrl;
           if (detailsDownload) detailsDownload.href = dataUrl;
           
+          // Show and animate details panel
           detailsPanel?.classList.remove('hidden');
+          detailsPanel?.classList.add('is-open');
           
           showToast({ type: 'success', title: 'Composed!', body: 'Image composition completed.' });
         }
@@ -1529,7 +1531,9 @@ window.addEventListener('DOMContentLoaded', () => {
           if (detailsPreview) detailsPreview.src = dataUrl;
           if (detailsDownload) detailsDownload.href = dataUrl;
           
+          // Show and animate details panel
           detailsPanel?.classList.remove('hidden');
+          detailsPanel?.classList.add('is-open');
           
           showToast({ type: 'success', title: 'Generated!', body: 'Image generated from prompt.' });
         }

@@ -1027,106 +1027,20 @@
                             <span class="material-symbols-outlined">close</span>
                         </button>
                     </header>
-                    <nav class="details-panel-tabs">
-                        <button class="tab-item active" data-tab="detail">Detail</button>
-                        <button class="tab-item" data-tab="motion">Motion</button>
-                    </nav>
                     <div class="details-panel-body">
-                        <div class="details-tab-content active" data-tab-content="detail">
-                            <div class="details-preview">
-                                <img id="details-preview-image-image" src="" alt="Details preview">
-                            </div>
-                            <div class="details-actions">
-                                <a href="#" id="details-download-btn-image" class="secondary-btn" download>
-                                    <span class="material-symbols-outlined">download</span> Download
-                                </a>
-                                <button id="details-copy-btn-image" class="secondary-btn">
-                                    <span class="material-symbols-outlined">content_copy</span> Copy Prompt
-                                </button>
-                                <button id="details-delete-btn-image" class="secondary-btn danger">
-                                    <span class="material-symbols-outlined">delete</span> Delete
-                                </button>
-                            </div>
+                        <div class="details-preview">
+                            <img id="details-preview-image-image" src="" alt="Details preview">
                         </div>
-                        <div class="details-tab-content hidden" data-tab-content="motion">
-                            <div class="motion-fixed-header">
-                                <div class="motion-thumbnail-container">
-                                    <img id="motion-thumbnail-image-image" src="" alt="Motion thumbnail">
-                                    <div class="motion-thumbnail-info">
-                                        <span id="motion-thumbnail-label-image"></span>
-                                        <span class="motion-thumbnail-desc">Ready for animation</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="motion-scroll-content">
-                                <div class="video-result-container hidden" id="motion-video-container-image">
-                                    <video id="motion-video-player-image" controls loop autoplay muted playsinline></video>
-                                    <div id="motion-video-loader-image" class="result-loading hidden">
-                                        <div class="loader"></div>
-                                        <span id="motion-gen-status-text-image" class="loader-text">Generating video...</span>
-                                    </div>
-                                </div>
-                                <div id="motion-reference-image-container-image" class="reference-image-container">
-                                  <div class="image-drop-zone reference-drop-zone" data-index="0">
-                                    <span class="slot-title">First Frame</span>
-                                    <div class="drop-zone-prompt"><p style="font-size:12px">Drop or click</p></div>
-                                    <img class="style-image-preview hidden" alt="First frame reference image">
-                                    <button class="remove-style-image-btn icon-button hidden" aria-label="Remove First Frame"><span class="material-symbols-outlined">delete</span></button>
-                                  </div>
-                                  <div class="image-drop-zone reference-drop-zone" data-index="1">
-                                    <span class="slot-title">Last Frame</span>
-                                    <div class="drop-zone-prompt"><p style="font-size:12px">Drop or click</p></div>
-                                    <img class="style-image-preview hidden" alt="Last frame reference image">
-                                    <button class="remove-style-image-btn icon-button hidden" aria-label="Remove Last Frame"><span class="material-symbols-outlined">delete</span></button>
-                                  </div>
-                                </div>
-                                <input type="file" id="motion-reference-image-input-image" class="hidden" accept="image/*">
-                                <div class="control-card">
-                                    <h3>Generation Speed</h3>
-                                    <p style="font-size: 13px; color: var(--text-secondary); margin-top: -8px; margin-bottom: 8px;">'High Quality' may take longer to generate.</p>
-                                    <div class="segmented-control" id="motion-model-select-image">
-                                        <input type="radio" id="model-fast-image" name="motion-model-image" value="veo-3.1-fast-generate-preview" checked />
-                                        <label for="model-fast-image">Fast</label>
-                                        <input type="radio" id="model-hq-image" name="motion-model-image" value="veo-3.1-generate-preview" />
-                                        <label for="model-hq-image">High Quality</label>
-                                    </div>
-                                </div>
-                                <div id="motion-prompt-output-image" class="hidden">
-                                    <div class="control-card">
-                                        <label for="motion-prompt-final-english-image">Final Prompt</label>
-                                        <textarea id="motion-prompt-final-english-image" rows="4"></textarea>
-                                    </div>
-                                    <div class="control-card">
-                                        <label>Description (Korean)</label>
-                                        <div id="motion-prompt-korean-image" class="description-box"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="details-actions">
-                                <button id="generate-motion-prompt-btn-image" class="primary-btn">
-                                    <span class="material-symbols-outlined">animation</span>
-                                    <span class="btn-text">Generate Motion Prompt</span>
-                                    <div class="btn-loader"></div>
-                                </button>
-                                <button id="regenerate-motion-prompt-btn-image" class="secondary-btn hidden">
-                                    <span class="material-symbols-outlined">refresh</span>
-                                    <span class="btn-text">Regenerate Prompt</span>
-                                    <div class="btn-loader"></div>
-                                </button>
-                                <button id="generate-video-btn-image" class="primary-btn hidden">
-                                    <span class="material-symbols-outlined">movie</span>
-                                    <span class="btn-text">Generate Video</span>
-                                    <div class="btn-loader"></div>
-                                </button>
-                                <button id="regenerate-video-btn-image" class="secondary-btn hidden">
-                                    <span class="material-symbols-outlined">refresh</span>
-                                    <span class="btn-text">Regenerate Video</span>
-                                    <div class="btn-loader"></div>
-                                </button>
-                                <a href="#" id="download-video-btn-image" class="secondary-btn hidden" download>
-                                    <span class="material-symbols-outlined">download</span> Download Video
-                                </a>
-                            </div>
+                        <div class="details-actions">
+                            <a href="#" id="details-download-btn-image" class="secondary-btn" download>
+                                <span class="material-symbols-outlined">download</span> Download
+                            </a>
+                            <button id="details-copy-btn-image" class="secondary-btn">
+                                <span class="material-symbols-outlined">content_copy</span> Copy Prompt
+                            </button>
+                            <button id="details-delete-btn-image" class="secondary-btn danger">
+                                <span class="material-symbols-outlined">delete</span> Delete
+                            </button>
                         </div>
                     </div>
                 </div>
