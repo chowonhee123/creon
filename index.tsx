@@ -78,6 +78,7 @@ window.addEventListener('DOMContentLoaded', () => {
   let imageStudioReferenceImages: ({ file: File; dataUrl: string; } | null)[] = [null, null];
   let currentGeneratedImageStudio: GeneratedImageData | null = null;
   let imageStudioHistory: GeneratedImageData[] = [];
+  let imageStudioHistoryIndex = -1;
 
   // --- CONSTANTS ---
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -1468,6 +1469,11 @@ window.addEventListener('DOMContentLoaded', () => {
             timestamp
           };
           imageStudioHistory.push(currentGeneratedImageStudio);
+          imageStudioHistoryIndex = imageStudioHistory.length - 1;
+          
+          // Show history panel
+          const historyPanel = $('#image-studio-history-panel');
+          historyPanel?.classList.remove('hidden');
           
           // Show details panel
           const detailsPanel = $('#image-details-panel-image');
@@ -1480,6 +1486,9 @@ window.addEventListener('DOMContentLoaded', () => {
           // Show and animate details panel
           detailsPanel?.classList.remove('hidden');
           detailsPanel?.classList.add('is-open');
+          
+          // Render history
+          renderImageStudioHistory();
           
           showToast({ type: 'success', title: 'Composed!', body: 'Image composition completed.' });
         }
@@ -1516,6 +1525,11 @@ window.addEventListener('DOMContentLoaded', () => {
             timestamp
           };
           imageStudioHistory.push(currentGeneratedImageStudio);
+          imageStudioHistoryIndex = imageStudioHistory.length - 1;
+          
+          // Show history panel
+          const historyPanel = $('#image-studio-history-panel');
+          historyPanel?.classList.remove('hidden');
           
           // Show details panel
           const detailsPanel = $('#image-details-panel-image');
@@ -1528,6 +1542,9 @@ window.addEventListener('DOMContentLoaded', () => {
           // Show and animate details panel
           detailsPanel?.classList.remove('hidden');
           detailsPanel?.classList.add('is-open');
+          
+          // Render history
+          renderImageStudioHistory();
           
           showToast({ type: 'success', title: 'Generated!', body: 'Image generated from prompt.' });
         }
@@ -1914,6 +1931,70 @@ Return the 5 suggestions as a JSON array.`;
     historyCounter.textContent = `${historyIndex + 1} / ${imageHistory.length}`;
     historyBackBtn.disabled = historyIndex <= 0;
     historyForwardBtn.disabled = historyIndex >= imageHistory.length - 1;
+  };
+
+  const renderImageStudioHistory = () => {
+    const historyPanelEl = $('#image-studio-history-panel');
+    const historyListEl = $('#history-list-image');
+    const historyCounterEl = $('#history-counter-image');
+    const historyBackBtnEl = $('#history-back-btn-image');
+    const historyForwardBtnEl = $('#history-forward-btn-image');
+    
+    if (!historyPanelEl || !historyListEl || !historyCounterEl || !historyBackBtnEl || !historyForwardBtnEl) return;
+    
+    if (imageStudioHistory.length === 0) {
+        historyPanelEl.classList.add('hidden');
+        return;
+    }
+
+    historyPanelEl.classList.remove('hidden');
+    historyListEl.innerHTML = '';
+
+    imageStudioHistory.forEach((item, index) => {
+        const li = document.createElement('li');
+        li.className = 'history-item';
+        if (index === imageStudioHistoryIndex) {
+            li.classList.add('selected');
+        }
+        li.dataset.index = String(index);
+
+        const date = new Date(item.timestamp);
+        const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        li.innerHTML = `
+        <div class="history-item-main">
+            <img src="data:${item.mimeType};base64,${item.data}" class="history-thumbnail" alt="History item thumbnail">
+            <div class="history-item-info">
+            <span class="history-item-label">${item.subject}</span>
+            <span class="history-item-timestamp">${timeString}</span>
+            </div>
+        </div>
+        `;
+        li.addEventListener('click', () => {
+            imageStudioHistoryIndex = index;
+            currentGeneratedImageStudio = imageStudioHistory[imageStudioHistoryIndex];
+            const dataUrl = `data:${item.mimeType};base64,${item.data}`;
+            const resultImage = $('#result-image-image') as HTMLImageElement;
+            if (resultImage) {
+                resultImage.src = dataUrl;
+                resultImage.classList.remove('hidden');
+            }
+            // Update details panel
+            const detailsPanel = $('#image-details-panel-image');
+            const detailsPreview = $('#details-preview-image-image') as HTMLImageElement;
+            const detailsDownload = $('#details-download-btn-image') as HTMLAnchorElement;
+            if (detailsPreview) detailsPreview.src = dataUrl;
+            if (detailsDownload) detailsDownload.href = dataUrl;
+            detailsPanel?.classList.remove('hidden');
+            detailsPanel?.classList.add('is-open');
+            renderImageStudioHistory();
+        });
+        historyListEl.prepend(li);
+    });
+
+    historyCounterEl.textContent = `${imageStudioHistoryIndex + 1} / ${imageStudioHistory.length}`;
+    historyBackBtnEl.disabled = imageStudioHistoryIndex <= 0;
+    historyForwardBtnEl.disabled = imageStudioHistoryIndex >= imageStudioHistory.length - 1;
   };
   
   // --- PAGE-SPECIFIC LOGIC: Icon Studio ---
@@ -2685,6 +2766,54 @@ Return the 5 suggestions as a JSON array.`;
   };
   
   // --- EVENT LISTENERS ---
+  
+  // Image Studio history navigation
+  const historyBackBtnImage = $('#history-back-btn-image');
+  const historyForwardBtnImage = $('#history-forward-btn-image');
+  const detailsCloseBtnImage = $('#details-close-btn-image');
+  const resultImageEl = $('#result-image-image') as HTMLImageElement;
+  
+  historyBackBtnImage?.addEventListener('click', () => {
+    if (imageStudioHistoryIndex > 0) {
+      imageStudioHistoryIndex--;
+      const item = imageStudioHistory[imageStudioHistoryIndex];
+      const dataUrl = `data:${item.mimeType};base64,${item.data}`;
+      if (resultImageEl) {
+        resultImageEl.src = dataUrl;
+        resultImageEl.classList.remove('hidden');
+      }
+      renderImageStudioHistory();
+    }
+  });
+  
+  historyForwardBtnImage?.addEventListener('click', () => {
+    if (imageStudioHistoryIndex < imageStudioHistory.length - 1) {
+      imageStudioHistoryIndex++;
+      const item = imageStudioHistory[imageStudioHistoryIndex];
+      const dataUrl = `data:${item.mimeType};base64,${item.data}`;
+      if (resultImageEl) {
+        resultImageEl.src = dataUrl;
+        resultImageEl.classList.remove('hidden');
+      }
+      renderImageStudioHistory();
+    }
+  });
+  
+  // Close details panel button
+  detailsCloseBtnImage?.addEventListener('click', () => {
+    const detailsPanel = $('#image-details-panel-image');
+    detailsPanel?.classList.add('hidden');
+    detailsPanel?.classList.remove('is-open');
+  });
+  
+  // Show details panel button (add to result image or generate button)
+  resultImageEl?.addEventListener('click', () => {
+    if (currentGeneratedImageStudio) {
+      const detailsPanel = $('#image-details-panel-image');
+      detailsPanel?.classList.remove('hidden');
+      detailsPanel?.classList.add('is-open');
+    }
+  });
 
   themeToggleButton?.addEventListener('click', () => {
     const newTheme = body.dataset.theme === 'light' ? 'dark' : 'light';
