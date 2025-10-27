@@ -2567,17 +2567,6 @@ Return the 5 suggestions as a JSON array.`;
       const attachBtn = zone.querySelector('.attach-image-btn') as HTMLButtonElement;
       const generateBtn = zone.querySelector('.generate-text-btn') as HTMLButtonElement;
 
-      // Add click listener for remove button
-      removeBtn?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (isSubject) {
-          imageStudioSubjectImage = null;
-        } else {
-          imageStudioSceneImage = null;
-        }
-        updateUI(null);
-      });
-
       const updateUI = (dataUrl: string | null) => {
         if (dataUrl && previewImg && content) {
           previewImg.src = dataUrl;
