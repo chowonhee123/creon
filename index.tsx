@@ -1323,9 +1323,9 @@ window.addEventListener('DOMContentLoaded', () => {
     loaderModal?.classList.remove('hidden');
 
     try {
-      // Generate image from text using imagen
+      // Generate image from text using gemini-2.5-flash-image
       const response = await ai.models.generateContent({
-        model: 'imagen-3.0-generate-001',
+        model: 'gemini-2.5-flash-image',
         contents: [{ parts: [{ text: promptText }] }],
         config: {
           responseModalities: [Modality.IMAGE],
@@ -1368,9 +1368,9 @@ window.addEventListener('DOMContentLoaded', () => {
     loaderModal?.classList.remove('hidden');
 
     try {
-      // Generate image from text using imagen
+      // Generate image from text using gemini-2.5-flash-image
       const response = await ai.models.generateContent({
-        model: 'imagen-3.0-generate-001',
+        model: 'gemini-2.5-flash-image',
         contents: [{ parts: [{ text: promptText }] }],
         config: {
           responseModalities: [Modality.IMAGE],
@@ -1488,9 +1488,9 @@ window.addEventListener('DOMContentLoaded', () => {
           showToast({ type: 'success', title: 'Composed!', body: 'Image composition completed.' });
         }
       } else if (promptText) {
-        // Single image generation mode - use imagen for text-to-image
+        // Single image generation mode - use gemini-2.5-flash-image
         const response = await ai.models.generateContent({
-          model: 'imagen-3.0-generate-001',
+          model: 'gemini-2.5-flash-image',
           contents: [{ parts: [{ text: promptText }] }],
           config: {
             responseModalities: [Modality.IMAGE],
