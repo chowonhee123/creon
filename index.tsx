@@ -2797,6 +2797,18 @@ Return the 5 suggestions as a JSON array.`;
     await Promise.all(
       defaultRefUrls.map((url, index) => loadImageToRef(url, index, referenceImagesForIconStudio3d, '#reference-image-container-3d'))
     );
+
+    const default2dRefUrls = [
+      '/images/references/fill_on.png',
+      '/images/references/fill_off.png',
+      '/images/references/weight_light.png',
+      '/images/references/weight_bold.png',
+    ];
+
+    // Load default images for 2D Studio references
+    await Promise.all(
+      default2dRefUrls.map((url, index) => loadImageToRef(url, index, referenceImagesForEdit2d, '#p2d-edit-reference-image-container-3d'))
+    );
   };
 
   // --- INITIALIZATION ---
