@@ -1445,8 +1445,8 @@ a.secondary-btn[disabled] {
 }
 
 /* Show delete button on hover for Image Studio drop zones */
-.subject-drop-zone:hover .remove-style-image-btn:not(.hidden),
-.scene-drop-zone:hover .remove-style-image-btn:not(.hidden) {
+.subject-drop-zone .drop-zone-content.has-image:hover .remove-style-image-btn,
+.scene-drop-zone .drop-zone-content.has-image:hover .remove-style-image-btn {
     opacity: 1;
 }
 
