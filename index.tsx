@@ -2621,8 +2621,64 @@ Return the 5 suggestions as a JSON array.`;
       if (generateBtn) {
         generateBtn.addEventListener('click', (e) => {
           e.stopPropagation();
-          // TODO: Add modal for text generation
-          console.log('Generate with text for image', index);
+          
+          // Store which image slot we're generating for
+          let currentImageStudioSlotIndex = index;
+          const textInput = $('#image-studio-text-input') as HTMLTextAreaElement;
+          
+          // Open modal
+          $('#image-studio-text-modal')?.classList.remove('hidden');
+          textInput.value = '';
+          textInput.focus();
+          
+          // Handle modal generate button
+          const generateBtn = $('#image-studio-text-generate-btn');
+          generateBtn?.replaceWith(generateBtn.cloneNode(true)); // Remove old listener
+          const newGenerateBtn = $('#image-studio-text-generate-btn');
+          
+          newGenerateBtn?.addEventListener('click', async () => {
+            const promptText = textInput?.value?.trim() || '';
+            if (!promptText) {
+              showToast({ type: 'error', title: 'Input Required', body: 'Please enter a prompt.' });
+              return;
+            }
+            
+            try {
+              const loaderModal = $('#image-generation-loader-modal');
+              loaderModal?.classList.remove('hidden');
+              
+              // Generate image from text
+              const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash-image',
+                contents: [{ parts: [{ text: promptText }] }],
+                config: {
+                  responseModalities: [Modality.IMAGE],
+                },
+              });
+              
+              const part = response.candidates?.[0]?.content?.parts?.[0];
+              if (part && part.inlineData) {
+                const { data, mimeType } = part.inlineData;
+                const dataUrl = `data:${mimeType};base64,${data}`;
+                
+                const blob = await (await fetch(dataUrl)).blob();
+                const file = new File([blob], `generated_image_${currentImageStudioSlotIndex}.png`, { type: mimeType });
+                
+                // Save to reference images
+                imageStudioReferenceImages[currentImageStudioSlotIndex] = { file, dataUrl };
+                updateUI(dataUrl);
+                
+                showToast({ type: 'success', title: 'Generated!', body: 'Image generated from text.' });
+              }
+            } catch (error) {
+              console.error('Error generating image:', error);
+              showToast({ type: 'error', title: 'Generation Failed', body: 'Failed to generate image.' });
+            } finally {
+              $('#image-generation-loader-modal')?.classList.add('hidden');
+              $('#image-studio-text-modal')?.classList.add('hidden');
+              textInput.value = '';
+            }
+          });
         });
       }
     });
