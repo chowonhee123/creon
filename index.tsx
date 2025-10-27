@@ -77,6 +77,8 @@ window.addEventListener('DOMContentLoaded', () => {
   // Image Studio state
   let imageStudioSubjectImage: { file: File; dataUrl: string; } | null = null;
   let imageStudioSceneImage: { file: File; dataUrl: string; } | null = null;
+  let currentGeneratedImageStudio: GeneratedImageData | null = null;
+  let imageStudioHistory: GeneratedImageData[] = [];
   let imageStudioSubjectPrompt: string = '';
   let imageStudioScenePrompt: string = '';
   let currentImageStudioModalType: 'subject' | 'scene' | null = null;
@@ -1460,6 +1462,21 @@ window.addEventListener('DOMContentLoaded', () => {
           resultPlaceholder?.classList.add('hidden');
           
           if (promptDisplay) promptDisplay.value = "Subject placed in scene";
+          
+          // Save to history
+          currentGeneratedImageStudio = { data, mimeType };
+          imageStudioHistory.push(currentGeneratedImageStudio);
+          
+          // Show details panel
+          const detailsPanel = $('#image-details-panel-image');
+          const detailsPreview = $('#details-preview-image-image') as HTMLImageElement;
+          const detailsDownload = $('#details-download-btn-image');
+          
+          if (detailsPreview) detailsPreview.src = dataUrl;
+          if (detailsDownload) detailsDownload.href = dataUrl;
+          
+          detailsPanel?.classList.remove('hidden');
+          
           showToast({ type: 'success', title: 'Composed!', body: 'Image composition completed.' });
         }
       } else if (promptText) {
@@ -1483,6 +1500,29 @@ window.addEventListener('DOMContentLoaded', () => {
           resultPlaceholder?.classList.add('hidden');
           
           if (promptDisplay) promptDisplay.value = promptText;
+          
+          // Save to history
+          const timestamp = Date.now();
+          currentGeneratedImageStudio = { 
+            id: `img_${timestamp}`,
+            data, 
+            mimeType,
+            subject: promptText,
+            styleConstraints: '',
+            timestamp
+          };
+          imageStudioHistory.push(currentGeneratedImageStudio);
+          
+          // Show details panel
+          const detailsPanel = $('#image-details-panel-image');
+          const detailsPreview = $('#details-preview-image-image') as HTMLImageElement;
+          const detailsDownload = $('#details-download-btn-image') as HTMLAnchorElement;
+          
+          if (detailsPreview) detailsPreview.src = dataUrl;
+          if (detailsDownload) detailsDownload.href = dataUrl;
+          
+          detailsPanel?.classList.remove('hidden');
+          
           showToast({ type: 'success', title: 'Generated!', body: 'Image generated from prompt.' });
         }
       } else {
