@@ -1272,8 +1272,7 @@ a.secondary-btn[disabled] {
 }
 
 /* Image Studio Drop Zones */
-.subject-drop-zone,
-.scene-drop-zone {
+.image-studio-drop-zone {
     width: 100%;
     min-height: 200px;
     border: 2px dashed var(--border-color);
@@ -1285,8 +1284,7 @@ a.secondary-btn[disabled] {
     overflow: hidden;
 }
 
-.subject-drop-zone:hover,
-.scene-drop-zone:hover {
+.image-studio-drop-zone:hover {
     border-color: var(--accent-color);
     background-color: var(--surface-color);
 }
@@ -1446,8 +1444,17 @@ a.secondary-btn[disabled] {
 }
 
 /* Show on hover for Image Studio */
-.subject-drop-zone:hover .remove-style-image-btn:not(.hidden),
-.scene-drop-zone:hover .remove-style-image-btn:not(.hidden) {
+.image-studio-drop-zone:hover .remove-style-image-btn:not(.hidden) {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.image-studio-drop-zone:hover .drop-zone-content:not(.has-image) {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.image-studio-drop-zone:hover .drop-zone-overlay {
     opacity: 1;
     pointer-events: auto;
 }

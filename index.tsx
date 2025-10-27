@@ -2551,7 +2551,81 @@ Return the 5 suggestions as a JSON array.`;
   };
 
   const setupImageStudioDropZones = () => {
-    setupDropZoneListeners('#image-studio-reference-container', '#image-studio-reference-input', imageStudioReferenceImages);
+    const zones = document.querySelectorAll('.image-studio-drop-zone');
+    const inputs = document.querySelectorAll('.image-studio-reference-input') as NodeListOf<HTMLInputElement>;
+    
+    zones.forEach((zone, index) => {
+      const input = inputs[index];
+      if (!zone || !input) return;
+      
+      const content = zone.querySelector('.drop-zone-content');
+      const previewImg = zone.querySelector('.drop-zone-preview') as HTMLImageElement;
+      const removeBtn = zone.querySelector('.remove-style-image-btn') as HTMLButtonElement;
+      const attachBtn = zone.querySelector('.attach-image-btn') as HTMLButtonElement;
+      const generateBtn = zone.querySelector('.generate-text-btn') as HTMLButtonElement;
+      
+      const updateUI = (dataUrl: string | null) => {
+        if (dataUrl && previewImg && content) {
+          previewImg.src = dataUrl;
+          previewImg.classList.remove('hidden');
+          removeBtn?.classList.remove('hidden');
+          content.classList.add('has-image');
+        } else if (content) {
+          previewImg.src = '';
+          previewImg.classList.add('hidden');
+          removeBtn?.classList.add('hidden');
+          content.classList.remove('has-image');
+        }
+      };
+      
+      const handleFile = (file: File | undefined) => {
+        if (!file || !file.type.startsWith('image/')) return;
+        
+        const reader = new FileReader();
+        reader.onload = e => {
+          const dataUrl = e.target?.result as string;
+          imageStudioReferenceImages[index] = { file, dataUrl };
+          updateUI(dataUrl);
+        };
+        reader.readAsDataURL(file);
+      };
+      
+      input.addEventListener('change', () => {
+        const file = input.files?.[0];
+        if (file) handleFile(file);
+        input.value = '';
+      });
+      
+      zone.addEventListener('dragover', (e) => { e.preventDefault(); });
+      zone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const file = (e as DragEvent).dataTransfer?.files[0];
+        handleFile(file);
+      });
+      
+      if (removeBtn) {
+        removeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          imageStudioReferenceImages[index] = null;
+          updateUI(null);
+        });
+      }
+      
+      if (attachBtn) {
+        attachBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          input.click();
+        });
+      }
+      
+      if (generateBtn) {
+        generateBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          // TODO: Add modal for text generation
+          console.log('Generate with text for image', index);
+        });
+      }
+    });
   };
   
   // --- EVENT LISTENERS ---
