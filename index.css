@@ -1575,7 +1575,7 @@ a.secondary-btn[disabled] {
   justify-content: center;
   overflow: hidden;
   transition: margin-right 0.3s ease-in-out;
-  padding: var(--spacing-4) 0;
+  padding: 0;
 }
 .result-container {
   width: 100%;
