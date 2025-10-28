@@ -2748,29 +2748,37 @@ Return the 5 suggestions as a JSON array.`;
               const loaderModal = $('#image-generation-loader-modal');
               loaderModal?.classList.remove('hidden');
               
-              // Generate image from text
-              console.log('Generating with prompt:', promptText);
+              // Generate image from text using gemini-2.5-flash-image
+              console.log('[Image Studio] Generating image from text with model: gemini-2.5-flash-image');
+              console.log('[Image Studio] Prompt:', promptText);
+              
               const response = await ai.models.generateContent({
-                model: 'imagen-4.0-generate-001',
+                model: 'gemini-2.5-flash-image',
                 contents: [{ parts: [{ text: promptText }] }],
                 config: {
                   responseModalities: [Modality.IMAGE],
                 },
               });
               
-              console.log('Full response:', response);
+              console.log('[Image Studio] Full response:', response);
               const part = response.candidates?.[0]?.content?.parts?.[0];
-              console.log('Response part:', part);
+              console.log('[Image Studio] Response part:', part);
+              
               if (part && part.inlineData) {
                 const { data, mimeType } = part.inlineData;
                 const dataUrl = `data:${mimeType};base64,${data}`;
+                
+                console.log('[Image Studio] Image data received, creating file...');
                 
                 const blob = await (await fetch(dataUrl)).blob();
                 const file = new File([blob], `generated_image_${currentImageStudioSlotIndex}.png`, { type: mimeType });
                 
                 // Save to reference images
                 imageStudioReferenceImages[currentImageStudioSlotIndex] = { file, dataUrl };
+                
                 const dropZone = document.querySelector(`.image-studio-drop-zone[data-index="${currentImageStudioSlotIndex}"]`);
+                console.log('[Image Studio] Drop zone:', dropZone);
+                
                 if (dropZone) {
                   const previewImg = dropZone.querySelector('.drop-zone-preview') as HTMLImageElement;
                   const content = dropZone.querySelector('.drop-zone-content');
@@ -2783,17 +2791,18 @@ Return the 5 suggestions as a JSON array.`;
                     if (promptLarge) promptLarge.classList.add('hidden');
                     if (removeBtn) removeBtn.classList.remove('hidden');
                     content.classList.add('has-image');
+                    console.log('[Image Studio] UI updated successfully');
                   }
                 }
                 
                 showToast({ type: 'success', title: 'Generated!', body: 'Image generated from text.' });
               } else {
-                console.error('No image data in response');
+                console.error('[Image Studio] No image data in response:', part);
                 throw new Error('No image data in response');
               }
             } catch (error) {
-              console.error('Error generating image:', error);
-              showToast({ type: 'error', title: 'Generation Failed', body: 'Failed to generate image.' });
+              console.error('[Image Studio] Error generating image:', error);
+              showToast({ type: 'error', title: 'Generation Failed', body: `Failed to generate image: ${error.message}` });
             } finally {
               $('#image-generation-loader-modal')?.classList.add('hidden');
               textInput.value = '';
