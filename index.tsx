@@ -802,10 +802,58 @@ window.addEventListener('DOMContentLoaded', () => {
     body.textContent = options.body;
 
     toast.classList.remove('hidden');
+    
+    // Trigger confetti for success toasts
+    if (options.type === 'success') {
+        triggerConfetti();
+    }
 
     bannerToastTimer = window.setTimeout(() => {
         toast.classList.add('hidden');
     }, options.duration || 5000);
+  };
+  
+  const triggerConfetti = () => {
+    // Create confetti particles
+    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE'];
+    const confettiCount = 150;
+    
+    for (let i = 0; i < confettiCount; i++) {
+      createConfettiParticle(colors[Math.floor(Math.random() * colors.length)]);
+    }
+  };
+  
+  const createConfettiParticle = (color: string) => {
+    const confetti = document.createElement('div');
+    confetti.style.position = 'fixed';
+    confetti.style.width = Math.random() * 10 + 5 + 'px';
+    confetti.style.height = confetti.style.width;
+    confetti.style.backgroundColor = color;
+    confetti.style.left = Math.random() * 100 + '%';
+    confetti.style.top = '-10px';
+    confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+    confetti.style.pointerEvents = 'none';
+    confetti.style.zIndex = '1000';
+    document.body.appendChild(confetti);
+    
+    const rotation = Math.random() * 360;
+    const horizontalMovement = (Math.random() - 0.5) * 200;
+    
+    const animation = confetti.animate([
+      { 
+        transform: `translate(0, 0) rotate(0deg)`,
+        opacity: 1 
+      },
+      { 
+        transform: `translate(${horizontalMovement}px, ${window.innerHeight + 200}px) rotate(${rotation}deg)`,
+        opacity: 0 
+      }
+    ], {
+      duration: Math.random() * 2000 + 2000,
+      easing: 'cubic-bezier(0.5, 0, 0.5, 1)'
+    });
+    
+    animation.onfinish = () => confetti.remove();
   };
 
   const updateButtonLoadingState = (button: HTMLElement | null, isLoading: boolean) => {

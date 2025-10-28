@@ -1036,7 +1036,7 @@ a.secondary-btn[disabled] {
 }
 
 #page-id-2d .control-card {
-  gap: 20px;
+  gap: var(--spacing-3);
 }
 
 #p2d-edit-reference-image-container-3d {
@@ -1824,15 +1824,19 @@ a.secondary-btn[disabled] {
     padding: var(--spacing-5);
 }
 
+#image-details-panel-image .details-tab-content[data-tab-content="detail"] {
+    padding: var(--spacing-5);
+}
+
+#image-details-panel-image .details-tab-content[data-tab-content="motion"] {
+    padding: 0;
+}
+
 #explore-details-panel .details-panel-body {
     padding: var(--spacing-5);
     gap: var(--spacing-4);
 }
 
-#image-details-panel-image .details-panel-body {
-    padding: 0;
-    gap: 0;
-}
 
 #image-details-panel-image .details-panel-body {
     overflow: hidden;
@@ -2534,6 +2538,7 @@ a.secondary-btn[disabled] {
 .banner-toast:not(.hidden) {
   transform: translateY(0);
 }
+
 .banner-toast-content {
   display: flex;
   align-items: center;
