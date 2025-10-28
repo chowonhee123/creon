@@ -1429,15 +1429,23 @@ window.addEventListener('DOMContentLoaded', () => {
           return;
         }
         
-        // Blend mode - add prompt first, then images in order
-        console.log('[Image Studio] Starting image composition with 2 reference images');
-        console.log('[Image Studio] Prompt:', promptText);
+        // Image Studio Composition: Blend two reference images with prompt
+        console.log('[Image Studio] Starting composition with 2 reference images');
+        console.log('[Image Studio] User prompt:', promptText);
         
-        const parts: any[] = [{ text: promptText }];
+        // Build the composition prompt with clear instructions
+        const compositionPrompt = `Create a composed image that blends the following two reference images based on this description: "${promptText}". The first image should be integrated with the second image context or scene. Ensure both images are harmoniously combined while respecting the user's creative intent.`;
         
-        // Add both reference images
+        console.log('[Image Studio] Composition prompt:', compositionPrompt);
+        
+        const parts: any[] = [];
+        
+        // Add the composition instruction text
+        parts.push({ text: compositionPrompt });
+        
+        // Add both reference images in order
+        console.log('[Image Studio] Adding reference image 1');
         if (imageStudioReferenceImages[0]) {
-          console.log('[Image Studio] Adding image 1:', imageStudioReferenceImages[0].file.name);
           parts.push({
             inlineData: {
               data: await blobToBase64(imageStudioReferenceImages[0].file),
@@ -1446,8 +1454,8 @@ window.addEventListener('DOMContentLoaded', () => {
           });
         }
         
+        console.log('[Image Studio] Adding reference image 2');
         if (imageStudioReferenceImages[1]) {
-          console.log('[Image Studio] Adding image 2:', imageStudioReferenceImages[1].file.name);
           parts.push({
             inlineData: {
               data: await blobToBase64(imageStudioReferenceImages[1].file),
@@ -1456,7 +1464,8 @@ window.addEventListener('DOMContentLoaded', () => {
           });
         }
 
-        console.log('[Image Studio] Parts array:', parts.length);
+        console.log('[Image Studio] Sending request with', parts.length, 'parts');
+        
         const response = await ai.models.generateContent({
           model: 'gemini-2.5-flash-image',
           contents: { parts },
@@ -1465,7 +1474,7 @@ window.addEventListener('DOMContentLoaded', () => {
           },
         });
         
-        console.log('[Image Studio] Response received:', response);
+        console.log('[Image Studio] Composition complete');
 
         const part = response.candidates?.[0]?.content?.parts?.[0];
         if (part && part.inlineData) {
