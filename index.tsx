@@ -1429,11 +1429,15 @@ window.addEventListener('DOMContentLoaded', () => {
           return;
         }
         
-        // Blend mode - treat both images equally with user prompt
-        const parts: any[] = [];
+        // Blend mode - add prompt first, then images in order
+        console.log('[Image Studio] Starting image composition with 2 reference images');
+        console.log('[Image Studio] Prompt:', promptText);
+        
+        const parts: any[] = [{ text: promptText }];
         
         // Add both reference images
         if (imageStudioReferenceImages[0]) {
+          console.log('[Image Studio] Adding image 1:', imageStudioReferenceImages[0].file.name);
           parts.push({
             inlineData: {
               data: await blobToBase64(imageStudioReferenceImages[0].file),
@@ -1443,6 +1447,7 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         
         if (imageStudioReferenceImages[1]) {
+          console.log('[Image Studio] Adding image 2:', imageStudioReferenceImages[1].file.name);
           parts.push({
             inlineData: {
               data: await blobToBase64(imageStudioReferenceImages[1].file),
@@ -1450,10 +1455,8 @@ window.addEventListener('DOMContentLoaded', () => {
             }
           });
         }
-        
-        // Add prompt text last
-        parts.push({ text: promptText });
 
+        console.log('[Image Studio] Parts array:', parts.length);
         const response = await ai.models.generateContent({
           model: 'gemini-2.5-flash-image',
           contents: { parts },
@@ -1461,6 +1464,8 @@ window.addEventListener('DOMContentLoaded', () => {
             responseModalities: [Modality.IMAGE],
           },
         });
+        
+        console.log('[Image Studio] Response received:', response);
 
         const part = response.candidates?.[0]?.content?.parts?.[0];
         if (part && part.inlineData) {
