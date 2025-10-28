@@ -2749,6 +2749,7 @@ Return the 5 suggestions as a JSON array.`;
               loaderModal?.classList.remove('hidden');
               
               // Generate image from text
+              console.log('Generating with prompt:', promptText);
               const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash-image',
                 contents: [{ parts: [{ text: promptText }] }],
@@ -2757,8 +2758,9 @@ Return the 5 suggestions as a JSON array.`;
                 },
               });
               
+              console.log('Full response:', response);
               const part = response.candidates?.[0]?.content?.parts?.[0];
-              console.log('Response:', part);
+              console.log('Response part:', part);
               if (part && part.inlineData) {
                 const { data, mimeType } = part.inlineData;
                 const dataUrl = `data:${mimeType};base64,${data}`;
