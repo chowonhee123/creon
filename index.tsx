@@ -1433,13 +1433,19 @@ window.addEventListener('DOMContentLoaded', () => {
         console.log('[Image Studio] Starting composition with 2 reference images');
         console.log('[Image Studio] User prompt:', promptText);
         
-        // Build the composition prompt with clear instructions
-        // The user wants to combine images according to their specific prompt
-        const compositionPrompt = `You are given two reference images and a user's creative description. Your task is to create a new image that follows the user's description exactly while incorporating elements from both reference images. 
+        // Build the composition prompt with clearer instructions for image blending
+        // For better composition, we should guide AI to use one image as subject and another as scene
+        const compositionPrompt = `You are creating a composed image based on the user's description and two reference images.
 
-User's description: "${promptText}"
+User's request: "${promptText}"
 
-Important: Apply the user's description to the composition. Use the first reference image and the second reference image as visual references, but make sure the final result matches what the user described in their prompt.`;
+Instructions:
+1. Use the first reference image as the primary subject or main element
+2. Use the second reference image as the background, scene, or environment
+3. Integrate these elements according to the user's description
+4. The final image should look natural and cohesive, not a weird hybrid
+
+Make sure the result is photorealistic and aesthetically pleasing.`;
         
         console.log('[Image Studio] Composition prompt:', compositionPrompt);
         
