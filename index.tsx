@@ -3017,26 +3017,7 @@ Return the 5 suggestions as a JSON array.`;
     currentImageStudioModalType = null;
   });
   
-  $('#image-studio-text-generate-btn')?.addEventListener('click', async () => {
-    const textInput = $('#image-studio-text-input') as HTMLTextAreaElement;
-    const promptText = textInput?.value?.trim() || '';
-    if (!promptText) {
-      showToast({ type: 'error', title: 'Input Required', body: 'Please enter a prompt.' });
-      return;
-    }
-    
-    if (currentImageStudioModalType === 'subject') {
-      imageStudioSubjectPrompt = promptText;
-      await handleGenerateSubjectImageFromText(promptText);
-    } else if (currentImageStudioModalType === 'scene') {
-      imageStudioScenePrompt = promptText;
-      await handleGenerateSceneImageFromText(promptText);
-    }
-    
-    $('#image-studio-text-modal')?.classList.add('hidden');
-    textInput.value = '';
-    currentImageStudioModalType = null;
-  });
+  // Note: image-studio-text-generate-btn click handler is added dynamically per slot
   
   exploreUploadBtn?.addEventListener('click', () => uploadChoiceModal?.classList.remove('hidden'));
   uploadChoiceCloseBtn?.addEventListener('click', () => uploadChoiceModal?.classList.add('hidden'));
