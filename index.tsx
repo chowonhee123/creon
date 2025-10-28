@@ -2758,6 +2758,7 @@ Return the 5 suggestions as a JSON array.`;
               });
               
               const part = response.candidates?.[0]?.content?.parts?.[0];
+              console.log('Response:', part);
               if (part && part.inlineData) {
                 const { data, mimeType } = part.inlineData;
                 const dataUrl = `data:${mimeType};base64,${data}`;
@@ -2784,6 +2785,9 @@ Return the 5 suggestions as a JSON array.`;
                 }
                 
                 showToast({ type: 'success', title: 'Generated!', body: 'Image generated from text.' });
+              } else {
+                console.error('No image data in response');
+                throw new Error('No image data in response');
               }
             } catch (error) {
               console.error('Error generating image:', error);
