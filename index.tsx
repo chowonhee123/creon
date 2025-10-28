@@ -2866,6 +2866,74 @@ Return the 5 suggestions as a JSON array.`;
       detailsPanel.classList.remove('is-open');
     }
   });
+  
+  // Upscale button for Image Studio
+  const upscaleBtnImage = $('#details-upscale-btn-image');
+  upscaleBtnImage?.addEventListener('click', async () => {
+    if (!currentGeneratedImageStudio) return;
+    
+    const loaderModal = $('#image-generation-loader-modal');
+    loaderModal?.classList.remove('hidden');
+    
+    try {
+      const dataUrl = `data:${currentGeneratedImageStudio.mimeType};base64,${currentGeneratedImageStudio.data}`;
+      
+      // Create blob from dataUrl
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      const file = new File([blob], 'image.png', { type: currentGeneratedImageStudio.mimeType });
+      
+      // Convert to base64 for API
+      const base64Data = await blobToBase64(file);
+      
+      // Use blending with upscale prompt
+      const parts = [
+        { inlineData: { data: base64Data, mimeType: currentGeneratedImageStudio.mimeType } },
+        { text: 'Upscale this image to 4K resolution while maintaining quality and details' }
+      ];
+      
+      const upscaleResponse = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image',
+        contents: { parts },
+        config: {
+          responseModalities: [Modality.IMAGE],
+        },
+      });
+      
+      const upscalePart = upscaleResponse.candidates?.[0]?.content?.parts?.[0];
+      if (upscalePart && upscalePart.inlineData) {
+        const { data, mimeType } = upscalePart.inlineData;
+        const upscaledDataUrl = `data:${mimeType};base64,${data}`;
+        
+        // Update current image
+        currentGeneratedImageStudio.data = data;
+        currentGeneratedImageStudio.mimeType = mimeType;
+        
+        // Update UI
+        const resultImage = $('#result-image-image') as HTMLImageElement;
+        if (resultImage) {
+          resultImage.src = upscaledDataUrl;
+        }
+        
+        const detailsPreview = $('#details-preview-image-image') as HTMLImageElement;
+        if (detailsPreview) {
+          detailsPreview.src = upscaledDataUrl;
+        }
+        
+        const detailsDownload = $('#details-download-btn-image') as HTMLAnchorElement;
+        if (detailsDownload) {
+          detailsDownload.href = upscaledDataUrl;
+        }
+        
+        showToast({ type: 'success', title: 'Upscaled!', body: 'Image has been upscaled to higher resolution.' });
+      }
+    } catch (error) {
+      console.error('Error upscaling image:', error);
+      showToast({ type: 'error', title: 'Upscale Failed', body: 'Failed to upscale image.' });
+    } finally {
+      loaderModal?.classList.add('hidden');
+    }
+  });
 
   themeToggleButton?.addEventListener('click', () => {
     const newTheme = body.dataset.theme === 'light' ? 'dark' : 'light';
