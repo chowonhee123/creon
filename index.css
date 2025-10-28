@@ -1730,10 +1730,6 @@ a.secondary-btn[disabled] {
 }
 .result-image {
   object-fit: contain;
-  max-width: 100%;
-  max-height: 100%;
-  width: auto;
-  height: auto;
   opacity: 0;
   transition: opacity 0.4s ease-in-out;
 }
@@ -1751,6 +1747,22 @@ a.secondary-btn[disabled] {
 
 .result-video {
   object-fit: contain;
+}
+
+/* 3D Studio specific - center images and videos */
+#page-id-3d .result-image,
+#page-id-3d .result-video {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+#page-id-3d .result-media-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .result-loader {
