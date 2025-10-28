@@ -2846,6 +2846,19 @@ Return the 5 suggestions as a JSON array.`;
       detailsPanel?.classList.add('is-open');
     }
   });
+  
+  // Toggle details panel button
+  const toggleDetailsPanelBtnImage = $('#toggle-details-panel-btn-image');
+  toggleDetailsPanelBtnImage?.addEventListener('click', () => {
+    const detailsPanel = $('#image-details-panel-image');
+    if (detailsPanel?.classList.contains('hidden')) {
+      detailsPanel.classList.remove('hidden');
+      detailsPanel.classList.add('is-open');
+    } else {
+      detailsPanel.classList.add('hidden');
+      detailsPanel.classList.remove('is-open');
+    }
+  });
 
   themeToggleButton?.addEventListener('click', () => {
     const newTheme = body.dataset.theme === 'light' ? 'dark' : 'light';
