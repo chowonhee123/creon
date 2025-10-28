@@ -1365,10 +1365,31 @@ a.secondary-btn[disabled] {
     pointer-events: none;
 }
 
-.subject-drop-zone .drop-zone-content.has-image + .drop-zone-overlay,
-.scene-drop-zone .drop-zone-content.has-image + .drop-zone-overlay {
+/* When image is present, hide overlay completely and show only trash button */
+.subject-drop-zone:hover .drop-zone-content.has-image + .drop-zone-overlay,
+.scene-drop-zone:hover .drop-zone-content.has-image + .drop-zone-overlay {
     opacity: 0 !important;
     pointer-events: none !important;
+}
+
+/* Show trash button on hover when image is present */
+.subject-drop-zone .drop-zone-content.has-image .remove-style-image-btn,
+.scene-drop-zone .drop-zone-content.has-image .remove-style-image-btn {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.subject-drop-zone:hover .drop-zone-content.has-image .remove-style-image-btn,
+.scene-drop-zone:hover .drop-zone-content.has-image .remove-style-image-btn {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Show overlay buttons (Generate with Text / Attach Image) only when NO image is present */
+.subject-drop-zone .drop-zone-content:not(.has-image) + .drop-zone-overlay,
+.scene-drop-zone .drop-zone-content:not(.has-image) + .drop-zone-overlay {
+    opacity: 0;
+    pointer-events: none;
 }
 
 .drop-zone-overlay button {
@@ -1445,18 +1466,19 @@ a.secondary-btn[disabled] {
     transform: scale(1.1);
 }
 
-/* Show on hover for Image Studio */
-.image-studio-drop-zone:hover .remove-style-image-btn:not(.hidden) {
-    opacity: 1;
-    pointer-events: auto;
-}
-
+/* Show on hover for Image Studio - when NO image */
 .image-studio-drop-zone:hover .drop-zone-content:not(.has-image) {
     opacity: 0;
     pointer-events: none;
 }
 
-.image-studio-drop-zone:hover .drop-zone-overlay {
+.image-studio-drop-zone:hover .drop-zone-content:not(.has-image) + .drop-zone-overlay {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* When image IS present, show only trash button on hover */
+.image-studio-drop-zone:hover .remove-style-image-btn:not(.hidden) {
     opacity: 1;
     pointer-events: auto;
 }
