@@ -1422,10 +1422,14 @@ window.addEventListener('DOMContentLoaded', () => {
       const hasTwoImages = imageStudioReferenceImages[0] && imageStudioReferenceImages[1];
       
       if (hasTwoImages) {
-        // Blend mode - use gemini-2.5-flash-image to blend two images
-        // Combine both images with user prompt
-        const blendPrompt = promptText || "Create a composite image by blending these two reference images naturally and seamlessly.";
+        if (!promptText) {
+          showToast({ type: 'error', title: 'Prompt Required', body: 'Please enter a prompt.' });
+          updateButtonLoadingState(generateBtn, false);
+          loaderModal?.classList.add('hidden');
+          return;
+        }
         
+        // Blend mode - treat both images equally with user prompt
         const parts: any[] = [];
         
         // Add both reference images
@@ -1448,7 +1452,7 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         
         // Add prompt text last
-        parts.push({ text: blendPrompt });
+        parts.push({ text: promptText });
 
         const response = await ai.models.generateContent({
           model: 'gemini-2.5-flash-image',
