@@ -1434,8 +1434,12 @@ window.addEventListener('DOMContentLoaded', () => {
         console.log('[Image Studio] User prompt:', promptText);
         
         // Build the composition prompt with clear instructions
-        // Order is flexible - both images should be harmoniously blended
-        const compositionPrompt = `Create a composed image that blends these two reference images harmoniously together based on: "${promptText}". Integrate both images naturally, respecting the user's creative intent. The images should complement each other to create a cohesive final result.`;
+        // The user wants to combine images according to their specific prompt
+        const compositionPrompt = `You are given two reference images and a user's creative description. Your task is to create a new image that follows the user's description exactly while incorporating elements from both reference images. 
+
+User's description: "${promptText}"
+
+Important: Apply the user's description to the composition. Use the first reference image and the second reference image as visual references, but make sure the final result matches what the user described in their prompt.`;
         
         console.log('[Image Studio] Composition prompt:', compositionPrompt);
         
