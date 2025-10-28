@@ -2748,12 +2748,12 @@ Return the 5 suggestions as a JSON array.`;
               const loaderModal = $('#image-generation-loader-modal');
               loaderModal?.classList.remove('hidden');
               
-              // Generate image from text using gemini-2.5-flash-image
-              console.log('[Image Studio] Generating image from text with model: gemini-2.5-flash-image');
+              // Generate image from text using imagen-4.0-generate-001
+              console.log('[Image Studio] Generating image from text with model: imagen-4.0-generate-001');
               console.log('[Image Studio] Prompt:', promptText);
               
               const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash-image',
+                model: 'imagen-4.0-generate-001',
                 contents: [{ parts: [{ text: promptText }] }],
                 config: {
                   responseModalities: [Modality.IMAGE],
