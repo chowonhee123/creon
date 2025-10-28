@@ -2790,7 +2790,6 @@ Return the 5 suggestions as a JSON array.`;
               showToast({ type: 'error', title: 'Generation Failed', body: 'Failed to generate image.' });
             } finally {
               $('#image-generation-loader-modal')?.classList.add('hidden');
-              $('#image-studio-text-modal')?.classList.add('hidden');
               textInput.value = '';
             }
           });
