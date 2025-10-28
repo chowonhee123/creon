@@ -157,7 +157,7 @@ input, button, textarea, select {
   gap: var(--spacing-2);
 }
 .nav-item {
-  padding: 8px 16px;
+  padding: var(--spacing-2) var(--spacing-4);
   text-decoration: none;
   color: var(--text-secondary);
   font-size: 15px;
@@ -581,7 +581,7 @@ input[type='range']::-moz-range-thumb {
   background: var(--surface-color);
 }
 .tab-item {
-  border: none; background: none; padding: 12px 0; margin-right: 24px;
+  border: none; background: none; padding: var(--spacing-3) 0; margin-right: var(--spacing-5);
   font-size: 15px; font-weight: 600; color: var(--text-secondary);
   cursor: pointer; border-bottom: 2px solid transparent;
   transition: color 0.2s, border-color 0.2s;
@@ -735,7 +735,7 @@ input[type='range']::-moz-range-thumb {
 .icon-button:hover { background-color: var(--input-bg); color: var(--text-primary); }
 .icon-button .material-symbols-outlined { font-size: 24px; }
 .primary-btn, .secondary-btn {
-  padding: 12px 18px; border-radius: var(--border-radius-md); border: 1px solid;
+  padding: var(--spacing-3) var(--spacing-4); border-radius: var(--border-radius-md); border: 1px solid;
   font-size: 15px; font-weight: 600; cursor: pointer;
   transition: all 0.2s; display: flex; align-items: center;
   justify-content: center; gap: var(--spacing-2);
@@ -1575,7 +1575,7 @@ a.secondary-btn[disabled] {
   justify-content: center;
   overflow: hidden;
   transition: margin-right 0.3s ease-in-out;
-  padding: 16px;
+  padding: var(--spacing-4);
 }
 .result-container {
   width: 100%;
@@ -1798,14 +1798,19 @@ a.secondary-btn[disabled] {
     overflow-y: auto;
 }
 
-/* All details panel padding - consistent */
+/* All details panel padding - consistent across all panels */
 .details-tab-content {
     padding: var(--spacing-5);
 }
 
-#image-details-panel-image .details-panel-body {
+#image-details-panel-image .details-panel-body,
+#explore-details-panel .details-panel-body {
     padding: var(--spacing-5);
     gap: var(--spacing-4);
+}
+
+#image-details-panel-image .details-panel-body {
+    overflow-y: auto;
 }
 
 #image-details-panel-image .details-actions {
@@ -1813,12 +1818,6 @@ a.secondary-btn[disabled] {
     flex-direction: column;
     gap: var(--spacing-2);
     margin-top: auto;
-}
-
-#explore-details-panel .details-panel-body {
-    padding: var(--spacing-5);
-    gap: var(--spacing-4);
-    overflow-y: auto;
 }
 
 .details-preview {
@@ -1845,7 +1844,7 @@ a.secondary-btn[disabled] {
   border-bottom: 1px solid var(--border-color);
 }
 .details-panel-tabs .tab-item {
-  border: none; background: none; padding: 12px 0; margin-right: 24px;
+  border: none; background: none; padding: var(--spacing-3) 0; margin-right: var(--spacing-5);
   font-size: 15px; font-weight: 600; color: var(--text-secondary);
   cursor: pointer; border-bottom: 2px solid transparent;
   transition: color 0.2s, border-color 0.2s;
