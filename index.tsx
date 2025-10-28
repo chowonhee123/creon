@@ -1423,13 +1423,12 @@ window.addEventListener('DOMContentLoaded', () => {
       
       if (hasTwoImages) {
         // Blend mode - use gemini-2.5-flash-image to blend two images
-        const blendPrompt = promptText 
-          ? `Take the character/subject from the first image and place them into the scene from the second image. ${promptText}`
-          : "Take the character/subject from the first image and place them into the scene from the second image.";
+        // Combine both images with user prompt
+        const blendPrompt = promptText || "Create a composite image by blending these two reference images naturally and seamlessly.";
         
         const parts: any[] = [];
         
-        // Add first reference image (subject)
+        // Add both reference images
         if (imageStudioReferenceImages[0]) {
           parts.push({
             inlineData: {
@@ -1439,7 +1438,6 @@ window.addEventListener('DOMContentLoaded', () => {
           });
         }
         
-        // Add second reference image (scene)
         if (imageStudioReferenceImages[1]) {
           parts.push({
             inlineData: {
