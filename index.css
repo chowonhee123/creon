@@ -1615,6 +1615,18 @@ a.secondary-btn[disabled] {
   flex-shrink: 0;
   z-index: 2;
 }
+
+.result-content-header-image {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  padding: var(--spacing-3) var(--spacing-4);
+  flex-shrink: 0;
+  z-index: 2;
+  position: absolute;
+  top: 0;
+  right: 0;
+}
 .result-media-container {
   flex-grow: 1;
   position: relative;
