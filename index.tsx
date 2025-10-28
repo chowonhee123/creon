@@ -2743,6 +2743,8 @@ Return the 5 suggestions as a JSON array.`;
             }
             
             try {
+              // Hide text modal and show loader modal
+              $('#image-studio-text-modal')?.classList.add('hidden');
               const loaderModal = $('#image-generation-loader-modal');
               loaderModal?.classList.remove('hidden');
               
