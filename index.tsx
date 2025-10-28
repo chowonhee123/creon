@@ -75,7 +75,7 @@ window.addEventListener('DOMContentLoaded', () => {
   let imageLibrary: {id: string, dataUrl: string, mimeType: string}[] = [];
 
   // Image Studio state
-  let imageStudioReferenceImages: ({ file: File; dataUrl: string; } | null)[] = [null, null];
+  let imageStudioReferenceImages: ({ file: File; dataUrl: string; } | null)[] = [null, null, null];
   let currentGeneratedImageStudio: GeneratedImageData | null = null;
   let imageStudioHistory: GeneratedImageData[] = [];
   let imageStudioHistoryIndex = -1;
@@ -1250,6 +1250,36 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  const createImagePromptFromTemplate = (template: any, userPrompt: string = ''): string => {
+    const subject = template.subject || 'a friendly robot';
+    const shadowText = template.lighting?.shadows || '';
+    const backgroundColor = template.background?.color || '#FFFFFF';
+    const objectColor = template.colors?.dominant_blue || '#2962FF';
+    
+    // Create a natural language prompt from the template
+    let prompt = `Generate an isometric 3D ${subject}. `;
+    
+    // Add user prompt if provided
+    if (userPrompt && userPrompt.trim()) {
+      prompt += `${userPrompt}. `;
+    }
+    
+    prompt += `Background: solid color ${backgroundColor}. `;
+    prompt += `Object color: ${objectColor}. `;
+    prompt += `Style: rounded, smooth, bubbly shapes with crisp edges and no outlines. `;
+    prompt += `Materials: high-gloss plastic look. `;
+    prompt += `Lighting: ${template.lighting?.mode || 'soft diffused studio'}, ${template.lighting?.source || 'top-front or top-right'}. ${shadowText}. `;
+    prompt += `Camera: isometric view, static. `;
+    prompt += `Composition: single main subject, centered, fully visible inside the frame with clean margins around all edges. No cropping, no extra decorations. `;
+    
+    // Add negative prompt
+    if (template.negative_prompt) {
+      prompt += `Negative: ${template.negative_prompt}`;
+    }
+    
+    return prompt;
+  };
+
   const handleGenerateImage3d = async () => {
     if (!imagePromptSubjectInput.value) {
         showToast({ type: 'error', title: 'Input Required', body: 'Please enter a subject for your image.' });
@@ -1261,8 +1291,13 @@ window.addEventListener('DOMContentLoaded', () => {
     imageGenerationLoaderModal?.classList.remove('hidden');
 
     try {
+        // Parse the template and create a natural language prompt
+        const template = JSON.parse(imagePromptDisplay.value);
+        const userPrompt = userPrompt3d?.value || '';
+        const imagePromptText = createImagePromptFromTemplate(template, userPrompt);
+        
         const imageData = await generateImage(
-            imagePromptDisplay.value,
+            imagePromptText,
             resultImage,
             resultPlaceholder,
             resultError,
@@ -1419,9 +1454,10 @@ window.addEventListener('DOMContentLoaded', () => {
     updateButtonLoadingState(generateBtn, true);
 
     try {
-      const hasTwoImages = imageStudioReferenceImages[0] && imageStudioReferenceImages[1];
+      const imageCount = imageStudioReferenceImages.filter(img => img !== null).length;
+      const hasMultipleImages = imageCount >= 2;
       
-      if (hasTwoImages) {
+      if (hasMultipleImages) {
         if (!promptText) {
           showToast({ type: 'error', title: 'Prompt Required', body: 'Please enter a prompt.' });
           updateButtonLoadingState(generateBtn, false);
@@ -1429,21 +1465,21 @@ window.addEventListener('DOMContentLoaded', () => {
           return;
         }
         
-        // Image Studio Composition: Blend two reference images with prompt
-        console.log('[Image Studio] Starting composition with 2 reference images');
+        // Image Studio Composition: Blend multiple reference images with prompt
+        console.log(`[Image Studio] Starting composition with ${imageCount} reference images`);
         console.log('[Image Studio] User prompt:', promptText);
         
         // Build the composition prompt with clearer instructions for image blending
-        // For better composition, we should guide AI to use one image as subject and another as scene
-        const compositionPrompt = `You are creating a composed image based on the user's description and two reference images.
+        const imageCountStr = imageCount === 2 ? 'two' : 'three';
+        const compositionPrompt = `You are creating a composed image based on the user's description and ${imageCountStr} reference images.
 
 User's request: "${promptText}"
 
 Instructions:
-1. Use the first reference image as the primary subject or main element
-2. Use the second reference image as the background, scene, or environment
-3. Integrate these elements according to the user's description
-4. The final image should look natural and cohesive, not a weird hybrid
+1. Analyze all reference images
+2. Integrate the elements from the reference images according to the user's description
+3. The final image should look natural and cohesive, not a weird hybrid
+4. Maintain the style and quality of the reference images
 
 Make sure the result is photorealistic and aesthetically pleasing.`;
         
@@ -1454,25 +1490,17 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
         // Add the composition instruction text
         parts.push({ text: compositionPrompt });
         
-        // Add both reference images in order
-        console.log('[Image Studio] Adding reference image 1');
-        if (imageStudioReferenceImages[0]) {
-          parts.push({
-            inlineData: {
-              data: await blobToBase64(imageStudioReferenceImages[0].file),
-              mimeType: imageStudioReferenceImages[0].file.type,
-            }
-          });
-        }
-        
-        console.log('[Image Studio] Adding reference image 2');
-        if (imageStudioReferenceImages[1]) {
-          parts.push({
-            inlineData: {
-              data: await blobToBase64(imageStudioReferenceImages[1].file),
-              mimeType: imageStudioReferenceImages[1].file.type,
-            }
-          });
+        // Add all reference images in order
+        for (let i = 0; i < imageStudioReferenceImages.length; i++) {
+          if (imageStudioReferenceImages[i]) {
+            console.log(`[Image Studio] Adding reference image ${i + 1}`);
+            parts.push({
+              inlineData: {
+                data: await blobToBase64(imageStudioReferenceImages[i]!.file),
+                mimeType: imageStudioReferenceImages[i]!.file.type,
+              }
+            });
+          }
         }
 
         console.log('[Image Studio] Sending request with', parts.length, 'parts');
@@ -1534,11 +1562,42 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
           
           showToast({ type: 'success', title: 'Composed!', body: 'Image composition completed.' });
         }
-      } else if (promptText) {
-        // Single image generation mode - use gemini-2.5-flash-image
+      } else {
+        // Single image generation mode with optional reference images
+        const hasOneImage = imageStudioReferenceImages[0] || imageStudioReferenceImages[1];
+        
+        if (hasOneImage && !promptText) {
+          showToast({ type: 'error', title: 'Prompt Required', body: 'Please enter a prompt to edit the image.' });
+          updateButtonLoadingState(generateBtn, false);
+          loaderModal?.classList.add('hidden');
+          return;
+        }
+        
+        const parts: any[] = [];
+        
+        // Add prompt text if provided
+        if (promptText) {
+          parts.push({ text: promptText });
+        }
+        
+        // Add reference images if available
+        for (let i = 0; i < imageStudioReferenceImages.length; i++) {
+          if (imageStudioReferenceImages[i]) {
+            console.log(`[Image Studio] Adding reference image ${i + 1}`);
+            parts.push({
+              inlineData: {
+                data: await blobToBase64(imageStudioReferenceImages[i]!.file),
+                mimeType: imageStudioReferenceImages[i]!.file.type,
+              }
+            });
+          }
+        }
+        
+        console.log(`[Image Studio] Sending request with ${parts.length} parts`);
+        
         const response = await ai.models.generateContent({
           model: 'gemini-2.5-flash-image',
-          contents: [{ parts: [{ text: promptText }] }],
+          contents: { parts },
           config: {
             responseModalities: [Modality.IMAGE],
           },
@@ -1555,7 +1614,7 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
           resultPlaceholder?.classList.add('hidden');
           loaderModal?.classList.add('hidden');
           
-          if (promptDisplay) promptDisplay.value = promptText;
+          if (promptDisplay) promptDisplay.value = promptText || 'Based on reference image';
           
           // Save to history
           const timestamp = Date.now();
@@ -1563,8 +1622,8 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
             id: `img_${timestamp}`,
             data, 
             mimeType,
-            subject: promptText,
-            styleConstraints: '',
+            subject: imageStudioReferenceImages[0]?.file.name || promptText || '',
+            styleConstraints: promptText || '',
             timestamp
           };
           imageStudioHistory.push(currentGeneratedImageStudio);
@@ -1589,10 +1648,12 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
           // Render history
           renderImageStudioHistory();
           
-          showToast({ type: 'success', title: 'Generated!', body: 'Image generated from prompt.' });
+          const hasImageAndPrompt = hasOneImage && promptText;
+          const message = hasImageAndPrompt ? 'Image edited successfully.' : 'Image generated successfully.';
+          showToast({ type: 'success', title: 'Success!', body: message });
+        } else {
+          showToast({ type: 'error', title: 'Missing Input', body: 'Please upload images or enter a prompt.' });
         }
-      } else {
-        showToast({ type: 'error', title: 'Missing Input', body: 'Please upload images or enter a prompt.' });
       }
     } catch (error) {
       console.error("Image generation failed:", error);
@@ -1632,16 +1693,44 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
         const cinematicKeywordsRegex = /cinematic|movie|film look/gi;
         const sanitizedUserPrompt = userPrompt.replace(cinematicKeywordsRegex, '').replace(/\s+/g, ' ').trim();
 
-        // Add specific prompts to avoid letterboxing and set resolution.
-        const finalPrompt = `Avoid letterboxing 16:9 aspect ratio, 1920x1080 resolution. ${sanitizedUserPrompt}. Negative Prompt: letterbox, cinematic crop, black bars, narrow frame, pillarbox.`;
+        // Detect and maintain source image aspect ratio to avoid black bars
+        let aspectRatio = '16:9';
+        let useImageAspectRatio = false;
+        
+        if (motionFirstFrameImage) {
+            const img = new Image();
+            const imgDataUrl = motionFirstFrameImage.dataUrl;
+            
+            await new Promise<void>((resolve) => {
+                img.onload = () => {
+                    const width = img.naturalWidth;
+                    const height = img.naturalHeight;
+                    const ratio = width / height;
+                    
+                    if (ratio > 1.5) {
+                        aspectRatio = '16:9';
+                    } else if (ratio > 1) {
+                        aspectRatio = '4:3';
+                    } else {
+                        aspectRatio = '1:1';
+                    }
+                    useImageAspectRatio = true;
+                    resolve();
+                };
+                img.src = imgDataUrl;
+            });
+        }
+
+        // Add specific prompts to avoid letterboxing and maintain background
+        const finalPrompt = `Maintain full frame coverage with no black bars, borders, or letterboxing. Keep the entire image visible. Preserve the exact background from the source image without any cropping or black bars. ${sanitizedUserPrompt}. CRITICAL NEGATIVE PROMPT: black bars, letterboxing, black borders, black edges, cinematic crop, pillarbox, narrow frame, cropped edges, missing background.`;
 
         const config: any = {
             numberOfVideos: 1,
             resolution: '1080p',
         };
 
-        if (!motionFirstFrameImage) {
-            config.aspectRatio = '16:9';
+        if (useImageAspectRatio || !motionFirstFrameImage) {
+            config.aspectRatio = aspectRatio;
         }
 
         const selectedModel = (document.querySelector('input[name="motion-model"]:checked') as HTMLInputElement)?.value || 'veo-3.1-fast-generate-preview';
@@ -2218,7 +2307,7 @@ Return the 5 suggestions as a JSON array.`;
           // Use the current image as reference and upscale to 4K
           const parts: any[] = [
               {
-                  text: "Upscale this image to 4k resolution (3840x3840), maintaining all details and quality, with enhanced sharpness and clarity."
+                  text: "Create a high-resolution version of this image. Generate it at maximum resolution (at least 2048x2048 pixels or larger, preferably 4096x4096), with extremely sharp details, enhanced clarity, perfect edge definition, no blur or artifacts. Maintain all colors, composition, and visual elements exactly as shown but at significantly higher resolution and quality."
               }
           ];
           
@@ -2235,6 +2324,9 @@ Return the 5 suggestions as a JSON array.`;
               contents: { parts },
               config: {
                   responseModalities: [Modality.IMAGE],
+                  temperature: 0.1,
+                  topP: 0.95,
+                  topK: 40,
               },
           });
           
@@ -2674,168 +2766,320 @@ Return the 5 suggestions as a JSON array.`;
       });
   };
 
-  const setupImageStudioDropZones = () => {
-    const zones = document.querySelectorAll('.image-studio-drop-zone');
-    const inputs = document.querySelectorAll('.image-studio-reference-input') as NodeListOf<HTMLInputElement>;
+  // Create a new image reference zone
+  const createImageReferenceZone = (index: number, container: HTMLElement) => {
+    const zoneId = `image-studio-zone-${index}`;
     
-    zones.forEach((zone, index) => {
-      const input = inputs[index];
-      if (!zone || !input) return;
+    const html = `
+      <div class="control-card">
+        <div class="prompt-card-header">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3>Reference Image ${index + 1}</h3>
+            <button class="remove-reference-zone-btn icon-button" data-index="${index}" ${index === 0 ? 'style="visibility: hidden;"' : ''}>
+              <span class="material-symbols-outlined">delete</span>
+            </button>
+          </div>
+        </div>
+        <div class="image-studio-drop-zone" data-index="${index}" id="${zoneId}">
+          <div class="drop-zone-content">
+            <div class="drop-zone-prompt-large">
+              <span class="material-symbols-outlined">add_photo_alternate</span>
+              <p>Drop or click</p>
+            </div>
+            <img class="drop-zone-preview hidden" alt="Reference image ${index + 1}">
+            <button class="remove-style-image-btn hidden" aria-label="Remove image ${index + 1}">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+          <div class="drop-zone-overlay">
+            <button class="generate-text-btn">
+              <span class="material-symbols-outlined">text_fields</span>
+              <span class="overlay-text-label">Generate with Text</span>
+            </button>
+            <div class="overlay-divider"></div>
+            <button class="attach-image-btn">
+              <span class="material-symbols-outlined">attach_file</span>
+              <span class="overlay-text-label">Attach Image</span>
+            </button>
+          </div>
+        </div>
+        <input type="file" class="image-studio-reference-input hidden" data-index="${index}" accept="image/*">
+      </div>
+    `;
+    
+    const div = document.createElement('div');
+    div.innerHTML = html.trim();
+    const card = div.firstChild as HTMLElement;
+    container.appendChild(card);
+    
+    return card;
+  };
+  
+  // Initialize Image Studio with dynamic zones
+  const initializeImageStudio = () => {
+    const container = $('#image-studio-reference-container');
+    const addBtn = $('#add-reference-image-btn');
+    const addBtnCard = $('#add-reference-image-card');
+    
+    if (!container) return;
+    
+    // Clear container
+    container.innerHTML = '';
+    
+    // Initialize with one zone (ensure array has space)
+    if (imageStudioReferenceImages.length === 0) {
+      imageStudioReferenceImages = [null, null, null];
+    }
+    
+    // Create first zone
+    createImageReferenceZone(0, container);
+    setupSingleImageZone(0);
+    
+    // Hide add button initially (will show when image is uploaded)
+    addBtnCard?.classList.add('hidden');
+    
+    // Add button handler - remove old listeners first
+    addBtn?.replaceWith(addBtn.cloneNode(true));
+    const newAddBtn = $('#add-reference-image-btn');
+    newAddBtn?.addEventListener('click', () => {
+      const currentCount = document.querySelectorAll('.image-studio-drop-zone').length;
+      if (currentCount >= 3) return; // Max 3 images
       
-      const content = zone.querySelector('.drop-zone-content');
-      const previewImg = zone.querySelector('.drop-zone-preview') as HTMLImageElement;
-      const removeBtn = zone.querySelector('.remove-style-image-btn') as HTMLButtonElement;
-      const attachBtn = zone.querySelector('.attach-image-btn') as HTMLButtonElement;
-      const generateBtn = zone.querySelector('.generate-text-btn') as HTMLButtonElement;
-      
-      const updateUI = (dataUrl: string | null) => {
-        if (dataUrl && previewImg && content) {
-          previewImg.src = dataUrl;
-          previewImg.classList.remove('hidden');
-          removeBtn?.classList.remove('hidden');
-          content.classList.add('has-image');
-        } else if (content) {
-          previewImg.src = '';
-          previewImg.classList.add('hidden');
-          removeBtn?.classList.add('hidden');
-          content.classList.remove('has-image');
-        }
-      };
-      
-      const handleFile = (file: File | undefined) => {
-        if (!file || !file.type.startsWith('image/')) return;
-        
-        const reader = new FileReader();
-        reader.onload = e => {
-          const dataUrl = e.target?.result as string;
-          imageStudioReferenceImages[index] = { file, dataUrl };
-          updateUI(dataUrl);
-        };
-        reader.readAsDataURL(file);
-      };
-      
-      input.addEventListener('change', () => {
-        const file = input.files?.[0];
-        if (file) handleFile(file);
-        input.value = '';
-      });
-      
-      zone.addEventListener('dragover', (e) => { e.preventDefault(); });
-      zone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        const file = (e as DragEvent).dataTransfer?.files[0];
-        handleFile(file);
-      });
-      
-      if (removeBtn) {
-        removeBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          imageStudioReferenceImages[index] = null;
-          updateUI(null);
-        });
+      // Extend array if needed
+      if (imageStudioReferenceImages.length < currentCount + 1) {
+        imageStudioReferenceImages.push(null);
       }
       
-      if (attachBtn) {
-        attachBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          input.click();
-        });
+      createImageReferenceZone(currentCount, container);
+      setupSingleImageZone(currentCount);
+      
+      // Hide add button if max reached
+      if (currentCount + 1 >= 3) {
+        addBtnCard?.classList.add('hidden');
       }
       
-      if (generateBtn) {
-        generateBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          
-          // Store which image slot we're generating for
-          let currentImageStudioSlotIndex = index;
-          const textInput = $('#image-studio-text-input') as HTMLTextAreaElement;
-          
-          // Open modal
-          $('#image-studio-text-modal')?.classList.remove('hidden');
-          textInput.value = '';
-          textInput.focus();
-          
-          // Handle modal generate button
-          const generateBtn = $('#image-studio-text-generate-btn');
-          generateBtn?.replaceWith(generateBtn.cloneNode(true)); // Remove old listener
-          const newGenerateBtn = $('#image-studio-text-generate-btn');
-          
-          newGenerateBtn?.addEventListener('click', async () => {
-            const promptText = textInput?.value?.trim() || '';
-            if (!promptText) {
-              showToast({ type: 'error', title: 'Input Required', body: 'Please enter a prompt.' });
-              return;
-            }
-            
-            try {
-              // Hide text modal and show loader modal
-              $('#image-studio-text-modal')?.classList.add('hidden');
-              const loaderModal = $('#image-generation-loader-modal');
-              loaderModal?.classList.remove('hidden');
-              
-              // Generate image from text using gemini-2.5-flash-image
-              console.log('[Image Studio] Generating image from text with model: gemini-2.5-flash-image');
-              console.log('[Image Studio] Prompt:', promptText);
-              
-              const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash-image',
-                contents: [{ parts: [{ text: promptText }] }],
-                config: {
-                  responseModalities: [Modality.IMAGE],
-                },
-              });
-              
-              console.log('[Image Studio] Full response:', response);
-              const part = response.candidates?.[0]?.content?.parts?.[0];
-              console.log('[Image Studio] Response part:', part);
-              
-              if (part && part.inlineData) {
-                const { data, mimeType } = part.inlineData;
-                const dataUrl = `data:${mimeType};base64,${data}`;
-                
-                console.log('[Image Studio] Image data received, creating file...');
-                
-                const blob = await (await fetch(dataUrl)).blob();
-                const file = new File([blob], `generated_image_${currentImageStudioSlotIndex}.png`, { type: mimeType });
-                
-                // Save to reference images
-                imageStudioReferenceImages[currentImageStudioSlotIndex] = { file, dataUrl };
-                
-                const dropZone = document.querySelector(`.image-studio-drop-zone[data-index="${currentImageStudioSlotIndex}"]`);
-                console.log('[Image Studio] Drop zone:', dropZone);
-                
-                if (dropZone) {
-                  const previewImg = dropZone.querySelector('.drop-zone-preview') as HTMLImageElement;
-                  const content = dropZone.querySelector('.drop-zone-content');
-                  const removeBtn = dropZone.querySelector('.remove-style-image-btn') as HTMLButtonElement;
-                  const promptLarge = content?.querySelector('.drop-zone-prompt-large');
-                  
-                  if (previewImg && content) {
-                    previewImg.src = dataUrl;
-                    previewImg.classList.remove('hidden');
-                    if (promptLarge) promptLarge.classList.add('hidden');
-                    if (removeBtn) removeBtn.classList.remove('hidden');
-                    content.classList.add('has-image');
-                    console.log('[Image Studio] UI updated successfully');
-                  }
-                }
-                
-                showToast({ type: 'success', title: 'Generated!', body: 'Image generated from text.' });
-              } else {
-                console.error('[Image Studio] No image data in response:', part);
-                throw new Error('No image data in response');
-              }
-            } catch (error) {
-              console.error('[Image Studio] Error generating image:', error);
-              showToast({ type: 'error', title: 'Generation Failed', body: `Failed to generate image: ${error.message}` });
-            } finally {
-              $('#image-generation-loader-modal')?.classList.add('hidden');
-              textInput.value = '';
-            }
-          });
-        });
+      // Show delete buttons on all zones
+      updateDeleteButtonVisibility();
+    });
+    
+    // Update delete button visibility
+    updateDeleteButtonVisibility();
+  };
+  
+  const updateDeleteButtonVisibility = () => {
+    const deleteBtns = document.querySelectorAll('.remove-reference-zone-btn');
+    deleteBtns.forEach(btn => {
+      const index = parseInt(btn.getAttribute('data-index') || '0');
+      if (index === 0) {
+        (btn as HTMLElement).style.visibility = 'hidden';
+      } else {
+        (btn as HTMLElement).style.visibility = 'visible';
       }
     });
+  };
+  
+  // Setup event listeners for a single image zone
+  const setupSingleImageZone = (index: number) => {
+    const zone = document.querySelector(`.image-studio-drop-zone[data-index="${index}"]`) as HTMLElement;
+    const input = document.querySelector(`.image-studio-reference-input[data-index="${index}"]`) as HTMLInputElement;
+    const removeZoneBtn = document.querySelector(`.remove-reference-zone-btn[data-index="${index}"]`) as HTMLButtonElement;
+    
+    if (!zone || !input) return;
+    
+    const content = zone.querySelector('.drop-zone-content');
+    const previewImg = zone.querySelector('.drop-zone-preview') as HTMLImageElement;
+    const removeBtn = zone.querySelector('.remove-style-image-btn') as HTMLButtonElement;
+    const attachBtn = zone.querySelector('.attach-image-btn') as HTMLButtonElement;
+    const generateBtn = zone.querySelector('.generate-text-btn') as HTMLButtonElement;
+    
+    const updateUI = (dataUrl: string | null) => {
+      if (dataUrl && previewImg && content) {
+        previewImg.src = dataUrl;
+        previewImg.classList.remove('hidden');
+        removeBtn?.classList.remove('hidden');
+        content.classList.add('has-image');
+        
+        // Show "Add Reference Image" button when image is uploaded
+        const addBtnCard = $('#add-reference-image-card');
+        const currentCount = document.querySelectorAll('.image-studio-drop-zone').length;
+        if (currentCount < 3 && imageStudioReferenceImages.some(img => img !== null)) {
+          addBtnCard?.classList.remove('hidden');
+        }
+      } else if (content) {
+        previewImg.src = '';
+        previewImg.classList.add('hidden');
+        removeBtn?.classList.add('hidden');
+        content.classList.remove('has-image');
+        
+        // Hide "Add Reference Image" button if no images
+        const hasImages = imageStudioReferenceImages.some(img => img !== null);
+        if (!hasImages) {
+          const addBtnCard = $('#add-reference-image-card');
+          addBtnCard?.classList.add('hidden');
+        }
+      }
+    };
+    
+    const handleFile = (file: File | undefined) => {
+      if (!file || !file.type.startsWith('image/')) return;
+      
+      const reader = new FileReader();
+      reader.onload = e => {
+        const dataUrl = e.target?.result as string;
+        imageStudioReferenceImages[index] = { file, dataUrl };
+        updateUI(dataUrl);
+      };
+      reader.readAsDataURL(file);
+    };
+    
+    input.addEventListener('change', () => {
+      const file = input.files?.[0];
+      if (file) handleFile(file);
+      input.value = '';
+    });
+    
+    zone.addEventListener('dragover', (e) => { e.preventDefault(); });
+    zone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const file = (e as DragEvent).dataTransfer?.files[0];
+      handleFile(file);
+    });
+    
+    if (removeBtn) {
+      removeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        imageStudioReferenceImages[index] = null;
+        updateUI(null);
+      });
+    }
+    
+    if (attachBtn) {
+      attachBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        input.click();
+      });
+    }
+    
+    if (generateBtn) {
+      generateBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        
+        // Store which image slot we're generating for
+        let currentImageStudioSlotIndex = index;
+        const textInput = $('#image-studio-text-input') as HTMLTextAreaElement;
+        
+        // Open modal
+        $('#image-studio-text-modal')?.classList.remove('hidden');
+        textInput.value = '';
+        textInput.focus();
+        
+        // Handle modal generate button
+        const generateBtn = $('#image-studio-text-generate-btn');
+        generateBtn?.replaceWith(generateBtn.cloneNode(true)); // Remove old listener
+        const newGenerateBtn = $('#image-studio-text-generate-btn');
+        
+        newGenerateBtn?.addEventListener('click', async () => {
+          const promptText = textInput?.value?.trim() || '';
+          if (!promptText) {
+            showToast({ type: 'error', title: 'Input Required', body: 'Please enter a prompt.' });
+            return;
+          }
+          
+          try {
+            // Hide text modal and show loader modal
+            $('#image-studio-text-modal')?.classList.add('hidden');
+            const loaderModal = $('#image-generation-loader-modal');
+            loaderModal?.classList.remove('hidden');
+            
+            // Generate image from text using gemini-2.5-flash-image
+            console.log('[Image Studio] Generating image from text with model: gemini-2.5-flash-image');
+            console.log('[Image Studio] Prompt:', promptText);
+            
+            const response = await ai.models.generateContent({
+              model: 'gemini-2.5-flash-image',
+              contents: [{ parts: [{ text: promptText }] }],
+              config: {
+                responseModalities: [Modality.IMAGE],
+              },
+            });
+            
+            console.log('[Image Studio] Full response:', response);
+            const part = response.candidates?.[0]?.content?.parts?.[0];
+            console.log('[Image Studio] Response part:', part);
+            
+            if (part && part.inlineData) {
+              const { data, mimeType } = part.inlineData;
+              const dataUrl = `data:${mimeType};base64,${data}`;
+              
+              console.log('[Image Studio] Image data received, creating file...');
+              
+              const blob = await (await fetch(dataUrl)).blob();
+              const file = new File([blob], `generated_image_${currentImageStudioSlotIndex}.png`, { type: mimeType });
+              
+              // Save to reference images
+              imageStudioReferenceImages[currentImageStudioSlotIndex] = { file, dataUrl };
+              
+              const dropZone = document.querySelector(`.image-studio-drop-zone[data-index="${currentImageStudioSlotIndex}"]`);
+              console.log('[Image Studio] Drop zone:', dropZone);
+              
+              if (dropZone) {
+                const previewImg = dropZone.querySelector('.drop-zone-preview') as HTMLImageElement;
+                const content = dropZone.querySelector('.drop-zone-content');
+                const removeBtn = dropZone.querySelector('.remove-style-image-btn') as HTMLButtonElement;
+                const promptLarge = content?.querySelector('.drop-zone-prompt-large');
+                
+                if (previewImg && content) {
+                  previewImg.src = dataUrl;
+                  previewImg.classList.remove('hidden');
+                  if (promptLarge) promptLarge.classList.add('hidden');
+                  if (removeBtn) removeBtn.classList.remove('hidden');
+                  content.classList.add('has-image');
+                  console.log('[Image Studio] UI updated successfully');
+                }
+              }
+              
+              showToast({ type: 'success', title: 'Generated!', body: 'Image generated from text.' });
+            } else {
+              console.error('[Image Studio] No image data in response:', part);
+              throw new Error('No image data in response');
+            }
+            
+            loaderModal?.classList.add('hidden');
+          } catch (error) {
+            console.error('[Image Studio] Text generation failed:', error);
+            showToast({ type: 'error', title: 'Generation Failed', body: 'Could not generate image from text.' });
+          }
+        });
+      });
+    }
+    
+    // Handle remove zone button
+    if (removeZoneBtn && index > 0) {
+      removeZoneBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        
+        // Remove from array
+        imageStudioReferenceImages[index] = null;
+        
+        // Find and remove the DOM element
+        const zone = document.querySelector(`.control-card`)?.querySelector(`.image-studio-drop-zone[data-index="${index}"]`);
+        if (zone) {
+          const card = zone.closest('.control-card');
+          card?.remove();
+        }
+        
+        // Show add button
+        const addBtnCard = $('#add-reference-image-card');
+        addBtnCard?.classList.remove('hidden');
+        
+        // Update visibility
+        updateDeleteButtonVisibility();
+      });
+    }
+  };
+  
+  const setupImageStudioDropZones = () => {
+    initializeImageStudio();
   };
   
   // --- EVENT LISTENERS ---

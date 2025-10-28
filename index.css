@@ -1903,6 +1903,7 @@ a.secondary-btn[disabled] {
 
 .details-tab-content[data-tab-content="motion"] {
     gap: 0;
+    padding: 0; /* Remove inherited padding since motion-fixed-header and motion-scroll-content handle their own padding */
 }
 
 .motion-fixed-header {
@@ -3255,7 +3256,7 @@ a.secondary-btn[disabled] {
     gap: var(--spacing-4);
     background-color: var(--input-bg);
     border-radius: var(--border-radius-lg);
-    padding: var(--spacing-4);
+    padding: var(--spacing-5);
 }
 
 /* --- Motion Prompt Output Customization --- */
