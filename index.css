@@ -1804,15 +1804,14 @@ a.secondary-btn[disabled] {
     overflow-y: auto;
 }
 
-/* Image Studio details panel padding */
+/* All details panel padding - consistent */
+.details-tab-content {
+    padding: var(--spacing-5);
+}
+
 #image-details-panel-image .details-panel-body {
     padding: var(--spacing-5);
     gap: var(--spacing-4);
-}
-
-/* 2D and 3D Studio details panel padding */
-.details-tab-content {
-    padding: var(--spacing-5);
 }
 
 #image-details-panel-image .details-actions {
@@ -1823,7 +1822,7 @@ a.secondary-btn[disabled] {
 }
 
 #explore-details-panel .details-panel-body {
-    padding: var(--spacing-4) var(--spacing-5);
+    padding: var(--spacing-5);
     gap: var(--spacing-4);
     overflow-y: auto;
 }
