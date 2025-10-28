@@ -764,11 +764,27 @@
                     <nav class="details-panel-tabs">
                         <button class="tab-item active" data-tab="detail">Detail</button>
                         <button class="tab-item" data-tab="motion">Motion</button>
+                        <button class="tab-item" data-tab="history">History</button>
                     </nav>
                     <div class="details-panel-body">
                         <div class="details-tab-content active" data-tab-content="detail">
                             <div class="details-preview">
                                 <img id="details-preview-image" src="" alt="Details preview">
+                            </div>
+                            <div class="details-fix-section">
+                                <h4 style="font-size: 14px; font-weight: 600; margin: 0 0 var(--spacing-3);">Adjust Colors & Background</h4>
+                                <div class="filter-group">
+                                    <label for="details-background-color-picker-3d" style="font-size: 13px; margin-bottom: var(--spacing-1);">Background Color</label>
+                                    <input type="color" id="details-background-color-picker-3d" value="#FFFFFF" />
+                                </div>
+                                <div class="filter-group">
+                                    <label for="details-object-color-picker-3d" style="font-size: 13px; margin-bottom: var(--spacing-1);">Object Color</label>
+                                    <input type="color" id="details-object-color-picker-3d" value="#2962FF" />
+                                </div>
+                                <button id="details-fix-btn" class="primary-btn" style="width: 100%; margin-top: var(--spacing-2);">
+                                    <span class="material-symbols-outlined">auto_fix_high</span> Apply Fix
+                                    <div class="btn-loader"></div>
+                                </button>
                             </div>
                             <div class="details-actions">
                                 <button id="details-upscale-btn" class="secondary-btn">
@@ -866,6 +882,28 @@
                                 </a>
                             </div>
                         </div>
+                        <div class="details-tab-content hidden" data-tab-content="history">
+                            <div class="history-comparison">
+                                <div class="history-comparison-item">
+                                    <div class="history-comparison-label">
+                                        <span class="material-symbols-outlined">image</span>
+                                        Original
+                                    </div>
+                                    <div class="details-preview">
+                                        <img id="history-original-image" src="" alt="Original image">
+                                    </div>
+                                </div>
+                                <div class="history-comparison-item">
+                                    <div class="history-comparison-label">
+                                        <span class="material-symbols-outlined">auto_fix_high</span>
+                                        Fixed
+                                    </div>
+                                    <div class="details-preview">
+                                        <img id="history-fixed-image" src="" alt="Fixed image">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </aside>
@@ -905,63 +943,15 @@
                         </div>
                         <input type="text" id="image-prompt-subject-input-image" placeholder="e.g., A cute cat wearing a wizard hat">
                     </div>
-                    <div class="control-card">
-                        <div class="prompt-card-header">
-                            <h3>Reference Image 1</h3>
-                        </div>
-                        <div class="image-studio-drop-zone" data-index="0">
-                            <div class="drop-zone-content">
-                                <div class="drop-zone-prompt-large">
-                                    <span class="material-symbols-outlined">add_photo_alternate</span>
-                                    <p>Drop or click</p>
-                                </div>
-                                <img class="drop-zone-preview hidden" alt="Reference image 1">
-                                <button class="remove-style-image-btn hidden" aria-label="Remove image 1">
-                                    <span class="material-symbols-outlined">close</span>
-                                </button>
-                            </div>
-                            <div class="drop-zone-overlay">
-                                <button class="generate-text-btn">
-                                    <span class="material-symbols-outlined">text_fields</span>
-                                    <span class="overlay-text-label">Generate with Text</span>
-                                </button>
-                                <div class="overlay-divider"></div>
-                                <button class="attach-image-btn">
-                                    <span class="material-symbols-outlined">attach_file</span>
-                                    <span class="overlay-text-label">Attach Image</span>
-                                </button>
-                            </div>
-                        </div>
-                        <input type="file" class="image-studio-reference-input hidden" data-index="0" accept="image/*">
-                    </div>
-                    <div class="control-card">
-                        <div class="prompt-card-header">
-                            <h3>Reference Image 2</h3>
-                        </div>
-                        <div class="image-studio-drop-zone" data-index="1">
-                            <div class="drop-zone-content">
-                                <div class="drop-zone-prompt-large">
-                                    <span class="material-symbols-outlined">add_photo_alternate</span>
-                                    <p>Drop or click</p>
-                                </div>
-                                <img class="drop-zone-preview hidden" alt="Reference image 2">
-                                <button class="remove-style-image-btn hidden" aria-label="Remove image 2">
-                                    <span class="material-symbols-outlined">close</span>
-                                </button>
-                            </div>
-                            <div class="drop-zone-overlay">
-                                <button class="generate-text-btn">
-                                    <span class="material-symbols-outlined">text_fields</span>
-                                    <span class="overlay-text-label">Generate with Text</span>
-                                </button>
-                                <div class="overlay-divider"></div>
-                                <button class="attach-image-btn">
-                                    <span class="material-symbols-outlined">attach_file</span>
-                                    <span class="overlay-text-label">Attach Image</span>
-                                </button>
-                            </div>
-                        </div>
-                        <input type="file" class="image-studio-reference-input hidden" data-index="1" accept="image/*">
+                    <!-- Reference Images Container -->
+                    <div id="image-studio-reference-container"></div>
+                    
+                    <!-- Add Image Button -->
+                    <div class="control-card hidden" id="add-reference-image-card">
+                        <button id="add-reference-image-btn" class="secondary-btn" style="width: 100%;">
+                            <span class="material-symbols-outlined">add</span>
+                            <span class="btn-text">Add Reference Image</span>
+                        </button>
                     </div>
                 </div>
                 <div class="image-gen-footer">
@@ -977,6 +967,14 @@
                     <div id="result-item-main-image" class="result-item" tabindex="0">
                         <div class="result-item-content">
                             <div class="result-content-header-image">
+                                <div class="preview-switcher">
+                                    <button class="preview-tab-item active" data-tab="image">
+                                        Image
+                                    </button>
+                                    <button class="preview-tab-item" data-tab="motion">
+                                        Motion
+                                    </button>
+                                </div>
                                 <div class="result-actions">
                                     <button id="toggle-details-panel-btn-image" class="icon-button" aria-label="Toggle details panel">
                                         <span class="material-symbols-outlined">info</span>
@@ -1008,8 +1006,8 @@
                                       Generate Motion
                                     </button>
                                 </div>
-                                <img src="" alt="Generated image" class="result-image-image hidden">
-                                <video src="" class="result-video-image hidden" controls loop autoplay muted playsinline></video>
+                                <img id="result-image-image" src="" alt="Generated image" class="result-image-image hidden">
+                                <video id="result-video-image" src="" class="result-video-image hidden" controls loop autoplay muted playsinline></video>
                             </div>
                         </div>
                     </div>
@@ -1023,20 +1021,106 @@
                             <span class="material-symbols-outlined">close</span>
                         </button>
                     </header>
+                    <nav class="details-panel-tabs">
+                        <button class="tab-item active" data-tab="detail">Detail</button>
+                        <button class="tab-item" data-tab="motion">Motion</button>
+                    </nav>
                     <div class="details-panel-body">
-                        <div class="details-preview">
-                            <img id="details-preview-image-image" src="" alt="Details preview">
+                        <div class="details-tab-content active" data-tab-content="detail">
+                            <div class="details-preview">
+                                <img id="details-preview-image-image" src="" alt="Details preview">
+                            </div>
+                            <div class="details-actions">
+                                <button id="details-upscale-btn-image" class="secondary-btn">
+                                    <span class="material-symbols-outlined">image</span> Upscale
+                                </button>
+                                <a href="#" id="details-download-btn-image" class="secondary-btn" download>
+                                    <span class="material-symbols-outlined">download</span> Download
+                                </a>
+                                <button id="details-delete-btn-image" class="secondary-btn danger">
+                                    <span class="material-symbols-outlined">delete</span> Delete
+                                </button>
+                            </div>
                         </div>
-                        <div class="details-actions">
-                            <button id="details-upscale-btn-image" class="secondary-btn">
-                                <span class="material-symbols-outlined">image</span> Upscale
-                            </button>
-                            <a href="#" id="details-download-btn-image" class="secondary-btn" download>
-                                <span class="material-symbols-outlined">download</span> Download
-                            </a>
-                            <button id="details-delete-btn-image" class="secondary-btn danger">
-                                <span class="material-symbols-outlined">delete</span> Delete
-                            </button>
+                        <div class="details-tab-content hidden" data-tab-content="motion">
+                            <div class="motion-fixed-header">
+                                <div class="motion-thumbnail-container">
+                                    <img id="motion-thumbnail-image-image" src="" alt="Motion thumbnail">
+                                    <div class="motion-thumbnail-info">
+                                        <span id="motion-thumbnail-label-image"></span>
+                                        <span class="motion-thumbnail-desc">Ready for animation</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="motion-scroll-content">
+                                <div class="video-result-container hidden" id="motion-video-container-image">
+                                    <video id="motion-video-player-image" controls loop autoplay muted playsinline></video>
+                                    <div id="motion-video-loader-image" class="result-loading hidden">
+                                        <div class="loader"></div>
+                                        <span id="motion-gen-status-text-image" class="loader-text">Generating video...</span>
+                                    </div>
+                                </div>
+                                <div id="motion-reference-image-container-image" class="reference-image-container">
+                                    <div class="image-drop-zone reference-drop-zone" data-index="0">
+                                        <span class="slot-title">First Frame</span>
+                                        <div class="drop-zone-prompt"><p style="font-size:12px">Drop or click</p></div>
+                                        <img class="style-image-preview hidden" alt="First frame reference image">
+                                        <button class="remove-style-image-btn icon-button hidden" aria-label="Remove First Frame"><span class="material-symbols-outlined">delete</span></button>
+                                    </div>
+                                    <div class="image-drop-zone reference-drop-zone" data-index="1">
+                                        <span class="slot-title">Last Frame</span>
+                                        <div class="drop-zone-prompt"><p style="font-size:12px">Drop or click</p></div>
+                                        <img class="style-image-preview hidden" alt="Last frame reference image">
+                                        <button class="remove-style-image-btn icon-button hidden" aria-label="Remove Last Frame"><span class="material-symbols-outlined">delete</span></button>
+                                    </div>
+                                </div>
+                                <input type="file" id="motion-reference-image-input-image" class="hidden" accept="image/*">
+                                <div class="control-card">
+                                    <h3>Generation Speed</h3>
+                                    <p style="font-size: 13px; color: var(--text-secondary); margin-top: -8px; margin-bottom: 8px;">'High Quality' may take longer to generate.</p>
+                                    <div class="segmented-control" id="motion-model-select-image">
+                                        <input type="radio" id="model-fast-image" name="motion-model-image" value="veo-3.1-fast-generate-preview" checked />
+                                        <label for="model-fast-image">Fast</label>
+                                        <input type="radio" id="model-hq-image" name="motion-model-image" value="veo-3.1-generate-preview" />
+                                        <label for="model-hq-image">High Quality</label>
+                                    </div>
+                                </div>
+                                <div id="motion-prompt-output-image" class="hidden">
+                                    <div class="control-card">
+                                        <label for="motion-prompt-final-english-image">Final Prompt</label>
+                                        <textarea id="motion-prompt-final-english-image" rows="4"></textarea>
+                                    </div>
+                                    <div class="control-card">
+                                        <label>Description (Korean)</label>
+                                        <div id="motion-prompt-korean-image" class="description-box"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="details-actions">
+                                <button id="generate-motion-prompt-btn-image" class="primary-btn">
+                                    <span class="material-symbols-outlined">animation</span>
+                                    <span class="btn-text">Generate Motion Prompt</span>
+                                    <div class="btn-loader"></div>
+                                </button>
+                                <button id="regenerate-motion-prompt-btn-image" class="secondary-btn hidden">
+                                    <span class="material-symbols-outlined">refresh</span>
+                                    <span class="btn-text">Regenerate Prompt</span>
+                                    <div class="btn-loader"></div>
+                                </button>
+                                <button id="generate-video-btn-image" class="primary-btn hidden">
+                                    <span class="material-symbols-outlined">movie</span>
+                                    <span class="btn-text">Generate Video</span>
+                                    <div class="btn-loader"></div>
+                                </button>
+                                <button id="regenerate-video-btn-image" class="secondary-btn hidden">
+                                    <span class="material-symbols-outlined">refresh</span>
+                                    <span class="btn-text">Regenerate Video</span>
+                                    <div class="btn-loader"></div>
+                                </button>
+                                <a href="#" id="download-video-btn-image" class="secondary-btn hidden" download>
+                                    <span class="material-symbols-outlined">download</span> Download Video
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>

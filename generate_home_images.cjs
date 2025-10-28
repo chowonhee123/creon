@@ -31,3 +31,5 @@ try {
   console.error('❌ Failed to generate home images:', error);
 }
 
+
+

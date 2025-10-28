@@ -28,6 +28,8 @@ type GeneratedImageData = {
   timestamp: number;
   videoDataUrl?: string;
   motionPrompt?: { json: any, korean: string, english:string } | null;
+  originalData?: string; // Original image data before fix
+  originalMimeType?: string; // Original image mimeType before fix
 };
 
 // --- WRAP IN DOMCONTENTLOADED TO PREVENT RACE CONDITIONS ---
@@ -53,6 +55,8 @@ window.addEventListener('DOMContentLoaded', () => {
   let referenceImagesForIconStudio3d: ({ file: File; dataUrl: string } | null)[] = [null, null, null];
   let motionFirstFrameImage: { file: File; dataUrl: string; } | null = null;
   let motionLastFrameImage: { file: File; dataUrl: string; } | null = null;
+  let motionFirstFrameImageStudio: { file: File; dataUrl: string; } | null = null;
+  let motionLastFrameImageStudio: { file: File; dataUrl: string; } | null = null;
   let currentPage = 'page-usages';
   let isGeneratingVideo = false;
   let currentVideoGenerationOperation: any = null;
@@ -528,6 +532,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const detailsCopyBtn = $('#details-copy-btn');
   const detailsDeleteBtn = $('#details-delete-btn');
   const detailsUpscaleBtn = $('#details-upscale-btn');
+  const detailsFixBtn = $('#details-fix-btn');
+  const detailsBackgroundColorPicker = $('#details-background-color-picker-3d') as HTMLInputElement;
+  const detailsObjectColorPicker = $('#details-object-color-picker-3d') as HTMLInputElement;
   const shadowToggleIcons = $('#shadow-toggle-icons') as HTMLInputElement;
   const shadowToggle3d = $('#shadow-toggle-3d') as HTMLInputElement;
   const toggleDetailsPanelBtn = $('#toggle-details-panel-btn');
@@ -591,6 +598,24 @@ window.addEventListener('DOMContentLoaded', () => {
   const motionCategoryModal = $('#motion-category-modal');
   const motionCategoryList = $('#motion-category-list');
   const motionCategoryCloseBtn = $('#motion-category-close-btn');
+  
+  // Image Studio Motion Elements
+  const previewSwitcherImageBtnStudio = $('#result-item-main-image .preview-tab-item[data-tab="image"]');
+  const previewSwitcherVideoBtnStudio = $('#result-item-main-image .preview-tab-item[data-tab="motion"]');
+  const motionPromptPlaceholderStudio = $('#motion-prompt-placeholder-image');
+  const resultImageStudio = $('#result-image-image') as HTMLImageElement;
+  const resultVideoStudio = $('#result-video-image') as HTMLVideoElement;
+  const motionThumbnailImageStudio = $('#motion-thumbnail-image-image') as HTMLImageElement;
+  const motionThumbnailLabelStudio = $('#motion-thumbnail-label-image');
+  const generateMotionPromptBtnStudio = $('#generate-motion-prompt-btn-image');
+  const regenerateMotionPromptBtnStudio = $('#regenerate-motion-prompt-btn-image');
+  const generateVideoBtnStudio = $('#generate-video-btn-image');
+  const regenerateVideoBtnStudio = $('#regenerate-video-btn-image');
+  const downloadVideoBtnStudio = $('#download-video-btn-image') as HTMLAnchorElement;
+  const detailsPanelImageStudio = $('#image-details-panel-image');
+  const detailsTabBtnDetailImageStudio = $('#image-details-panel-image .tab-item[data-tab="detail"]');
+  const detailsTabBtnMotionImageStudio = $('#image-details-panel-image .tab-item[data-tab="motion"]');
+  const generateMotionFromPreviewBtnImage = $('#generate-motion-from-preview-btn-image');
 
   // Loader Modals
   const imageGenerationLoaderModal = $('#image-generation-loader-modal');
@@ -1214,6 +1239,36 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  const setInitialMotionFramesStudio = async (imageData: GeneratedImageData) => {
+    const dataUrl = `data:${imageData.mimeType};base64,${imageData.data}`;
+    
+    try {
+        const response = await fetch(dataUrl);
+        const blob = await response.blob();
+        const file = new File([blob], `generated_frame_studio.${imageData.mimeType.split('/')[1] || 'png'}`, { type: imageData.mimeType });
+        
+        const frameData = { file, dataUrl };
+        
+        // Update state
+        motionFirstFrameImageStudio = frameData;
+        motionLastFrameImageStudio = frameData;
+
+        // Update UI for both drop zones
+        const firstFrameZone = document.querySelector<HTMLElement>('#motion-reference-image-container-image .image-drop-zone[data-index="0"]');
+        const lastFrameZone = document.querySelector<HTMLElement>('#motion-reference-image-container-image .image-drop-zone[data-index="1"]');
+        
+        if (firstFrameZone) {
+            updateDropZoneUI(firstFrameZone, dataUrl);
+        }
+        if (lastFrameZone) {
+            updateDropZoneUI(lastFrameZone, dataUrl);
+        }
+
+    } catch (error) {
+        console.error("Failed to set initial motion frames for Image Studio:", error);
+    }
+  };
+
   const update3dPromptDisplay = () => {
     if (!imagePromptDisplay) return;
     try {
@@ -1250,11 +1305,12 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const createImagePromptFromTemplate = (template: any, userPrompt: string = ''): string => {
+  const createImagePromptFromTemplate = (template: any, userPrompt: string = '', isFix: boolean = false): string => {
     const subject = template.subject || 'a friendly robot';
     const shadowText = template.lighting?.shadows || '';
     const backgroundColor = template.background?.color || '#FFFFFF';
     const objectColor = template.colors?.dominant_blue || '#2962FF';
+    const inherentColors = template.colors?.inherent_colors || '';
     
     // Create a natural language prompt from the template
     let prompt = `Generate an isometric 3D ${subject}. `;
@@ -1264,8 +1320,23 @@ window.addEventListener('DOMContentLoaded', () => {
       prompt += `${userPrompt}. `;
     }
     
-    prompt += `Background: solid color ${backgroundColor}. `;
-    prompt += `Object color: ${objectColor}. `;
+    if (isFix) {
+      // Fix mode: Maintain exact shape and only change colors
+      prompt += `CRITICAL: Maintain the exact same shape, proportions, and form. DO NOT change the subject's structure or design. `;
+      prompt += `Background color: ${backgroundColor}. `;
+      prompt += `Object main color: ${objectColor}. Preserve all sub-elements' inherent colors (e.g., if there's food, keep it realistic; if there are decorative elements, maintain their natural appearance). `;
+    } else {
+      // Normal generation mode
+      prompt += `Background: solid color ${backgroundColor}. `;
+      
+      // Color palette instructions
+      if (inherentColors) {
+        prompt += `Colors: ${inherentColors}. When natural colors are needed, use them. Otherwise, use the blue/white palette (${objectColor}). `;
+      } else {
+        prompt += `Color palette: Use natural colors where the object has a universal color identity (e.g., sun=yellow, carrot=orange/green, leaf=green). For other elements, use ${objectColor} and white. `;
+      }
+    }
+    
     prompt += `Style: rounded, smooth, bubbly shapes with crisp edges and no outlines. `;
     prompt += `Materials: high-gloss plastic look. `;
     prompt += `Lighting: ${template.lighting?.mode || 'soft diffused studio'}, ${template.lighting?.source || 'top-front or top-right'}. ${shadowText}. `;
@@ -1451,6 +1522,7 @@ window.addEventListener('DOMContentLoaded', () => {
     resultPlaceholder?.classList.add('hidden');
     resultIdlePlaceholder?.classList.add('hidden');
     resultImage?.classList.add('hidden');
+    resultError?.classList.add('hidden');
     updateButtonLoadingState(generateBtn, true);
 
     try {
@@ -1553,12 +1625,18 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
           if (detailsPreview) detailsPreview.src = dataUrl;
           if (detailsDownload) detailsDownload.href = dataUrl;
           
+          // Set initial motion frames
+          await setInitialMotionFramesStudio(currentGeneratedImageStudio);
+          
           // Show and animate details panel
           detailsPanel?.classList.remove('hidden');
           detailsPanel?.classList.add('is-open');
           
           // Render history
           renderImageStudioHistory();
+          
+          // Update motion UI
+          updateMotionUIStudio();
           
           showToast({ type: 'success', title: 'Composed!', body: 'Image composition completed.' });
         }
@@ -1641,12 +1719,18 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
           if (detailsPreview) detailsPreview.src = dataUrl;
           if (detailsDownload) detailsDownload.href = dataUrl;
           
+          // Set initial motion frames
+          await setInitialMotionFramesStudio(currentGeneratedImageStudio);
+          
           // Show and animate details panel
           detailsPanel?.classList.remove('hidden');
           detailsPanel?.classList.add('is-open');
           
           // Render history
           renderImageStudioHistory();
+          
+          // Update motion UI
+          updateMotionUIStudio();
           
           const hasImageAndPrompt = hasOneImage && promptText;
           const message = hasImageAndPrompt ? 'Image edited successfully.' : 'Image generated successfully.';
@@ -1812,6 +1896,230 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
     }
   };
 
+  const handleGenerateVideoStudio = async () => {
+    if (!currentGeneratedImageStudio || !currentGeneratedImageStudio.motionPrompt || !motionFirstFrameImageStudio) {
+        showToast({ type: 'error', title: 'Missing Data', body: 'Cannot generate video without an image and motion prompt.' });
+        return;
+    }
+
+    updateButtonLoadingState(generateVideoBtnStudio, true);
+    updateButtonLoadingState(regenerateVideoBtnStudio, true);
+    isGeneratingVideo = true;
+
+    // Show modal and start messages
+    if (videoGenerationLoaderModal && videoLoaderMessage) {
+        videoGenerationLoaderModal.classList.remove('hidden');
+        let messageIndex = 0;
+        videoLoaderMessage.textContent = VIDEO_LOADER_MESSAGES[messageIndex];
+        videoMessageInterval = window.setInterval(() => {
+            messageIndex = (messageIndex + 1) % VIDEO_LOADER_MESSAGES.length;
+            videoLoaderMessage.textContent = VIDEO_LOADER_MESSAGES[messageIndex];
+        }, 3000);
+    }
+    
+    try {
+        const userPrompt = (document.getElementById('motion-prompt-final-english-image') as HTMLTextAreaElement).value;
+        
+        // Remove cinematic keywords as requested.
+        const cinematicKeywordsRegex = /cinematic|movie|film look/gi;
+        const sanitizedUserPrompt = userPrompt.replace(cinematicKeywordsRegex, '').replace(/\s+/g, ' ').trim();
+
+        // Detect and maintain source image aspect ratio to avoid black bars
+        let aspectRatio = '16:9';
+        let useImageAspectRatio = false;
+        
+        if (motionFirstFrameImageStudio) {
+            const img = new Image();
+            const imgDataUrl = motionFirstFrameImageStudio.dataUrl;
+            
+            await new Promise<void>((resolve) => {
+                img.onload = () => {
+                    const width = img.naturalWidth;
+                    const height = img.naturalHeight;
+                    const ratio = width / height;
+                    
+                    if (ratio > 1.5) {
+                        aspectRatio = '16:9';
+                    } else if (ratio > 1) {
+                        aspectRatio = '4:3';
+                    } else {
+                        aspectRatio = '1:1';
+                    }
+                    useImageAspectRatio = true;
+                    resolve();
+                };
+                img.src = imgDataUrl;
+            });
+        }
+
+        // Add specific prompts to avoid letterboxing and maintain background
+        const finalPrompt = `Maintain full frame coverage with no black bars, borders, or letterboxing. Keep the entire image visible. Preserve the exact background from the source image without any cropping or black bars. ${sanitizedUserPrompt}. CRITICAL NEGATIVE PROMPT: black bars, letterboxing, black borders, black edges, cinematic crop, pillarbox, narrow frame, cropped edges, missing background.`;
+
+        const config: any = {
+            numberOfVideos: 1,
+            resolution: '1080p',
+        };
+
+        if (useImageAspectRatio || !motionFirstFrameImageStudio) {
+            config.aspectRatio = aspectRatio;
+        }
+
+        const selectedModel = (document.querySelector('input[name="motion-model-image"]:checked') as HTMLInputElement)?.value || 'veo-3.1-fast-generate-preview';
+
+        const payload: any = {
+            model: selectedModel,
+            prompt: finalPrompt,
+            config: config,
+        };
+
+        if (motionFirstFrameImageStudio) {
+            payload.image = {
+                imageBytes: await blobToBase64(motionFirstFrameImageStudio.file),
+                mimeType: motionFirstFrameImageStudio.file.type,
+            };
+        }
+
+        if (motionLastFrameImageStudio) {
+            payload.config.lastFrame = {
+                imageBytes: await blobToBase64(motionLastFrameImageStudio.file),
+                mimeType: motionLastFrameImageStudio.file.type,
+            };
+        }
+
+        let operation = await ai.models.generateVideos(payload);
+        currentVideoGenerationOperation = operation;
+
+        while (!operation.done) {
+            await new Promise(resolve => setTimeout(resolve, 10000));
+            operation = await ai.operations.getVideosOperation({ operation: operation });
+            currentVideoGenerationOperation = operation;
+        }
+
+        const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
+        if (!downloadLink) {
+            throw new Error("Video generation succeeded but no download link was found.");
+        }
+        
+        const videoResponse = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
+        if (!videoResponse.ok) {
+            throw new Error(`Failed to download video: ${videoResponse.statusText}`);
+        }
+
+        const videoBlob = await videoResponse.blob();
+        const videoDataUrl = URL.createObjectURL(videoBlob);
+
+        currentGeneratedImageStudio.videoDataUrl = videoDataUrl;
+        const historyItem = imageStudioHistory.find(item => item.id === currentGeneratedImageStudio!.id);
+        if (historyItem) {
+            historyItem.videoDataUrl = videoDataUrl;
+        }
+        
+        if(resultVideoStudio) {
+            resultVideoStudio.src = videoDataUrl;
+            resultVideoStudio.classList.remove('hidden');
+            resultImageStudio?.classList.add('hidden');
+            motionPromptPlaceholderStudio?.classList.add('hidden');
+        }
+        if (previewSwitcherVideoBtnStudio) {
+            previewSwitcherVideoBtnStudio.classList.add('active');
+            previewSwitcherImageBtnStudio?.classList.remove('active');
+        }
+
+        updateMotionUIStudio();
+        showToast({ type: 'success', title: 'Video Generated!', body: 'Your animated image is ready.' });
+
+    } catch (error) {
+        console.error("Video generation failed:", error);
+        showToast({ type: 'error', title: 'Video Failed', body: 'Something went wrong during video generation.' });
+        const motionVideoContainerStudio = $('#motion-video-container-image');
+        if (motionVideoContainerStudio) motionVideoContainerStudio.classList.remove('loading');
+    } finally {
+        updateButtonLoadingState(generateVideoBtnStudio, false);
+        updateButtonLoadingState(regenerateVideoBtnStudio, false);
+        isGeneratingVideo = false;
+        currentVideoGenerationOperation = null;
+        
+        videoGenerationLoaderModal?.classList.add('hidden');
+        if (videoMessageInterval) {
+            clearInterval(videoMessageInterval);
+            videoMessageInterval = null;
+        }
+    }
+  };
+
+  const updateMotionUIStudio = () => {
+    if (!currentGeneratedImageStudio) return;
+    
+    const motionPromptOutputStudio = $('#motion-prompt-output-image');
+    const finalEnglishPromptEl = $('#motion-prompt-final-english-image') as HTMLTextAreaElement;
+    const koreanDescEl = $('#motion-prompt-korean-image');
+    
+    const hasMotionPrompt = !!currentGeneratedImageStudio.motionPrompt;
+    const hasVideo = !!currentGeneratedImageStudio.videoDataUrl;
+
+    // Update prompt display
+    if (hasMotionPrompt && finalEnglishPromptEl && koreanDescEl) {
+        finalEnglishPromptEl.value = currentGeneratedImageStudio.motionPrompt!.english;
+        koreanDescEl.textContent = currentGeneratedImageStudio.motionPrompt!.korean;
+        if (motionPromptOutputStudio) motionPromptOutputStudio.classList.remove('hidden');
+    } else {
+        if (motionPromptOutputStudio) motionPromptOutputStudio.classList.add('hidden');
+    }
+
+    // Update video player
+    const motionVideoPlayerStudio = $('#motion-video-player-image') as HTMLVideoElement;
+    const motionVideoContainerStudio = $('#motion-video-container-image');
+    
+    if (motionVideoPlayerStudio) {
+        if (hasVideo) {
+            motionVideoPlayerStudio.src = currentGeneratedImageStudio.videoDataUrl!;
+            if (motionVideoContainerStudio) motionVideoContainerStudio.classList.remove('loading');
+            if (motionVideoContainerStudio) motionVideoContainerStudio.classList.remove('hidden');
+        } else {
+            motionVideoPlayerStudio.src = '';
+            if (motionVideoContainerStudio) motionVideoContainerStudio.classList.add('hidden');
+        }
+    }
+    
+    // Update download button link
+    if (downloadVideoBtnStudio) {
+      if (hasVideo) {
+        downloadVideoBtnStudio.href = currentGeneratedImageStudio.videoDataUrl!;
+        downloadVideoBtnStudio.download = `${currentGeneratedImageStudio.subject.replace(/\s+/g, '_')}_motion.mp4`;
+      }
+    }
+
+    // Update action buttons visibility
+    if (generateMotionPromptBtnStudio && regenerateMotionPromptBtnStudio && generateVideoBtnStudio && regenerateVideoBtnStudio && downloadVideoBtnStudio) {
+        if (hasVideo) {
+            generateMotionPromptBtnStudio.classList.add('hidden');
+            generateVideoBtnStudio.classList.add('hidden');
+            regenerateMotionPromptBtnStudio.classList.remove('hidden');
+            regenerateVideoBtnStudio.classList.remove('hidden');
+            downloadVideoBtnStudio.classList.remove('hidden');
+        } else if (hasMotionPrompt) {
+            generateMotionPromptBtnStudio.classList.add('hidden');
+            generateVideoBtnStudio.classList.remove('hidden');
+            regenerateMotionPromptBtnStudio.classList.remove('hidden');
+            regenerateVideoBtnStudio.classList.add('hidden');
+            downloadVideoBtnStudio.classList.add('hidden');
+        } else {
+            generateMotionPromptBtnStudio.classList.remove('hidden');
+            generateVideoBtnStudio.classList.add('hidden');
+            regenerateMotionPromptBtnStudio.classList.add('hidden');
+            regenerateVideoBtnStudio.classList.add('hidden');
+            downloadVideoBtnStudio.classList.add('hidden');
+        }
+    }
+    
+    // Update thumbnail
+    if (motionThumbnailImageStudio && motionThumbnailLabelStudio) {
+        const dataUrl = `data:${currentGeneratedImageStudio.mimeType};base64,${currentGeneratedImageStudio.data}`;
+        motionThumbnailImageStudio.src = dataUrl;
+        motionThumbnailLabelStudio.textContent = currentGeneratedImageStudio.subject;
+    }
+  };
+
   const updateMotionUI = () => {
     if (!currentGeneratedImage || !motionPromptOutput || !generateMotionPromptBtn || !regenerateMotionPromptBtn || !generateVideoBtn || !regenerateVideoBtn || !downloadVideoBtn || !motionVideoContainer) return;
     
@@ -1919,6 +2227,122 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
     });
   };
   
+  const generateAndDisplayMotionCategoriesStudio = async () => {
+    if (!currentGeneratedImageStudio || !motionCategoryList) return;
+
+    motionCategoryList.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--spacing-4); padding: var(--spacing-6);">
+            <div class="loader"></div>
+            <p style="color: var(--text-secondary);">Analyzing image and generating ideas...</p>
+        </div>
+    `;
+
+    try {
+        const subject = currentGeneratedImageStudio.subject;
+        const dataUrl = `data:${currentGeneratedImageStudio.mimeType};base64,${currentGeneratedImageStudio.data}`;
+        const textPrompt = `Analyze the provided image of a '${subject}'. Based on its appearance, create 5 unique and creative motion style suggestions for a short, looping video.
+
+For each suggestion, provide:
+1. 'name': A short, catchy category name in Korean (e.g., '부드러운 루핑').
+2. 'description': A brief, engaging description in Korean of the motion style. You can use <b> tags for emphasis (e.g., '<b>자연스럽게 반복되는 움직임.</b> 시작과 끝이 매끄럽게 연결됩니다.').
+3. 'english': A concise, direct text-to-video prompt in English that embodies the motion style. Crucially, the prompt must ensure the animation creates a perfect loop, starting and ending with the provided image. The subject must remain fully visible within the frame throughout the animation. Start the prompt with the subject.
+4. 'korean': A lively, descriptive version of the prompt in Korean for the user to read, mentioning that it's a looping animation.
+
+Return the 5 suggestions as a JSON array.`;
+        
+        const imagePart = {
+          inlineData: {
+            data: currentGeneratedImageStudio.data,
+            mimeType: currentGeneratedImageStudio.mimeType,
+          },
+        };
+
+        const textPart = { text: textPrompt };
+        const contents = { parts: [imagePart, textPart] };
+        
+        const schema = {
+            type: Type.ARRAY,
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    name: { type: Type.STRING, description: 'A short, catchy category name in Korean.' },
+                    description: { type: Type.STRING, description: 'An engaging description in Korean of the motion style, allowing <b> tags.' },
+                    english: { type: Type.STRING, description: 'A concise text-to-video prompt in English.' },
+                    korean: { type: Type.STRING, description: 'A lively, descriptive version of the prompt in Korean for the user.' },
+                },
+                required: ['name', 'description', 'english', 'korean'],
+            }
+        };
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: contents,
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: schema,
+            },
+        });
+
+        const jsonResponse = JSON.parse(response.text.trim());
+        renderGeneratedMotionCategoriesStudio(jsonResponse);
+
+    } catch (error) {
+        console.error("Failed to generate motion categories:", error);
+        showToast({ type: 'error', title: 'Error', body: 'Could not generate motion ideas.' });
+        if (motionCategoryList) {
+            motionCategoryList.innerHTML = `<p style="text-align: center; color: var(--text-secondary); padding: var(--spacing-5);">An error occurred. Please close this and try again.</p>`;
+        }
+    }
+  };
+
+  const renderGeneratedMotionCategoriesStudio = (categories: any[]) => {
+    if (!motionCategoryList) return;
+    motionCategoryList.innerHTML = '';
+
+    if (!categories || categories.length === 0) {
+        motionCategoryList.innerHTML = `<p style="text-align: center; color: var(--text-secondary); padding: var(--spacing-5);">Could not generate motion ideas. Please try again.</p>`;
+        return;
+    }
+
+    categories.forEach((category, index) => {
+        const item = document.createElement('button');
+        item.className = 'category-item';
+
+        item.innerHTML = `
+            <div class="category-item-header">
+                <h3 class="category-item-title">${category.name}</h3>
+            </div>
+            <p class="category-item-description">${category.description}</p>
+        `;
+        item.addEventListener('click', () => {
+            if (!currentGeneratedImageStudio) return;
+
+            motionCategoryModal?.classList.add('hidden');
+            
+            const motionData = {
+                json: category,
+                english: category.english,
+                korean: category.korean
+            };
+
+            currentGeneratedImageStudio.motionPrompt = motionData;
+            
+            const historyItem = imageStudioHistory.find(item => item.id === currentGeneratedImageStudio!.id);
+            if (historyItem) {
+                historyItem.motionPrompt = motionData;
+            }
+
+            lastFocusedElement?.focus();
+            
+            // Update motion UI after modal is hidden
+            setTimeout(() => {
+                updateMotionUIStudio();
+            }, 100);
+        });
+        motionCategoryList.appendChild(item);
+    });
+  };
+
   const generateAndDisplayMotionCategories = async () => {
     if (!currentGeneratedImage || !motionCategoryList) return;
 
@@ -1986,6 +2410,23 @@ Return the 5 suggestions as a JSON array.`;
     }
   };
 
+  const updateHistoryTab = () => {
+    if (!currentGeneratedImage) return;
+    
+    const historyOriginalImage = $('#history-original-image') as HTMLImageElement;
+    const historyFixedImage = $('#history-fixed-image') as HTMLImageElement;
+    
+    if (historyOriginalImage && currentGeneratedImage.originalData) {
+        const originalDataUrl = `data:${currentGeneratedImage.originalMimeType};base64,${currentGeneratedImage.originalData}`;
+        historyOriginalImage.src = originalDataUrl;
+    }
+    
+    if (historyFixedImage) {
+        const fixedDataUrl = `data:${currentGeneratedImage.mimeType};base64,${currentGeneratedImage.data}`;
+        historyFixedImage.src = fixedDataUrl;
+    }
+  };
+
   const update3dViewFromState = () => {
     if (!currentGeneratedImage || !resultImage || !resultIdlePlaceholder || !resultPlaceholder || !resultError || !mainResultContentHeader) return;
 
@@ -2016,8 +2457,24 @@ Return the 5 suggestions as a JSON array.`;
       motionThumbnailImage.src = dataUrl;
       motionThumbnailLabel.textContent = currentGeneratedImage.subject;
     }
+    
+    // Update color pickers in details panel
+    if (currentGeneratedImage.styleConstraints) {
+        try {
+            const styleData = JSON.parse(currentGeneratedImage.styleConstraints);
+            if (detailsBackgroundColorPicker && styleData.background?.color) {
+                detailsBackgroundColorPicker.value = styleData.background.color;
+            }
+            if (detailsObjectColorPicker && styleData.colors?.dominant_blue) {
+                detailsObjectColorPicker.value = styleData.colors.dominant_blue;
+            }
+        } catch (e) {
+            console.error('Failed to parse style constraints:', e);
+        }
+    }
 
     updateMotionUI();
+    updateHistoryTab();
   };
 
   const renderHistory = () => {
@@ -3434,6 +3891,7 @@ Return the 5 suggestions as a JSON array.`;
     
     setupTabs($('#settings-panel'));
     setupTabs($('#image-details-panel'));
+    setupTabs($('#image-details-panel-image'));
     
     // Icon Studio Details Listeners
     downloadSvgBtn?.addEventListener('click', handleDownloadSVG);
@@ -3565,6 +4023,76 @@ Return the 5 suggestions as a JSON array.`;
         handleUpscaleImage();
     });
 
+    detailsFixBtn?.addEventListener('click', async () => {
+        if (!currentGeneratedImage) return;
+        
+        const fixBtn = detailsFixBtn;
+        updateButtonLoadingState(fixBtn, true);
+        imageGenerationLoaderModal?.classList.remove('hidden');
+        
+        try {
+            const backgroundColor = detailsBackgroundColorPicker?.value || '#FFFFFF';
+            const objectColor = detailsObjectColorPicker?.value || '#2962FF';
+            
+            // Save original image data if not already saved
+            if (!currentGeneratedImage.originalData) {
+                currentGeneratedImage.originalData = currentGeneratedImage.data;
+                currentGeneratedImage.originalMimeType = currentGeneratedImage.mimeType;
+            }
+            
+            // Parse current style constraints
+            let template = JSON.parse(currentGeneratedImage.styleConstraints);
+            
+            // Update colors
+            template.background.color = backgroundColor;
+            template.colors.dominant_blue = objectColor;
+            
+            // Create new prompt with updated colors (Fix mode)
+            const imagePromptText = createImagePromptFromTemplate(template, userPrompt3d?.value || '', true);
+            
+            const imageData = await generateImage(
+                imagePromptText,
+                resultImage,
+                resultPlaceholder,
+                resultError,
+                resultIdlePlaceholder,
+                imageGenerateBtn,
+                referenceImagesFor3d
+            );
+            
+            if (imageData) {
+                // Update current image with new data
+                currentGeneratedImage.data = imageData.data;
+                currentGeneratedImage.mimeType = imageData.mimeType;
+                currentGeneratedImage.styleConstraints = JSON.stringify(template, null, 2);
+                
+                // Update in history
+                const historyItem = imageHistory.find(item => item.id === currentGeneratedImage!.id);
+                if (historyItem) {
+                    historyItem.data = imageData.data;
+                    historyItem.mimeType = imageData.mimeType;
+                    historyItem.styleConstraints = JSON.stringify(template, null, 2);
+                    if (!historyItem.originalData) {
+                        historyItem.originalData = currentGeneratedImage.originalData;
+                        historyItem.originalMimeType = currentGeneratedImage.originalMimeType;
+                    }
+                }
+                
+                // Update UI
+                update3dViewFromState();
+                updateHistoryTab();
+                
+                showToast({ type: 'success', title: 'Fixed!', body: 'Image updated with new colors.' });
+            }
+        } catch (error) {
+            console.error("Fix failed:", error);
+            showToast({ type: 'error', title: 'Fix Failed', body: 'Failed to update image.' });
+        } finally {
+            updateButtonLoadingState(fixBtn, false);
+            imageGenerationLoaderModal?.classList.add('hidden');
+        }
+    });
+
     resultImage?.addEventListener('click', () => {
 
         if (!currentGeneratedImage) return;
@@ -3623,6 +4151,31 @@ Return the 5 suggestions as a JSON array.`;
     regenerateMotionPromptBtn?.addEventListener('click', openMotionCategoryModal);
     generateVideoBtn?.addEventListener('click', handleGenerateVideo);
     regenerateVideoBtn?.addEventListener('click', handleGenerateVideo);
+    
+    // Image Studio motion handlers
+    const openMotionCategoryModalStudio = () => {
+        motionCategoryModal?.classList.remove('hidden');
+        generateAndDisplayMotionCategoriesStudio();
+        lastFocusedElement = document.activeElement as HTMLElement;
+    };
+    
+    generateMotionPromptBtnStudio?.addEventListener('click', openMotionCategoryModalStudio);
+    regenerateMotionPromptBtnStudio?.addEventListener('click', openMotionCategoryModalStudio);
+    generateMotionFromPreviewBtnImage?.addEventListener('click', () => {
+      if (!currentGeneratedImageStudio) {
+        showToast({ type: 'error', title: 'No Image', body: 'Please generate an image first.' });
+        return;
+      }
+      // Ensure details panel is open and on Motion tab
+      if (detailsPanelImageStudio?.classList.contains('hidden')) {
+        detailsPanelImageStudio.classList.remove('hidden');
+        detailsPanelImageStudio.classList.add('is-open');
+      }
+      detailsTabBtnMotionImageStudio?.click();
+      openMotionCategoryModalStudio();
+    });
+    generateVideoBtnStudio?.addEventListener('click', handleGenerateVideoStudio);
+    regenerateVideoBtnStudio?.addEventListener('click', handleGenerateVideoStudio);
 
     motionCategoryCloseBtn?.addEventListener('click', () => {
       motionCategoryModal?.classList.add('hidden');
@@ -3640,6 +4193,74 @@ Return the 5 suggestions as a JSON array.`;
         
         openMotionCategoryModal();
     });
+    
+    // History tab thumbnail click handlers
+    $('#history-original-image')?.addEventListener('click', () => {
+        if (!currentGeneratedImage || !currentGeneratedImage.originalData) return;
+        
+        const dataUrl = `data:${currentGeneratedImage.originalMimeType};base64,${currentGeneratedImage.originalData}`;
+        resultImage.src = dataUrl;
+        resultImage.classList.remove('hidden');
+        resultImage.classList.add('visible');
+        
+        // Switch to image tab
+        previewSwitcherImageBtn?.classList.add('active');
+        previewSwitcherVideoBtn?.classList.remove('active');
+    });
+    
+    $('#history-fixed-image')?.addEventListener('click', () => {
+        if (!currentGeneratedImage) return;
+        
+        const dataUrl = `data:${currentGeneratedImage.mimeType};base64,${currentGeneratedImage.data}`;
+        resultImage.src = dataUrl;
+        resultImage.classList.remove('hidden');
+        resultImage.classList.add('visible');
+        
+        // Switch to image tab
+        previewSwitcherImageBtn?.classList.add('active');
+        previewSwitcherVideoBtn?.classList.remove('active');
+    });
+    
+    // Image Studio preview switcher handlers
+    if (previewSwitcherImageBtnStudio && previewSwitcherVideoBtnStudio) {
+        previewSwitcherImageBtnStudio.addEventListener('click', () => {
+            if (!currentGeneratedImageStudio) return;
+            
+            resultImageStudio?.classList.remove('hidden');
+            resultVideoStudio?.classList.add('hidden');
+            motionPromptPlaceholderStudio?.classList.add('hidden');
+            
+            previewSwitcherImageBtnStudio.classList.add('active');
+            previewSwitcherVideoBtnStudio.classList.remove('active');
+            
+            // Switch details panel to detail tab
+            if (detailsPanelImageStudio && !detailsPanelImageStudio.classList.contains('hidden')) {
+                detailsTabBtnDetailImageStudio?.click();
+            }
+        });
+        
+        previewSwitcherVideoBtnStudio.addEventListener('click', () => {
+            if (!currentGeneratedImageStudio) return;
+            
+            previewSwitcherVideoBtnStudio.classList.add('active');
+            previewSwitcherImageBtnStudio.classList.remove('active');
+            
+            if (currentGeneratedImageStudio.videoDataUrl) {
+                resultVideoStudio.src = currentGeneratedImageStudio.videoDataUrl;
+                resultVideoStudio.classList.remove('hidden');
+                motionPromptPlaceholderStudio?.classList.add('hidden');
+            } else {
+                resultVideoStudio?.classList.add('hidden');
+                motionPromptPlaceholderStudio?.classList.remove('hidden');
+            }
+            resultImageStudio?.classList.add('hidden');
+            
+            // Switch details panel to motion tab
+            if (detailsPanelImageStudio && !detailsPanelImageStudio.classList.contains('hidden')) {
+                detailsTabBtnMotionImageStudio?.click();
+            }
+        });
+    }
   };
   
   init();
