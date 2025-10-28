@@ -1320,9 +1320,9 @@ window.addEventListener('DOMContentLoaded', () => {
     loaderModal?.classList.remove('hidden');
 
     try {
-      // Generate image from text using gemini-2.5-flash-image
+      // Generate image from text using imagen-4.0-generate-001
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
+        model: 'imagen-4.0-generate-001',
         contents: [{ parts: [{ text: promptText }] }],
         config: {
           responseModalities: [Modality.IMAGE],
@@ -1365,9 +1365,9 @@ window.addEventListener('DOMContentLoaded', () => {
     loaderModal?.classList.remove('hidden');
 
     try {
-      // Generate image from text using gemini-2.5-flash-image
+      // Generate image from text using imagen-4.0-generate-001
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
+        model: 'imagen-4.0-generate-001',
         contents: [{ parts: [{ text: promptText }] }],
         config: {
           responseModalities: [Modality.IMAGE],
@@ -1510,9 +1510,9 @@ window.addEventListener('DOMContentLoaded', () => {
           showToast({ type: 'success', title: 'Composed!', body: 'Image composition completed.' });
         }
       } else if (promptText) {
-        // Single image generation mode - use gemini-2.5-flash-image
+        // Single image generation mode - use imagen-4.0-generate-001
         const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash-image',
+          model: 'imagen-4.0-generate-001',
           contents: [{ parts: [{ text: promptText }] }],
           config: {
             responseModalities: [Modality.IMAGE],
@@ -2751,7 +2751,7 @@ Return the 5 suggestions as a JSON array.`;
               // Generate image from text
               console.log('Generating with prompt:', promptText);
               const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash-image',
+                model: 'imagen-4.0-generate-001',
                 contents: [{ parts: [{ text: promptText }] }],
                 config: {
                   responseModalities: [Modality.IMAGE],
