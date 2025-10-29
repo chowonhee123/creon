@@ -5,8 +5,6 @@
 
 import { GoogleGenAI, GenerateContentResponse, Modality, Chat, Type } from '@google/genai';
 import {marked} from 'https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js';
-import { removeBackground } from '@imgly/background-removal';
-import ImageTracer from 'imagetracerjs';
 
 // --- TYPE DEFINITIONS ---
 interface IconData {
@@ -85,15 +83,6 @@ window.addEventListener('DOMContentLoaded', () => {
   let currentGeneratedImageStudio: GeneratedImageData | null = null;
   let imageStudioHistory: GeneratedImageData[] = [];
   let imageStudioHistoryIndex = -1;
-  let imageStudioSubjectImage: { file: File; dataUrl: string } | null = null;
-  let imageStudioSceneImage: { file: File; dataUrl: string } | null = null;
-  let currentImageStudioModalType: 'subject' | 'scene' | null = null;
-  
-  // Main Page State (3D Studio functionality)
-  let currentGeneratedImageMain: GeneratedImageData | null = null;
-  let imageHistoryMain: GeneratedImageData[] = [];
-  let historyIndexMain = -1;
-  let mainReferenceImage: string | null = null;
 
   // --- CONSTANTS ---
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -636,14 +625,6 @@ window.addEventListener('DOMContentLoaded', () => {
   // Explore Page
   const explorePage = $('#page-usages');
   const exploreMain = $('.explore-main');
-  
-  // Main Page Elements (3D Studio functionality)
-  const mainReferenceContainer = $('#main-reference-container');
-  const mainReferenceDropZone = $('#main-reference-drop-zone');
-  const mainGenerateWithTextBtn = $('#main-generate-with-text-btn');
-  const mainAttachImageBtn = $('#main-attach-image-btn');
-  const mainRemoveReferenceBtn = $('#main-remove-reference-btn');
-  const mainGenerationLoaderModal = $('#main-generation-loader-modal');
   const exploreFeed = $('#explore-feed');
   const exploreDetailsPanel = $('#explore-details-panel');
   const exploreDetailsCloseBtn = $('#explore-details-close-btn');
@@ -1012,59 +993,33 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const generateImage = async (
     prompt: string,
-    resultImgElement: HTMLImageElement | null,
-    resultPlaceholderElement: HTMLElement | null,
-    resultErrorElement: HTMLElement | null,
-    idlePlaceholderElement: HTMLElement | null,
+    resultImgElement: HTMLImageElement,
+    resultPlaceholderElement: HTMLElement,
+    resultErrorElement: HTMLElement,
+    idlePlaceholderElement: HTMLElement,
     generateBtn: HTMLElement,
     referenceImages: ({ file: File; dataUrl: string } | null)[] = []
   ) => {
     updateButtonLoadingState(generateBtn, true);
-    resultPlaceholderElement?.classList.remove('hidden');
-    resultPlaceholderElement?.classList.remove('is-error');
-    idlePlaceholderElement?.classList.add('hidden');
-    resultImgElement?.classList.add('hidden');
-    resultImgElement?.classList.remove('visible');
+    resultPlaceholderElement.classList.remove('hidden');
+    resultPlaceholderElement.classList.remove('is-error');
+    idlePlaceholderElement.classList.add('hidden');
+    resultImgElement.classList.add('hidden');
+    resultImgElement.classList.remove('visible');
 
     try {
       const parts: any[] = [{ text: prompt }];
       
       const imageParts = await Promise.all(referenceImages.filter(img => img).map(async refImg => {
-        if (!refImg) return null;
-        
-        // If file exists, use it
-        if (refImg.file) {
-          return {
-            inlineData: {
-              data: await blobToBase64(refImg.file),
-              mimeType: refImg.file.type,
-            }
-          };
-        }
-        
-        // Otherwise, extract from dataUrl
-        if (refImg.dataUrl) {
-          const match = refImg.dataUrl.match(/^data:([^;]+);base64,(.+)$/);
-          if (match) {
-            const mimeType = match[1];
-            const base64Data = match[2];
-            return {
-              inlineData: {
-                data: base64Data,
-                mimeType: mimeType,
-              }
-            };
+        return {
+          inlineData: {
+            data: await blobToBase64(refImg!.file),
+            mimeType: refImg!.file.type,
           }
-        }
-        
-        return null;
+        };
       }));
-      
-      // Filter out null values
-      const validImageParts = imageParts.filter(part => part !== null) as any[];
-      parts.push(...validImageParts);
+      parts.push(...imageParts);
 
-      console.log('Calling AI API with parts:', parts);
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash-image',
         contents: { parts },
@@ -1073,43 +1028,23 @@ window.addEventListener('DOMContentLoaded', () => {
         },
       });
 
-      console.log('API response received:', response);
-      
-      const candidate = response.candidates?.[0];
-      const content = candidate?.content;
-      const responseParts = content?.parts;
-      const firstPart = responseParts?.[0];
-      const inlineData = firstPart?.inlineData;
-
-      if (inlineData && inlineData.data && inlineData.mimeType) {
-        console.log('Image data extracted successfully, mimeType:', inlineData.mimeType);
-        const imageData = inlineData;
+      if (response.candidates && response.candidates[0].content.parts[0].inlineData) {
+        const imageData = response.candidates[0].content.parts[0].inlineData;
         const dataUrl = `data:${imageData.mimeType};base64,${imageData.data}`;
-        if (resultImgElement) {
-          resultImgElement.src = dataUrl;
-          resultImgElement.classList.remove('hidden');
-          setTimeout(() => resultImgElement.classList.add('visible'), 50); // For transition
-        }
+        resultImgElement.src = dataUrl;
+        resultImgElement.classList.remove('hidden');
+        setTimeout(() => resultImgElement.classList.add('visible'), 50); // For transition
         return { data: imageData.data, mimeType: imageData.mimeType };
       } else {
-        console.error('Invalid API response structure:', {
-          hasCandidates: !!response.candidates,
-          candidateCount: response.candidates?.length,
-          hasContent: !!candidate?.content,
-          hasParts: !!responseParts,
-          partsCount: responseParts?.length,
-          hasInlineData: !!inlineData,
-          inlineDataKeys: inlineData ? Object.keys(inlineData) : null
-        });
         throw new Error('No image data received from API.');
       }
     } catch (error) {
       console.error('Image generation failed:', error);
-      resultPlaceholderElement?.classList.add('is-error');
+      resultPlaceholderElement.classList.add('is-error');
       return null;
     } finally {
       updateButtonLoadingState(generateBtn, false);
-      resultPlaceholderElement?.classList.add('hidden');
+      resultPlaceholderElement.classList.add('hidden');
     }
   };
 
@@ -1291,8 +1226,8 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     historyCounter2d.textContent = `${historyIndex2d + 1} / ${imageHistory2d.length}`;
-    (historyBackBtn2d as HTMLButtonElement).disabled = historyIndex2d <= 0;
-    (historyForwardBtn2d as HTMLButtonElement).disabled = historyIndex2d >= imageHistory2d.length - 1;
+    historyBackBtn2d.disabled = historyIndex2d <= 0;
+    historyForwardBtn2d.disabled = historyIndex2d >= imageHistory2d.length - 1;
   };
   
   
@@ -1616,365 +1551,6 @@ window.addEventListener('DOMContentLoaded', () => {
       showToast({ type: 'error', title: 'Generation Failed', body: 'Failed to generate scene image.' });
     } finally {
       loaderModal?.classList.add('hidden');
-    }
-  };
-
-  // Main Page Generate Functions (3D Studio functionality)
-  const handleGenerateImageMain = async () => {
-    console.log('handleGenerateImageMain called');
-    const generateInput = document.getElementById('generate-input') as HTMLInputElement;
-    if (!generateInput?.value.trim()) {
-      console.log('No input provided');
-      showToast({ type: 'error', title: 'Input Required', body: 'Please enter a prompt for your image.' });
-      generateInput?.focus();
-      return;
-    }
-
-    const userPrompt = generateInput.value.trim();
-    console.log('User prompt:', userPrompt);
-    
-    // Show loading modal
-    if (mainGenerationLoaderModal) {
-      console.log('Showing loading modal');
-      mainGenerationLoaderModal.classList.remove('hidden');
-    }
-
-    // Show loading state on button
-    const generateBtn = document.getElementById('generate-btn');
-    if (generateBtn) {
-      generateBtn.classList.add('loading');
-      generateBtn.setAttribute('disabled', 'true');
-    }
-
-    try {
-      // Use the same prompt generation logic as 3D Studio
-      const template = JSON.parse(DEFAULT_3D_STYLE_PROMPT_TEMPLATE);
-      // Set the subject from user input
-      template.subject = userPrompt || 'a friendly robot';
-      // Use default values for other options (shadow, colors, etc.)
-      const imagePromptText = createImagePromptFromTemplate(template, '');
-      console.log('Generated prompt:', imagePromptText);
-
-      // Generate image using the same logic as 3D Studio
-      console.log('Calling generateImage...');
-      const imageData = await generateImage(
-        imagePromptText,
-        null, // No specific result image element for main page
-        null, // No placeholder
-        null, // No error element
-        null, // No idle placeholder
-        generateBtn as HTMLButtonElement,
-        mainReferenceImage ? [{ dataUrl: mainReferenceImage, file: null as any }] : []
-      );
-
-      console.log('Image generation result:', imageData);
-
-      if (imageData && imageData.data && imageData.mimeType) {
-        const newImage: GeneratedImageData = {
-          id: `img_main_${Date.now()}`,
-          data: imageData.data,
-          mimeType: imageData.mimeType,
-          subject: userPrompt,
-          styleConstraints: imagePromptText,
-          timestamp: Date.now(),
-          videoDataUrl: undefined,
-          motionPrompt: null,
-        };
-        
-        console.log('Created new image object:', newImage);
-        
-        await setInitialMotionFramesMain(newImage);
-        
-        currentGeneratedImageMain = newImage;
-        imageHistoryMain.splice(historyIndexMain + 1);
-        imageHistoryMain.push(newImage);
-        historyIndexMain = imageHistoryMain.length - 1;
-
-        // Add to image library
-        const dataUrl = `data:${newImage.mimeType};base64,${newImage.data}`;
-        const newLibraryItem = { id: newImage.id, dataUrl, mimeType: newImage.mimeType };
-        imageLibrary.unshift(newLibraryItem);
-        if (imageLibrary.length > 20) {
-          imageLibrary.splice(20);
-        }
-
-        // Hide loading modal
-        if (mainGenerationLoaderModal) {
-          mainGenerationLoaderModal.classList.add('hidden');
-        }
-
-        // Show success toast
-        showToast({ 
-          type: 'success', 
-          title: 'Image Generated!', 
-          body: 'Your 3D image has been created successfully.' 
-        });
-        
-        // Trigger confetti
-        triggerConfetti();
-        
-        // Navigate to 3D Studio to show the result
-        console.log('Navigating to 3D Studio...');
-        navigateTo3DStudioWithResult(newImage);
-      } else {
-        console.error('Image generation returned invalid data:', imageData);
-        throw new Error('Image generation failed: Invalid response data');
-      }
-    } catch (error) {
-      console.error('Error generating image:', error);
-      
-      // Hide loading modal
-      if (mainGenerationLoaderModal) {
-        mainGenerationLoaderModal.classList.add('hidden');
-      }
-      
-      showToast({ 
-        type: 'error', 
-        title: 'Generation Failed', 
-        body: 'Failed to generate image. Please try again.' 
-      });
-    } finally {
-      // Reset loading state
-      if (generateBtn) {
-        generateBtn.classList.remove('loading');
-        generateBtn.removeAttribute('disabled');
-      }
-    }
-  };
-
-  const setInitialMotionFramesMain = async (imageData: GeneratedImageData) => {
-    if (!imageData) return;
-    
-    try {
-      const dataUrl = `data:${imageData.mimeType};base64,${imageData.data}`;
-      
-      // Set first frame (same as original image)
-      imageData.videoDataUrl = dataUrl;
-      
-      // Motion prompt will be generated later when user requests it
-      imageData.motionPrompt = null;
-    } catch (error) {
-      console.error('Error setting initial motion frames:', error);
-    }
-  };
-
-  const navigateTo3DStudioWithResult = (imageData: GeneratedImageData) => {
-    // Navigate to 3D Studio
-    const targetPage = document.getElementById('page-id-3d');
-    if (targetPage) {
-      // Hide all pages
-      document.querySelectorAll('.page-container').forEach(pageEl => {
-        pageEl.classList.add('hidden');
-      });
-      
-      // Show 3D Studio page
-      targetPage.classList.remove('hidden');
-      
-      // Update nav items
-      document.querySelectorAll('.nav-item').forEach(navItem => {
-        navItem.classList.remove('active');
-      });
-      
-      const targetNavItem = document.querySelector('[data-page="page-id-3d"]');
-      if (targetNavItem) {
-        targetNavItem.classList.add('active');
-      }
-
-      // Set the generated image as current in 3D Studio
-      currentGeneratedImage = imageData;
-      imageHistory = [imageData];
-      historyIndex = 0;
-
-      // Update 3D Studio UI with the generated image
-      // Use setTimeout to ensure DOM is ready after page transition
-      setTimeout(() => {
-        update3DStudioUIWithImage(imageData);
-      }, 100);
-    }
-  };
-
-  const update3DStudioUIWithImage = (imageData: GeneratedImageData) => {
-    console.log('update3DStudioUIWithImage called with:', imageData);
-    
-    // Update the result image - 3D Studio uses class selector, not ID
-    const resultImage = document.querySelector('#page-id-3d .result-image') as HTMLImageElement;
-    if (resultImage && imageData.data && imageData.mimeType) {
-      const dataUrl = `data:${imageData.mimeType};base64,${imageData.data}`;
-      console.log('Setting result image src:', dataUrl.substring(0, 50) + '...');
-      console.log('Result image element found:', resultImage);
-      resultImage.src = dataUrl;
-      resultImage.classList.remove('hidden');
-      resultImage.classList.add('visible');
-      
-      // Ensure image loads
-      resultImage.onload = () => {
-        console.log('Result image loaded successfully');
-        console.log('Image dimensions:', resultImage.naturalWidth, 'x', resultImage.naturalHeight);
-      };
-      resultImage.onerror = (e) => {
-        console.error('Error loading result image:', e);
-        console.error('Failed dataUrl:', dataUrl.substring(0, 100));
-      };
-    } else {
-      console.error('Result image element not found or invalid image data', {
-        resultImage: !!resultImage,
-        hasData: !!imageData.data,
-        hasMimeType: !!imageData.mimeType,
-        imageDataKeys: Object.keys(imageData)
-      });
-    }
-
-    // Update prompt display
-    const promptDisplay = $('#prompt-display-3d') as HTMLTextAreaElement;
-    if (promptDisplay && imageData.styleConstraints) {
-      promptDisplay.value = imageData.styleConstraints;
-    }
-
-    // Update user prompt
-    const userPrompt = $('#user-prompt-3d') as HTMLInputElement;
-    if (userPrompt && imageData.subject) {
-      userPrompt.value = imageData.subject;
-    }
-
-    // Update subject input
-    const subjectInput = $('#image-prompt-subject-input') as HTMLInputElement;
-    if (subjectInput && imageData.subject) {
-      subjectInput.value = imageData.subject;
-    }
-
-    // Hide placeholders and show result
-    const placeholder = $('#id-3d-placeholder');
-    const errorPlaceholder = $('#id-3d-error-placeholder');
-    const resultPlaceholder = $('#result-placeholder');
-    const idlePlaceholder = document.querySelector('#page-id-3d #result-idle-placeholder');
-    const motionPromptPlaceholder = document.querySelector('#page-id-3d #motion-prompt-placeholder');
-    
-    if (placeholder) placeholder.classList.add('hidden');
-    if (errorPlaceholder) errorPlaceholder.classList.add('hidden');
-    if (resultPlaceholder) resultPlaceholder.classList.add('hidden');
-    if (idlePlaceholder) idlePlaceholder.classList.add('hidden');
-    if (motionPromptPlaceholder) motionPromptPlaceholder.classList.add('hidden');
-
-    // Show result container - use class selector within 3D Studio page
-    const resultContainer = document.querySelector('#page-id-3d .result-container');
-    if (resultContainer) {
-      resultContainer.classList.remove('hidden');
-      console.log('Result container shown');
-    } else {
-      console.error('Result container not found');
-    }
-
-    // Update details panel
-    const dataUrl = `data:${imageData.mimeType};base64,${imageData.data}`;
-    const detailsPreviewImage = $('#details-preview-image') as HTMLImageElement;
-    const detailsDownloadBtn = $('#details-download-btn') as HTMLAnchorElement;
-    
-    if (detailsPreviewImage && detailsDownloadBtn) {
-      detailsPreviewImage.src = dataUrl;
-      detailsDownloadBtn.href = dataUrl;
-      detailsDownloadBtn.download = `${imageData.subject.replace(/\s+/g, '_')}.png`;
-      console.log('Details panel preview and download updated');
-    }
-    
-    // Update motion thumbnail in details panel
-    const motionThumbnailImage = $('#motion-thumbnail-image') as HTMLImageElement;
-    const motionThumbnailLabel = $('#motion-thumbnail-label');
-    if (motionThumbnailImage && motionThumbnailLabel) {
-      motionThumbnailImage.src = dataUrl;
-      motionThumbnailLabel.textContent = imageData.subject;
-      console.log('Motion thumbnail updated');
-    }
-    
-    // Update color pickers in details panel from style constraints
-    if (imageData.styleConstraints) {
-      try {
-        const styleData = JSON.parse(imageData.styleConstraints);
-        const detailsBackgroundColorPicker = $('#details-background-color-picker-3d') as HTMLInputElement;
-        const detailsObjectColorPicker = $('#details-object-color-picker-3d') as HTMLInputElement;
-        
-        if (detailsBackgroundColorPicker && styleData.background?.color) {
-          detailsBackgroundColorPicker.value = styleData.background.color;
-          console.log('Background color updated:', styleData.background.color);
-        }
-        if (detailsObjectColorPicker && styleData.colors?.dominant_blue) {
-          detailsObjectColorPicker.value = styleData.colors.dominant_blue;
-          console.log('Object color updated:', styleData.colors.dominant_blue);
-        }
-      } catch (e) {
-        console.error('Failed to parse style constraints:', e);
-      }
-    }
-    
-    // Show details panel
-    const detailsPanel = $('#image-details-panel');
-    if (detailsPanel) {
-      detailsPanel.classList.remove('hidden');
-      detailsPanel.classList.add('is-open');
-      console.log('Details panel shown');
-    }
-
-    // Update motion UI
-    updateMotionUI();
-    
-    // Update history tab
-    updateHistoryTab();
-    
-    console.log('3D Studio UI updated successfully');
-  };
-
-  // Main page reference image functions
-  const handleMainReferenceImageUpload = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target?.result as string;
-      mainReferenceImage = dataUrl;
-      
-      // Update UI
-      const previewImg = mainReferenceDropZone?.querySelector('.drop-zone-preview') as HTMLImageElement;
-      const promptEl = mainReferenceDropZone?.querySelector('.drop-zone-prompt');
-      
-      if (previewImg && promptEl) {
-        previewImg.src = dataUrl;
-        previewImg.classList.remove('hidden');
-        promptEl.classList.add('hidden');
-      }
-      
-      // Show remove button
-      if (mainRemoveReferenceBtn) {
-        mainRemoveReferenceBtn.classList.remove('hidden');
-      }
-      
-      // Show overlay buttons
-      const overlay = mainReferenceDropZone?.querySelector('.drop-zone-overlay');
-      if (overlay) {
-        overlay.classList.remove('hidden');
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const removeMainReferenceImage = () => {
-    mainReferenceImage = null;
-    
-    // Update UI
-    const previewImg = mainReferenceDropZone?.querySelector('.drop-zone-preview') as HTMLImageElement;
-    const promptEl = mainReferenceDropZone?.querySelector('.drop-zone-prompt');
-    
-    if (previewImg && promptEl) {
-      previewImg.src = '';
-      previewImg.classList.add('hidden');
-      promptEl.classList.remove('hidden');
-    }
-    
-    // Hide remove button
-    if (mainRemoveReferenceBtn) {
-      mainRemoveReferenceBtn.classList.add('hidden');
-    }
-    
-    // Hide overlay buttons
-    const overlay = mainReferenceDropZone?.querySelector('.drop-zone-overlay');
-    if (overlay) {
-      overlay.classList.add('hidden');
     }
   };
 
@@ -2990,8 +2566,8 @@ Return the 5 suggestions as a JSON array.`;
     });
 
     historyCounter.textContent = `${historyIndex + 1} / ${imageHistory.length}`;
-    (historyBackBtn as HTMLButtonElement).disabled = historyIndex <= 0;
-    (historyForwardBtn as HTMLButtonElement).disabled = historyIndex >= imageHistory.length - 1;
+    historyBackBtn.disabled = historyIndex <= 0;
+    historyForwardBtn.disabled = historyIndex >= imageHistory.length - 1;
   };
 
   const renderImageStudioHistory = () => {
@@ -3054,8 +2630,8 @@ Return the 5 suggestions as a JSON array.`;
     });
 
     historyCounterEl.textContent = `${imageStudioHistoryIndex + 1} / ${imageStudioHistory.length}`;
-    (historyBackBtnEl as HTMLButtonElement).disabled = imageStudioHistoryIndex <= 0;
-    (historyForwardBtnEl as HTMLButtonElement).disabled = imageStudioHistoryIndex >= imageStudioHistory.length - 1;
+    historyBackBtnEl.disabled = imageStudioHistoryIndex <= 0;
+    historyForwardBtnEl.disabled = imageStudioHistoryIndex >= imageStudioHistory.length - 1;
   };
   
   // --- PAGE-SPECIFIC LOGIC: Icon Studio ---
@@ -3328,10 +2904,10 @@ Return the 5 suggestions as a JSON array.`;
     
     updateIconStudio3dPrompt();
     
-    (downloadSvgBtn as HTMLButtonElement).disabled = false;
-    (downloadPngBtn as HTMLButtonElement).disabled = false;
-    (copyJsxBtn as HTMLButtonElement).disabled = false;
-    (copySnippetBtn as HTMLButtonElement).disabled = false;
+    downloadSvgBtn.disabled = false;
+    downloadPngBtn.disabled = false;
+    copyJsxBtn.disabled = false;
+    copySnippetBtn.disabled = false;
     
     updateCodeSnippetDisplay();
     applyAllIconStyles();
@@ -4430,156 +4006,6 @@ Return the 5 suggestions as a JSON array.`;
         handleCopyCode(currentGeneratedImage2d.styleConstraints, '2D Prompt');
     });
 
-    // 2D Studio: Remove Background
-    const removeBackgroundBtn2d = $('#p2d-remove-background-btn');
-    removeBackgroundBtn2d?.addEventListener('click', async () => {
-        if (!currentGeneratedImage2d) {
-            showToast({ type: 'error', title: 'No Image', body: 'Please generate an image first.' });
-            return;
-        }
-
-        try {
-            removeBackgroundBtn2d.setAttribute('disabled', 'true');
-            removeBackgroundBtn2d.classList.add('loading');
-            
-            const dataUrl = `data:${currentGeneratedImage2d.mimeType};base64,${currentGeneratedImage2d.data}`;
-            
-            // Convert data URL to blob
-            const response = await fetch(dataUrl);
-            const blob = await response.blob();
-            
-            // Remove background
-            const blobWithoutBg = await removeBackground(blob);
-            
-            // Convert to base64
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const result = e.target?.result as string;
-                const base64Data = result.split(',')[1];
-                
-                // Update current image
-                currentGeneratedImage2d.data = base64Data;
-                currentGeneratedImage2d.mimeType = 'image/png';
-                
-                // Update preview
-                const newDataUrl = `data:image/png;base64,${base64Data}`;
-                if (detailsPreviewImage2d) detailsPreviewImage2d.src = newDataUrl;
-                if (resultImage2d) {
-                    resultImage2d.src = newDataUrl;
-                }
-                
-                // Update download button
-                if (detailsDownloadBtn2d) {
-                    detailsDownloadBtn2d.href = newDataUrl;
-                }
-                
-                showToast({ type: 'success', title: 'Background Removed', body: 'Background has been successfully removed.' });
-            };
-            reader.readAsDataURL(blobWithoutBg);
-            
-        } catch (error) {
-            console.error('Background removal failed:', error);
-            showToast({ type: 'error', title: 'Removal Failed', body: 'Failed to remove background. Please try again.' });
-        } finally {
-            removeBackgroundBtn2d?.removeAttribute('disabled');
-            removeBackgroundBtn2d?.classList.remove('loading');
-        }
-    });
-
-    // 2D Studio: Convert to SVG
-    const convertToSvgBtn2d = $('#p2d-convert-to-svg-btn');
-    convertToSvgBtn2d?.addEventListener('click', async () => {
-        if (!currentGeneratedImage2d) {
-            showToast({ type: 'error', title: 'No Image', body: 'Please generate an image first.' });
-            return;
-        }
-
-        try {
-            convertToSvgBtn2d.setAttribute('disabled', 'true');
-            convertToSvgBtn2d.classList.add('loading');
-            
-            const dataUrl = `data:${currentGeneratedImage2d.mimeType};base64,${currentGeneratedImage2d.data}`;
-            
-            // Create image element to get image data
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
-            
-            img.onload = () => {
-                // Create canvas
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                if (!ctx) {
-                    throw new Error('Could not get canvas context');
-                }
-                
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
-                
-                // Get image data
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                
-                // Convert to SVG using ImageTracer
-                const options = {
-                    ltres: 1,
-                    qtres: 1,
-                    pathomit: 8,
-                    colorsampling: 2,
-                    numberofcolors: 256,
-                    mincolorratio: 0.02,
-                    colorquantcycles: 5,
-                    scale: 1,
-                    roundcoords: 1,
-                    blurradius: 0,
-                    blurdelta: 20,
-                    strokewidth: 1,
-                    linefilter: true,
-                    layercontainer: 'g',
-                    layerbgcolor: '',
-                    viewbox: false,
-                    desc: false,
-                    lcpr: 0,
-                    qcpr: 0,
-                    minroundedstops: 0,
-                    minrectroundedstops: 0,
-                    blursvg: false,
-                    despeckle: false,
-                    despecklelevel: 0,
-                    simplifytolerance: 0,
-                    corsenabled: false
-                };
-                
-                const svgString = ImageTracer.imagedataToSVG(imageData, options);
-                
-                // Create blob and download
-                const blob = new Blob([svgString], { type: 'image/svg+xml' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}.svg`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                
-                showToast({ type: 'success', title: 'SVG Converted', body: 'Image has been converted to SVG and downloaded.' });
-            };
-            
-            img.onerror = () => {
-                throw new Error('Failed to load image');
-            };
-            
-            img.src = dataUrl;
-            
-        } catch (error) {
-            console.error('SVG conversion failed:', error);
-            showToast({ type: 'error', title: 'Conversion Failed', body: 'Failed to convert image to SVG. Please try again.' });
-        } finally {
-            convertToSvgBtn2d?.removeAttribute('disabled');
-            convertToSvgBtn2d?.classList.remove('loading');
-        }
-    });
-
     detailsDeleteBtn2d?.addEventListener('click', () => {
         if (!currentGeneratedImage2d) return;
 
@@ -4883,257 +4309,7 @@ Return the 5 suggestions as a JSON array.`;
             }
         });
     }
-
-    // GNB scroll effect
-    const appHeader = document.querySelector('.app-header');
-    let lastScrollY = window.scrollY;
-
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      
-      if (currentScrollY > 50) {
-        appHeader?.classList.add('scrolled');
-      } else {
-        appHeader?.classList.remove('scrolled');
-      }
-      
-      lastScrollY = currentScrollY;
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-
-    // Generate button functionality (navigate to 3D Studio and prefill)
-    const generateBtn = document.getElementById('generate-btn');
-    const generateInput = document.getElementById('generate-input') as HTMLInputElement;
-
-    generateBtn?.addEventListener('click', handleGenerateImageMain);
-
-    // Enter key support for generate input
-    generateInput?.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        generateBtn?.click();
-      }
-    });
-
-    // Main page reference image upload functionality
-    if (mainReferenceDropZone) {
-      // Drag and drop events
-      mainReferenceDropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        mainReferenceDropZone.classList.add('dragover');
-      });
-
-      mainReferenceDropZone.addEventListener('dragleave', (e) => {
-        e.preventDefault();
-        mainReferenceDropZone.classList.remove('dragover');
-      });
-
-      mainReferenceDropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        mainReferenceDropZone.classList.remove('dragover');
-        const file = e.dataTransfer?.files[0];
-        if (file && file.type.startsWith('image/')) {
-          handleMainReferenceImageUpload(file);
-        }
-      });
-
-      // Click to upload
-      mainReferenceDropZone.addEventListener('click', () => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        input.addEventListener('change', (e) => {
-          const file = (e.target as HTMLInputElement).files?.[0];
-          if (file) {
-            handleMainReferenceImageUpload(file);
-          }
-        });
-        input.click();
-      });
-    }
-
-    // Main page reference image buttons
-    mainGenerateWithTextBtn?.addEventListener('click', () => {
-      if (mainReferenceImage) {
-        handleGenerateImageMain();
-      }
-    });
-
-    mainAttachImageBtn?.addEventListener('click', () => {
-      if (mainReferenceImage) {
-        handleGenerateImageMain();
-      }
-    });
-
-    mainRemoveReferenceBtn?.addEventListener('click', () => {
-      removeMainReferenceImage();
-    });
-
-    // Logo click handler to navigate to home
-    const logo = $('.logo');
-    logo?.addEventListener('click', () => {
-      // Remove active class from all nav items
-      document.querySelectorAll('.nav-item').forEach(navItem => {
-        navItem.classList.remove('active');
-      });
-      
-      // Show home page
-      currentPage = 'page-usages';
-      pageContainers.forEach(container => {
-        container.classList.add('hidden');
-      });
-      
-      const homePage = $('#page-usages');
-      if (homePage) {
-        homePage.classList.remove('hidden');
-      }
-    });
-
-    // Dynamic placeholder functionality
-    const dynamicPlaceholder = document.getElementById('dynamic-placeholder');
-    const placeholderTexts = [
-      'Creon create a stunning 3D logo animation...',
-      'Creon create a modern icon set for my app...',
-      'Creon create a cinematic video intro...',
-      'Creon create a futuristic UI mockup...',
-      'Creon create a minimalist brand identity...',
-      'Creon create a product showcase video...',
-      'Creon create a social media banner...',
-      'Creon create a mobile app interface...',
-      'Creon create a promotional animation...',
-      'Creon create a website hero section...'
-    ];
-
-    let currentIndex = 0;
-    let isTyping = false;
-    let currentText = '';
-    let charIndex = 0;
-
-    function typeText() {
-      if (charIndex < placeholderTexts[currentIndex].length) {
-        currentText += placeholderTexts[currentIndex].charAt(charIndex);
-        if (dynamicPlaceholder) {
-          dynamicPlaceholder.textContent = currentText;
-        }
-        charIndex++;
-        setTimeout(typeText, 50); // Typing speed
-      } else {
-        // Wait before erasing
-        setTimeout(eraseText, 2000);
-      }
-    }
-
-    function eraseText() {
-      if (currentText.length > 0) {
-        currentText = currentText.slice(0, -1);
-        if (dynamicPlaceholder) {
-          dynamicPlaceholder.textContent = currentText;
-        }
-        setTimeout(eraseText, 30); // Erasing speed
-      } else {
-        // Move to next text
-        currentIndex = (currentIndex + 1) % placeholderTexts.length;
-        charIndex = 0;
-        setTimeout(typeText, 500); // Pause before next text
-      }
-    }
-
-    // Start the dynamic placeholder
-    if (dynamicPlaceholder) {
-      typeText();
-    }
-
-    // Hide placeholder when user starts typing
-    generateInput?.addEventListener('input', () => {
-      if (dynamicPlaceholder) {
-        dynamicPlaceholder.classList.add('hidden');
-      }
-    });
-
-    // Show placeholder when input is empty
-    generateInput?.addEventListener('blur', () => {
-      if (generateInput?.value === '' && dynamicPlaceholder) {
-        dynamicPlaceholder.classList.remove('hidden');
-      }
-    });
   };
-  
-  // Setup 2D Studio accordions
-  const p2dOptionsAccordion = document.querySelector('.accordion-header[data-accordion="p2d-options"]');
-  const p2dOptionsContent = document.getElementById('p2d-options-content');
-  
-  if (p2dOptionsAccordion && p2dOptionsContent) {
-    p2dOptionsAccordion.addEventListener('click', () => {
-      const isActive = p2dOptionsAccordion.getAttribute('data-active') === 'true';
-      p2dOptionsAccordion.setAttribute('data-active', isActive ? 'false' : 'true');
-      p2dOptionsContent.setAttribute('data-active', isActive ? 'false' : 'true');
-    });
-  }
-  
-  const p2dReferenceAccordion = document.querySelector('.accordion-header[data-accordion="p2d-reference"]');
-  const p2dReferenceContent = document.getElementById('p2d-reference-content');
-  
-  if (p2dReferenceAccordion && p2dReferenceContent) {
-    p2dReferenceAccordion.addEventListener('click', () => {
-      const isActive = p2dReferenceAccordion.getAttribute('data-active') === 'true';
-      p2dReferenceAccordion.setAttribute('data-active', isActive ? 'false' : 'true');
-      p2dReferenceContent.setAttribute('data-active', isActive ? 'false' : 'true');
-    });
-  }
-  
-  const p2dLibraryAccordion = document.querySelector('.accordion-header[data-accordion="p2d-library"]');
-  const p2dLibraryContent = document.getElementById('p2d-library-content');
-  
-  if (p2dLibraryAccordion && p2dLibraryContent) {
-    p2dLibraryAccordion.addEventListener('click', () => {
-      const isActive = p2dLibraryAccordion.getAttribute('data-active') === 'true';
-      p2dLibraryAccordion.setAttribute('data-active', isActive ? 'false' : 'true');
-      p2dLibraryContent.setAttribute('data-active', isActive ? 'false' : 'true');
-    });
-  }
-  
-  // Setup 3D Studio accordions
-  const p3dOptionsAccordion = document.querySelector('.accordion-header[data-accordion="3d-options"]');
-  const p3dOptionsContent = document.getElementById('3d-options-content');
-  
-  if (p3dOptionsAccordion && p3dOptionsContent) {
-    p3dOptionsAccordion.addEventListener('click', () => {
-      const isActive = p3dOptionsAccordion.getAttribute('data-active') === 'true';
-      p3dOptionsAccordion.setAttribute('data-active', isActive ? 'false' : 'true');
-      p3dOptionsContent.setAttribute('data-active', isActive ? 'false' : 'true');
-    });
-  }
-  
-  const p3dRefAccordion = document.querySelector('.accordion-header[data-accordion="3d-reference"]');
-  const p3dRefContent = document.getElementById('3d-reference-content');
-  if (p3dRefAccordion && p3dRefContent) {
-    p3dRefAccordion.addEventListener('click', () => {
-      const isActive = p3dRefAccordion.getAttribute('data-active') === 'true';
-      p3dRefAccordion.setAttribute('data-active', isActive ? 'false' : 'true');
-      p3dRefContent.setAttribute('data-active', isActive ? 'false' : 'true');
-    });
-  }
-
-  const p3dLibAccordion = document.querySelector('.accordion-header[data-accordion="3d-library"]');
-  const p3dLibContent = document.getElementById('3d-library-content');
-  if (p3dLibAccordion && p3dLibContent) {
-    p3dLibAccordion.addEventListener('click', () => {
-      const isActive = p3dLibAccordion.getAttribute('data-active') === 'true';
-      p3dLibAccordion.setAttribute('data-active', isActive ? 'false' : 'true');
-      p3dLibContent.setAttribute('data-active', isActive ? 'false' : 'true');
-    });
-  }
-  
-  // 3D Details Panel: Fix the image accordion
-  const p3dFixAccordion = document.querySelector('.accordion-header[data-accordion="3d-fix"]');
-  const p3dFixContent = document.getElementById('3d-fix-content');
-  if (p3dFixAccordion && p3dFixContent) {
-    p3dFixAccordion.addEventListener('click', () => {
-      const isActive = p3dFixAccordion.getAttribute('data-active') === 'true';
-      p3dFixAccordion.setAttribute('data-active', isActive ? 'false' : 'true');
-      p3dFixContent.setAttribute('data-active', isActive ? 'false' : 'true');
-    });
-  }
   
   init();
 
