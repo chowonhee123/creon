@@ -1062,6 +1062,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const validImageParts = imageParts.filter(part => part !== null) as any[];
       parts.push(...validImageParts);
 
+      console.log('Calling AI API with parts:', parts);
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash-image',
         contents: { parts },
@@ -1070,8 +1071,17 @@ window.addEventListener('DOMContentLoaded', () => {
         },
       });
 
-      if (response.candidates && response.candidates[0].content.parts[0].inlineData) {
-        const imageData = response.candidates[0].content.parts[0].inlineData;
+      console.log('API response received:', response);
+      
+      const candidate = response.candidates?.[0];
+      const content = candidate?.content;
+      const responseParts = content?.parts;
+      const firstPart = responseParts?.[0];
+      const inlineData = firstPart?.inlineData;
+
+      if (inlineData && inlineData.data && inlineData.mimeType) {
+        console.log('Image data extracted successfully, mimeType:', inlineData.mimeType);
+        const imageData = inlineData;
         const dataUrl = `data:${imageData.mimeType};base64,${imageData.data}`;
         if (resultImgElement) {
           resultImgElement.src = dataUrl;
@@ -1080,6 +1090,15 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         return { data: imageData.data, mimeType: imageData.mimeType };
       } else {
+        console.error('Invalid API response structure:', {
+          hasCandidates: !!response.candidates,
+          candidateCount: response.candidates?.length,
+          hasContent: !!candidate?.content,
+          hasParts: !!responseParts,
+          partsCount: responseParts?.length,
+          hasInlineData: !!inlineData,
+          inlineDataKeys: inlineData ? Object.keys(inlineData) : null
+        });
         throw new Error('No image data received from API.');
       }
     } catch (error) {
@@ -1644,7 +1663,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
       console.log('Image generation result:', imageData);
 
-      if (imageData) {
+      if (imageData && imageData.data && imageData.mimeType) {
         const newImage: GeneratedImageData = {
           id: `img_main_${Date.now()}`,
           data: imageData.data,
@@ -1691,6 +1710,9 @@ window.addEventListener('DOMContentLoaded', () => {
         // Navigate to 3D Studio to show the result
         console.log('Navigating to 3D Studio...');
         navigateTo3DStudioWithResult(newImage);
+      } else {
+        console.error('Image generation returned invalid data:', imageData);
+        throw new Error('Image generation failed: Invalid response data');
       }
     } catch (error) {
       console.error('Error generating image:', error);
@@ -1763,28 +1785,43 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 
   const update3DStudioUIWithImage = (imageData: GeneratedImageData) => {
+    console.log('update3DStudioUIWithImage called with:', imageData);
+    
     // Update the result image
     const resultImage = $('#result-image') as HTMLImageElement;
-    if (resultImage) {
-      resultImage.src = `data:${imageData.mimeType};base64,${imageData.data}`;
+    if (resultImage && imageData.data && imageData.mimeType) {
+      const dataUrl = `data:${imageData.mimeType};base64,${imageData.data}`;
+      console.log('Setting result image src:', dataUrl.substring(0, 50) + '...');
+      resultImage.src = dataUrl;
       resultImage.classList.remove('hidden');
+      resultImage.classList.add('visible');
+      
+      // Ensure image loads
+      resultImage.onload = () => {
+        console.log('Result image loaded successfully');
+      };
+      resultImage.onerror = (e) => {
+        console.error('Error loading result image:', e);
+      };
+    } else {
+      console.error('Result image element not found or invalid image data');
     }
 
     // Update prompt display
     const promptDisplay = $('#prompt-display-3d') as HTMLTextAreaElement;
-    if (promptDisplay) {
+    if (promptDisplay && imageData.styleConstraints) {
       promptDisplay.value = imageData.styleConstraints;
     }
 
     // Update user prompt
     const userPrompt = $('#user-prompt-3d') as HTMLInputElement;
-    if (userPrompt) {
+    if (userPrompt && imageData.subject) {
       userPrompt.value = imageData.subject;
     }
 
     // Update subject input
     const subjectInput = $('#image-prompt-subject-input') as HTMLInputElement;
-    if (subjectInput) {
+    if (subjectInput && imageData.subject) {
       subjectInput.value = imageData.subject;
     }
 
@@ -1805,6 +1842,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Update motion UI
     updateMotionUI();
+    
+    console.log('3D Studio UI updated successfully');
   };
 
   // Main page reference image functions
