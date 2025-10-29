@@ -631,6 +631,8 @@ window.addEventListener('DOMContentLoaded', () => {
   const imageGenerationLoaderModal = $('#image-generation-loader-modal');
   const videoGenerationLoaderModal = $('#video-generation-loader-modal');
   const videoLoaderMessage = $('#video-loader-message');
+  const p2dLoaderModal = $('#p2d-loader-modal');
+  const p2dLoaderMessage = $('#p2d-loader-message');
   
   // Explore Page
   const explorePage = $('#page-usages');
@@ -1155,78 +1157,94 @@ window.addEventListener('DOMContentLoaded', () => {
     
     update2dPromptDisplay();
 
-    const fill = (document.querySelector('#p2d-fill-toggle') as HTMLInputElement).checked;
-    const weight = parseInt((document.querySelector('#p2d-weight-slider') as HTMLInputElement).value);
-
-    const selectedReferences = new Set<({ file: File; dataUrl: string } | null)>();
-
-    // Rule for Fill
-    if (fill) {
-      if (referenceImagesForEdit2d[0]) {
-        selectedReferences.add(referenceImagesForEdit2d[0]);
-      }
-    } else { // fill is off
-      if (referenceImagesForEdit2d[1]) {
-        selectedReferences.add(referenceImagesForEdit2d[1]);
-      }
+    // Show loading modal
+    if (p2dLoaderModal && p2dLoaderMessage) {
+        p2dLoaderMessage.textContent = 'Generating your icon...';
+        p2dLoaderModal.classList.remove('hidden');
     }
 
-    // Rule for Weight
-    if (weight <= 300) {
-      if (referenceImagesForEdit2d[2]) {
-        selectedReferences.add(referenceImagesForEdit2d[2]);
-      }
-    } else if (weight >= 500) {
-      if (referenceImagesForEdit2d[3]) {
-        selectedReferences.add(referenceImagesForEdit2d[3]);
-      }
-    } else if (weight === 400) {
-      if (referenceImagesForEdit2d[1]) {
-        selectedReferences.add(referenceImagesForEdit2d[1]);
-      }
-    }
+    try {
+        const fill = (document.querySelector('#p2d-fill-toggle') as HTMLInputElement).checked;
+        const weight = parseInt((document.querySelector('#p2d-weight-slider') as HTMLInputElement).value);
 
-    const finalReferenceImages = Array.from(selectedReferences);
+        const selectedReferences = new Set<({ file: File; dataUrl: string } | null)>();
 
-    const imageData = await generateImage(
-      imagePromptDisplay2d.value,
-      resultImage2d,
-      resultPlaceholder2d,
-      resultError2d,
-      resultIdlePlaceholder2d,
-      imageGenerateBtn2d,
-      finalReferenceImages
-    );
-
-    if (imageData) {
-        const newImage: GeneratedImageData = {
-            id: `img_2d_${Date.now()}`,
-            data: imageData.data,
-            mimeType: imageData.mimeType,
-            subject: imagePromptSubjectInput2d.value,
-            styleConstraints: imagePromptDisplay2d.value,
-            timestamp: Date.now()
-        };
-        
-        currentGeneratedImage2d = newImage;
-        imageHistory2d.splice(historyIndex2d + 1);
-        imageHistory2d.push(newImage);
-        historyIndex2d = imageHistory2d.length - 1;
-
-        const dataUrl = `data:${newImage.mimeType};base64,${newImage.data}`;
-        const newLibraryItem = { id: newImage.id, dataUrl, mimeType: newImage.mimeType };
-
-        imageLibrary.unshift(newLibraryItem);
-        if (imageLibrary.length > 20) {
-            imageLibrary.pop();
+        // Rule for Fill
+        if (fill) {
+          if (referenceImagesForEdit2d[0]) {
+            selectedReferences.add(referenceImagesForEdit2d[0]);
+          }
+        } else { // fill is off
+          if (referenceImagesForEdit2d[1]) {
+            selectedReferences.add(referenceImagesForEdit2d[1]);
+          }
         }
 
-        saveImageLibrary();
-        renderImageLibrary();
-        update2dViewFromState();
-        detailsPanel2d?.classList.remove('hidden');
-        detailsPanel2d?.classList.add('is-open');
-        renderHistory2d();
+        // Rule for Weight
+        if (weight <= 300) {
+          if (referenceImagesForEdit2d[2]) {
+            selectedReferences.add(referenceImagesForEdit2d[2]);
+          }
+        } else if (weight >= 500) {
+          if (referenceImagesForEdit2d[3]) {
+            selectedReferences.add(referenceImagesForEdit2d[3]);
+          }
+        } else if (weight === 400) {
+          if (referenceImagesForEdit2d[1]) {
+            selectedReferences.add(referenceImagesForEdit2d[1]);
+          }
+        }
+
+        const finalReferenceImages = Array.from(selectedReferences);
+
+        const imageData = await generateImage(
+          imagePromptDisplay2d.value,
+          resultImage2d,
+          resultPlaceholder2d,
+          resultError2d,
+          resultIdlePlaceholder2d,
+          imageGenerateBtn2d,
+          finalReferenceImages
+        );
+
+        if (imageData) {
+            const newImage: GeneratedImageData = {
+                id: `img_2d_${Date.now()}`,
+                data: imageData.data,
+                mimeType: imageData.mimeType,
+                subject: imagePromptSubjectInput2d.value,
+                styleConstraints: imagePromptDisplay2d.value,
+                timestamp: Date.now()
+            };
+            
+            currentGeneratedImage2d = newImage;
+            imageHistory2d.splice(historyIndex2d + 1);
+            imageHistory2d.push(newImage);
+            historyIndex2d = imageHistory2d.length - 1;
+
+            const dataUrl = `data:${newImage.mimeType};base64,${newImage.data}`;
+            const newLibraryItem = { id: newImage.id, dataUrl, mimeType: newImage.mimeType };
+
+            imageLibrary.unshift(newLibraryItem);
+            if (imageLibrary.length > 20) {
+                imageLibrary.pop();
+            }
+
+            saveImageLibrary();
+            renderImageLibrary();
+            update2dViewFromState();
+            detailsPanel2d?.classList.remove('hidden');
+            detailsPanel2d?.classList.add('is-open');
+            renderHistory2d();
+        }
+    } catch (error) {
+        console.error('Error generating 2D image:', error);
+        showToast({ type: 'error', title: 'Generation Failed', body: 'Failed to generate icon. Please try again.' });
+    } finally {
+        // Hide loading modal
+        if (p2dLoaderModal) {
+            p2dLoaderModal.classList.add('hidden');
+        }
     }
   };
 
@@ -4437,6 +4455,12 @@ Return the 5 suggestions as a JSON array.`;
             return;
         }
 
+        // Show loading modal
+        if (p2dLoaderModal && p2dLoaderMessage) {
+            p2dLoaderMessage.textContent = 'Removing background...';
+            p2dLoaderModal.classList.remove('hidden');
+        }
+
         try {
             removeBackgroundBtn2d.setAttribute('disabled', 'true');
             removeBackgroundBtn2d.classList.add('loading');
@@ -4485,6 +4509,10 @@ Return the 5 suggestions as a JSON array.`;
         } finally {
             removeBackgroundBtn2d?.removeAttribute('disabled');
             removeBackgroundBtn2d?.classList.remove('loading');
+            // Hide loading modal
+            if (p2dLoaderModal) {
+                p2dLoaderModal.classList.add('hidden');
+            }
         }
     });
 
@@ -4494,6 +4522,12 @@ Return the 5 suggestions as a JSON array.`;
         if (!currentGeneratedImage2d) {
             showToast({ type: 'error', title: 'No Image', body: 'Please generate an image first.' });
             return;
+        }
+
+        // Show loading modal
+        if (p2dLoaderModal && p2dLoaderMessage) {
+            p2dLoaderMessage.textContent = 'Converting to SVG...';
+            p2dLoaderModal.classList.remove('hidden');
         }
 
         try {
@@ -4579,6 +4613,10 @@ Return the 5 suggestions as a JSON array.`;
         } finally {
             convertToSvgBtn2d?.removeAttribute('disabled');
             convertToSvgBtn2d?.classList.remove('loading');
+            // Hide loading modal
+            if (p2dLoaderModal) {
+                p2dLoaderModal.classList.add('hidden');
+            }
         }
     });
 
