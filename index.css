@@ -1048,6 +1048,45 @@ a.secondary-btn[disabled] {
   font-size: 12px;
   color: var(--text-secondary);
 }
+
+/* History Delete Button */
+.history-item-delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: var(--border-radius-sm);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.history-item:hover .history-item-delete-btn,
+.history-item:focus-within .history-item-delete-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.history-item-delete-btn:hover {
+  background-color: var(--surface-color);
+  color: var(--error-color, #ef4444);
+}
+
+.history-item-delete-btn:active {
+  transform: scale(0.95);
+}
+
+.history-item-delete-btn .material-symbols-outlined {
+  font-size: 18px;
+}
 .history-item-actions {
   display: flex;
   align-items: center;

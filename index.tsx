@@ -1296,8 +1296,45 @@ window.addEventListener('DOMContentLoaded', () => {
             <span class="history-item-label">${item.subject}</span>
             <span class="history-item-timestamp">${timeString}</span>
             </div>
+            <button class="history-item-delete-btn" aria-label="Delete history item">
+                <span class="material-symbols-outlined">delete</span>
+            </button>
         </div>
         `;
+        
+        // Delete button event
+        const deleteBtn = li.querySelector('.history-item-delete-btn') as HTMLButtonElement;
+        deleteBtn?.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent history item click
+            if (imageHistory2d.length === 1) {
+                showToast({ type: 'error', title: 'Cannot Delete', body: 'Cannot delete the last item in history.' });
+                return;
+            }
+            
+            imageHistory2d.splice(index, 1);
+            
+            // Adjust history index
+            if (historyIndex2d >= index && historyIndex2d > 0) {
+                historyIndex2d--;
+            } else if (historyIndex2d >= imageHistory2d.length) {
+                historyIndex2d = imageHistory2d.length - 1;
+            }
+            
+            if (imageHistory2d.length > 0) {
+                currentGeneratedImage2d = imageHistory2d[historyIndex2d];
+                update2dViewFromState();
+            } else {
+                currentGeneratedImage2d = null;
+                resultImage2d.src = '';
+                resultImage2d.classList.add('hidden');
+                resultIdlePlaceholder2d?.classList.remove('hidden');
+                mainResultContentHeader2d?.classList.add('hidden');
+            }
+            
+            renderHistory2d();
+            showToast({ type: 'success', title: 'Deleted', body: 'Item removed from history.' });
+        });
+        
         li.addEventListener('click', () => {
             historyIndex2d = index;
             currentGeneratedImage2d = imageHistory2d[historyIndex2d];
@@ -2995,8 +3032,45 @@ Return the 5 suggestions as a JSON array.`;
             <span class="history-item-label">${item.subject}</span>
             <span class="history-item-timestamp">${timeString}</span>
             </div>
+            <button class="history-item-delete-btn" aria-label="Delete history item">
+                <span class="material-symbols-outlined">delete</span>
+            </button>
         </div>
         `;
+        
+        // Delete button event
+        const deleteBtn = li.querySelector('.history-item-delete-btn') as HTMLButtonElement;
+        deleteBtn?.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent history item click
+            if (imageHistory.length === 1) {
+                showToast({ type: 'error', title: 'Cannot Delete', body: 'Cannot delete the last item in history.' });
+                return;
+            }
+            
+            imageHistory.splice(index, 1);
+            
+            // Adjust history index
+            if (historyIndex >= index && historyIndex > 0) {
+                historyIndex--;
+            } else if (historyIndex >= imageHistory.length) {
+                historyIndex = imageHistory.length - 1;
+            }
+            
+            if (imageHistory.length > 0) {
+                currentGeneratedImage = imageHistory[historyIndex];
+                update3dViewFromState();
+            } else {
+                currentGeneratedImage = null;
+                resultImage.src = '';
+                resultImage.classList.add('hidden');
+                resultIdlePlaceholder?.classList.remove('hidden');
+                mainResultContentHeader?.classList.add('hidden');
+            }
+            
+            renderHistory();
+            showToast({ type: 'success', title: 'Deleted', body: 'Item removed from history.' });
+        });
+        
         li.addEventListener('click', () => {
             historyIndex = index;
             currentGeneratedImage = imageHistory[historyIndex];
