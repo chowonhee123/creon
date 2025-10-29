@@ -5,7 +5,6 @@
 
 import { GoogleGenAI, GenerateContentResponse, Modality, Chat, Type } from '@google/genai';
 import {marked} from 'https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js';
-import { removeBackground } from '@imgly/background-removal';
 import ImageTracer from 'imagetracerjs';
 
 // --- TYPE DEFINITIONS ---
@@ -4447,6 +4446,9 @@ Return the 5 suggestions as a JSON array.`;
             // Convert data URL to blob
             const response = await fetch(dataUrl);
             const blob = await response.blob();
+            
+            // Dynamically import background removal (loads WebAssembly only when needed)
+            const { removeBackground } = await import('@imgly/background-removal');
             
             // Remove background
             const blobWithoutBg = await removeBackground(blob);
