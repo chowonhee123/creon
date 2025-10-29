@@ -1862,8 +1862,60 @@ window.addEventListener('DOMContentLoaded', () => {
       console.error('Result container not found');
     }
 
+    // Update details panel
+    const dataUrl = `data:${imageData.mimeType};base64,${imageData.data}`;
+    const detailsPreviewImage = $('#details-preview-image') as HTMLImageElement;
+    const detailsDownloadBtn = $('#details-download-btn') as HTMLAnchorElement;
+    
+    if (detailsPreviewImage && detailsDownloadBtn) {
+      detailsPreviewImage.src = dataUrl;
+      detailsDownloadBtn.href = dataUrl;
+      detailsDownloadBtn.download = `${imageData.subject.replace(/\s+/g, '_')}.png`;
+      console.log('Details panel preview and download updated');
+    }
+    
+    // Update motion thumbnail in details panel
+    const motionThumbnailImage = $('#motion-thumbnail-image') as HTMLImageElement;
+    const motionThumbnailLabel = $('#motion-thumbnail-label');
+    if (motionThumbnailImage && motionThumbnailLabel) {
+      motionThumbnailImage.src = dataUrl;
+      motionThumbnailLabel.textContent = imageData.subject;
+      console.log('Motion thumbnail updated');
+    }
+    
+    // Update color pickers in details panel from style constraints
+    if (imageData.styleConstraints) {
+      try {
+        const styleData = JSON.parse(imageData.styleConstraints);
+        const detailsBackgroundColorPicker = $('#details-background-color-picker-3d') as HTMLInputElement;
+        const detailsObjectColorPicker = $('#details-object-color-picker-3d') as HTMLInputElement;
+        
+        if (detailsBackgroundColorPicker && styleData.background?.color) {
+          detailsBackgroundColorPicker.value = styleData.background.color;
+          console.log('Background color updated:', styleData.background.color);
+        }
+        if (detailsObjectColorPicker && styleData.colors?.dominant_blue) {
+          detailsObjectColorPicker.value = styleData.colors.dominant_blue;
+          console.log('Object color updated:', styleData.colors.dominant_blue);
+        }
+      } catch (e) {
+        console.error('Failed to parse style constraints:', e);
+      }
+    }
+    
+    // Show details panel
+    const detailsPanel = $('#image-details-panel');
+    if (detailsPanel) {
+      detailsPanel.classList.remove('hidden');
+      detailsPanel.classList.add('is-open');
+      console.log('Details panel shown');
+    }
+
     // Update motion UI
     updateMotionUI();
+    
+    // Update history tab
+    updateHistoryTab();
     
     console.log('3D Studio UI updated successfully');
   };
