@@ -1780,18 +1780,22 @@ window.addEventListener('DOMContentLoaded', () => {
       historyIndex = 0;
 
       // Update 3D Studio UI with the generated image
-      update3DStudioUIWithImage(imageData);
+      // Use setTimeout to ensure DOM is ready after page transition
+      setTimeout(() => {
+        update3DStudioUIWithImage(imageData);
+      }, 100);
     }
   };
 
   const update3DStudioUIWithImage = (imageData: GeneratedImageData) => {
     console.log('update3DStudioUIWithImage called with:', imageData);
     
-    // Update the result image
-    const resultImage = $('#result-image') as HTMLImageElement;
+    // Update the result image - 3D Studio uses class selector, not ID
+    const resultImage = document.querySelector('#page-id-3d .result-image') as HTMLImageElement;
     if (resultImage && imageData.data && imageData.mimeType) {
       const dataUrl = `data:${imageData.mimeType};base64,${imageData.data}`;
       console.log('Setting result image src:', dataUrl.substring(0, 50) + '...');
+      console.log('Result image element found:', resultImage);
       resultImage.src = dataUrl;
       resultImage.classList.remove('hidden');
       resultImage.classList.add('visible');
@@ -1799,12 +1803,19 @@ window.addEventListener('DOMContentLoaded', () => {
       // Ensure image loads
       resultImage.onload = () => {
         console.log('Result image loaded successfully');
+        console.log('Image dimensions:', resultImage.naturalWidth, 'x', resultImage.naturalHeight);
       };
       resultImage.onerror = (e) => {
         console.error('Error loading result image:', e);
+        console.error('Failed dataUrl:', dataUrl.substring(0, 100));
       };
     } else {
-      console.error('Result image element not found or invalid image data');
+      console.error('Result image element not found or invalid image data', {
+        resultImage: !!resultImage,
+        hasData: !!imageData.data,
+        hasMimeType: !!imageData.mimeType,
+        imageDataKeys: Object.keys(imageData)
+      });
     }
 
     // Update prompt display
@@ -1829,15 +1840,22 @@ window.addEventListener('DOMContentLoaded', () => {
     const placeholder = $('#id-3d-placeholder');
     const errorPlaceholder = $('#id-3d-error-placeholder');
     const resultPlaceholder = $('#result-placeholder');
+    const idlePlaceholder = document.querySelector('#page-id-3d #result-idle-placeholder');
+    const motionPromptPlaceholder = document.querySelector('#page-id-3d #motion-prompt-placeholder');
     
     if (placeholder) placeholder.classList.add('hidden');
     if (errorPlaceholder) errorPlaceholder.classList.add('hidden');
     if (resultPlaceholder) resultPlaceholder.classList.add('hidden');
+    if (idlePlaceholder) idlePlaceholder.classList.add('hidden');
+    if (motionPromptPlaceholder) motionPromptPlaceholder.classList.add('hidden');
 
-    // Show result container
-    const resultContainer = $('#result-container');
+    // Show result container - use class selector within 3D Studio page
+    const resultContainer = document.querySelector('#page-id-3d .result-container');
     if (resultContainer) {
       resultContainer.classList.remove('hidden');
+      console.log('Result container shown');
+    } else {
+      console.error('Result container not found');
     }
 
     // Update motion UI
