@@ -83,6 +83,15 @@ window.addEventListener('DOMContentLoaded', () => {
   let currentGeneratedImageStudio: GeneratedImageData | null = null;
   let imageStudioHistory: GeneratedImageData[] = [];
   let imageStudioHistoryIndex = -1;
+  let imageStudioSubjectImage: { file: File; dataUrl: string } | null = null;
+  let imageStudioSceneImage: { file: File; dataUrl: string } | null = null;
+  let currentImageStudioModalType: 'subject' | 'scene' | null = null;
+  
+  // Main Page State (3D Studio functionality)
+  let currentGeneratedImageMain: GeneratedImageData | null = null;
+  let imageHistoryMain: GeneratedImageData[] = [];
+  let historyIndexMain = -1;
+  let mainReferenceImage: string | null = null;
 
   // --- CONSTANTS ---
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -625,6 +634,14 @@ window.addEventListener('DOMContentLoaded', () => {
   // Explore Page
   const explorePage = $('#page-usages');
   const exploreMain = $('.explore-main');
+  
+  // Main Page Elements (3D Studio functionality)
+  const mainReferenceContainer = $('#main-reference-container');
+  const mainReferenceDropZone = $('#main-reference-drop-zone');
+  const mainGenerateWithTextBtn = $('#main-generate-with-text-btn');
+  const mainAttachImageBtn = $('#main-attach-image-btn');
+  const mainRemoveReferenceBtn = $('#main-remove-reference-btn');
+  const mainGenerationLoaderModal = $('#main-generation-loader-modal');
   const exploreFeed = $('#explore-feed');
   const exploreDetailsPanel = $('#explore-details-panel');
   const exploreDetailsCloseBtn = $('#explore-details-close-btn');
@@ -993,32 +1010,57 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const generateImage = async (
     prompt: string,
-    resultImgElement: HTMLImageElement,
-    resultPlaceholderElement: HTMLElement,
-    resultErrorElement: HTMLElement,
-    idlePlaceholderElement: HTMLElement,
+    resultImgElement: HTMLImageElement | null,
+    resultPlaceholderElement: HTMLElement | null,
+    resultErrorElement: HTMLElement | null,
+    idlePlaceholderElement: HTMLElement | null,
     generateBtn: HTMLElement,
     referenceImages: ({ file: File; dataUrl: string } | null)[] = []
   ) => {
     updateButtonLoadingState(generateBtn, true);
-    resultPlaceholderElement.classList.remove('hidden');
-    resultPlaceholderElement.classList.remove('is-error');
-    idlePlaceholderElement.classList.add('hidden');
-    resultImgElement.classList.add('hidden');
-    resultImgElement.classList.remove('visible');
+    resultPlaceholderElement?.classList.remove('hidden');
+    resultPlaceholderElement?.classList.remove('is-error');
+    idlePlaceholderElement?.classList.add('hidden');
+    resultImgElement?.classList.add('hidden');
+    resultImgElement?.classList.remove('visible');
 
     try {
       const parts: any[] = [{ text: prompt }];
       
       const imageParts = await Promise.all(referenceImages.filter(img => img).map(async refImg => {
-        return {
-          inlineData: {
-            data: await blobToBase64(refImg!.file),
-            mimeType: refImg!.file.type,
+        if (!refImg) return null;
+        
+        // If file exists, use it
+        if (refImg.file) {
+          return {
+            inlineData: {
+              data: await blobToBase64(refImg.file),
+              mimeType: refImg.file.type,
+            }
+          };
+        }
+        
+        // Otherwise, extract from dataUrl
+        if (refImg.dataUrl) {
+          const match = refImg.dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+          if (match) {
+            const mimeType = match[1];
+            const base64Data = match[2];
+            return {
+              inlineData: {
+                data: base64Data,
+                mimeType: mimeType,
+              }
+            };
           }
-        };
+        }
+        
+        return null;
       }));
-      parts.push(...imageParts);
+      
+      // Filter out null values
+      const validImageParts = imageParts.filter(part => part !== null) as any[];
+      parts.push(...validImageParts);
 
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash-image',
@@ -1031,20 +1073,22 @@ window.addEventListener('DOMContentLoaded', () => {
       if (response.candidates && response.candidates[0].content.parts[0].inlineData) {
         const imageData = response.candidates[0].content.parts[0].inlineData;
         const dataUrl = `data:${imageData.mimeType};base64,${imageData.data}`;
-        resultImgElement.src = dataUrl;
-        resultImgElement.classList.remove('hidden');
-        setTimeout(() => resultImgElement.classList.add('visible'), 50); // For transition
+        if (resultImgElement) {
+          resultImgElement.src = dataUrl;
+          resultImgElement.classList.remove('hidden');
+          setTimeout(() => resultImgElement.classList.add('visible'), 50); // For transition
+        }
         return { data: imageData.data, mimeType: imageData.mimeType };
       } else {
         throw new Error('No image data received from API.');
       }
     } catch (error) {
       console.error('Image generation failed:', error);
-      resultPlaceholderElement.classList.add('is-error');
+      resultPlaceholderElement?.classList.add('is-error');
       return null;
     } finally {
       updateButtonLoadingState(generateBtn, false);
-      resultPlaceholderElement.classList.add('hidden');
+      resultPlaceholderElement?.classList.add('hidden');
     }
   };
 
@@ -1226,8 +1270,8 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     historyCounter2d.textContent = `${historyIndex2d + 1} / ${imageHistory2d.length}`;
-    historyBackBtn2d.disabled = historyIndex2d <= 0;
-    historyForwardBtn2d.disabled = historyIndex2d >= imageHistory2d.length - 1;
+    (historyBackBtn2d as HTMLButtonElement).disabled = historyIndex2d <= 0;
+    (historyForwardBtn2d as HTMLButtonElement).disabled = historyIndex2d >= imageHistory2d.length - 1;
   };
   
   
@@ -1551,6 +1595,271 @@ window.addEventListener('DOMContentLoaded', () => {
       showToast({ type: 'error', title: 'Generation Failed', body: 'Failed to generate scene image.' });
     } finally {
       loaderModal?.classList.add('hidden');
+    }
+  };
+
+  // Main Page Generate Functions (3D Studio functionality)
+  const handleGenerateImageMain = async () => {
+    console.log('handleGenerateImageMain called');
+    const generateInput = document.getElementById('generate-input') as HTMLInputElement;
+    if (!generateInput?.value.trim()) {
+      console.log('No input provided');
+      showToast({ type: 'error', title: 'Input Required', body: 'Please enter a prompt for your image.' });
+      generateInput?.focus();
+      return;
+    }
+
+    const userPrompt = generateInput.value.trim();
+    console.log('User prompt:', userPrompt);
+    
+    // Show loading modal
+    if (mainGenerationLoaderModal) {
+      console.log('Showing loading modal');
+      mainGenerationLoaderModal.classList.remove('hidden');
+    }
+
+    // Show loading state on button
+    const generateBtn = document.getElementById('generate-btn');
+    if (generateBtn) {
+      generateBtn.classList.add('loading');
+      generateBtn.setAttribute('disabled', 'true');
+    }
+
+    try {
+      // Create a 3D-style prompt similar to 3D Studio
+      const imagePromptText = `Create a high-quality 3D rendered image of ${userPrompt}. The image should be photorealistic, well-lit, with proper shadows and reflections. Use a clean background and ensure the subject is the main focus.`;
+      console.log('Generated prompt:', imagePromptText);
+
+      // Generate image using the same logic as 3D Studio
+      console.log('Calling generateImage...');
+      const imageData = await generateImage(
+        imagePromptText,
+        null, // No specific result image element for main page
+        null, // No placeholder
+        null, // No error element
+        null, // No idle placeholder
+        generateBtn as HTMLButtonElement,
+        mainReferenceImage ? [{ dataUrl: mainReferenceImage, file: null as any }] : []
+      );
+
+      console.log('Image generation result:', imageData);
+
+      if (imageData) {
+        const newImage: GeneratedImageData = {
+          id: `img_main_${Date.now()}`,
+          data: imageData.data,
+          mimeType: imageData.mimeType,
+          subject: userPrompt,
+          styleConstraints: imagePromptText,
+          timestamp: Date.now(),
+          videoDataUrl: undefined,
+          motionPrompt: null,
+        };
+        
+        console.log('Created new image object:', newImage);
+        
+        await setInitialMotionFramesMain(newImage);
+        
+        currentGeneratedImageMain = newImage;
+        imageHistoryMain.splice(historyIndexMain + 1);
+        imageHistoryMain.push(newImage);
+        historyIndexMain = imageHistoryMain.length - 1;
+
+        // Add to image library
+        const dataUrl = `data:${newImage.mimeType};base64,${newImage.data}`;
+        const newLibraryItem = { id: newImage.id, dataUrl, mimeType: newImage.mimeType };
+        imageLibrary.unshift(newLibraryItem);
+        if (imageLibrary.length > 20) {
+          imageLibrary.splice(20);
+        }
+
+        // Hide loading modal
+        if (mainGenerationLoaderModal) {
+          mainGenerationLoaderModal.classList.add('hidden');
+        }
+
+        // Show success toast
+        showToast({ 
+          type: 'success', 
+          title: 'Image Generated!', 
+          body: 'Your 3D image has been created successfully.' 
+        });
+        
+        // Trigger confetti
+        triggerConfetti();
+        
+        // Navigate to 3D Studio to show the result
+        console.log('Navigating to 3D Studio...');
+        navigateTo3DStudioWithResult(newImage);
+      }
+    } catch (error) {
+      console.error('Error generating image:', error);
+      
+      // Hide loading modal
+      if (mainGenerationLoaderModal) {
+        mainGenerationLoaderModal.classList.add('hidden');
+      }
+      
+      showToast({ 
+        type: 'error', 
+        title: 'Generation Failed', 
+        body: 'Failed to generate image. Please try again.' 
+      });
+    } finally {
+      // Reset loading state
+      if (generateBtn) {
+        generateBtn.classList.remove('loading');
+        generateBtn.removeAttribute('disabled');
+      }
+    }
+  };
+
+  const setInitialMotionFramesMain = async (imageData: GeneratedImageData) => {
+    if (!imageData) return;
+    
+    try {
+      const dataUrl = `data:${imageData.mimeType};base64,${imageData.data}`;
+      
+      // Set first frame (same as original image)
+      imageData.videoDataUrl = dataUrl;
+      
+      // Motion prompt will be generated later when user requests it
+      imageData.motionPrompt = null;
+    } catch (error) {
+      console.error('Error setting initial motion frames:', error);
+    }
+  };
+
+  const navigateTo3DStudioWithResult = (imageData: GeneratedImageData) => {
+    // Navigate to 3D Studio
+    const targetPage = document.getElementById('page-id-3d');
+    if (targetPage) {
+      // Hide all pages
+      document.querySelectorAll('.page-container').forEach(pageEl => {
+        pageEl.classList.add('hidden');
+      });
+      
+      // Show 3D Studio page
+      targetPage.classList.remove('hidden');
+      
+      // Update nav items
+      document.querySelectorAll('.nav-item').forEach(navItem => {
+        navItem.classList.remove('active');
+      });
+      
+      const targetNavItem = document.querySelector('[data-page="page-id-3d"]');
+      if (targetNavItem) {
+        targetNavItem.classList.add('active');
+      }
+
+      // Set the generated image as current in 3D Studio
+      currentGeneratedImage = imageData;
+      imageHistory = [imageData];
+      historyIndex = 0;
+
+      // Update 3D Studio UI with the generated image
+      update3DStudioUIWithImage(imageData);
+    }
+  };
+
+  const update3DStudioUIWithImage = (imageData: GeneratedImageData) => {
+    // Update the result image
+    const resultImage = $('#result-image') as HTMLImageElement;
+    if (resultImage) {
+      resultImage.src = `data:${imageData.mimeType};base64,${imageData.data}`;
+      resultImage.classList.remove('hidden');
+    }
+
+    // Update prompt display
+    const promptDisplay = $('#prompt-display-3d') as HTMLTextAreaElement;
+    if (promptDisplay) {
+      promptDisplay.value = imageData.styleConstraints;
+    }
+
+    // Update user prompt
+    const userPrompt = $('#user-prompt-3d') as HTMLInputElement;
+    if (userPrompt) {
+      userPrompt.value = imageData.subject;
+    }
+
+    // Update subject input
+    const subjectInput = $('#image-prompt-subject-input') as HTMLInputElement;
+    if (subjectInput) {
+      subjectInput.value = imageData.subject;
+    }
+
+    // Hide placeholders and show result
+    const placeholder = $('#id-3d-placeholder');
+    const errorPlaceholder = $('#id-3d-error-placeholder');
+    const resultPlaceholder = $('#result-placeholder');
+    
+    if (placeholder) placeholder.classList.add('hidden');
+    if (errorPlaceholder) errorPlaceholder.classList.add('hidden');
+    if (resultPlaceholder) resultPlaceholder.classList.add('hidden');
+
+    // Show result container
+    const resultContainer = $('#result-container');
+    if (resultContainer) {
+      resultContainer.classList.remove('hidden');
+    }
+
+    // Update motion UI
+    updateMotionUI();
+  };
+
+  // Main page reference image functions
+  const handleMainReferenceImageUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      mainReferenceImage = dataUrl;
+      
+      // Update UI
+      const previewImg = mainReferenceDropZone?.querySelector('.drop-zone-preview') as HTMLImageElement;
+      const promptEl = mainReferenceDropZone?.querySelector('.drop-zone-prompt');
+      
+      if (previewImg && promptEl) {
+        previewImg.src = dataUrl;
+        previewImg.classList.remove('hidden');
+        promptEl.classList.add('hidden');
+      }
+      
+      // Show remove button
+      if (mainRemoveReferenceBtn) {
+        mainRemoveReferenceBtn.classList.remove('hidden');
+      }
+      
+      // Show overlay buttons
+      const overlay = mainReferenceDropZone?.querySelector('.drop-zone-overlay');
+      if (overlay) {
+        overlay.classList.remove('hidden');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeMainReferenceImage = () => {
+    mainReferenceImage = null;
+    
+    // Update UI
+    const previewImg = mainReferenceDropZone?.querySelector('.drop-zone-preview') as HTMLImageElement;
+    const promptEl = mainReferenceDropZone?.querySelector('.drop-zone-prompt');
+    
+    if (previewImg && promptEl) {
+      previewImg.src = '';
+      previewImg.classList.add('hidden');
+      promptEl.classList.remove('hidden');
+    }
+    
+    // Hide remove button
+    if (mainRemoveReferenceBtn) {
+      mainRemoveReferenceBtn.classList.add('hidden');
+    }
+    
+    // Hide overlay buttons
+    const overlay = mainReferenceDropZone?.querySelector('.drop-zone-overlay');
+    if (overlay) {
+      overlay.classList.add('hidden');
     }
   };
 
@@ -2566,8 +2875,8 @@ Return the 5 suggestions as a JSON array.`;
     });
 
     historyCounter.textContent = `${historyIndex + 1} / ${imageHistory.length}`;
-    historyBackBtn.disabled = historyIndex <= 0;
-    historyForwardBtn.disabled = historyIndex >= imageHistory.length - 1;
+    (historyBackBtn as HTMLButtonElement).disabled = historyIndex <= 0;
+    (historyForwardBtn as HTMLButtonElement).disabled = historyIndex >= imageHistory.length - 1;
   };
 
   const renderImageStudioHistory = () => {
@@ -2630,8 +2939,8 @@ Return the 5 suggestions as a JSON array.`;
     });
 
     historyCounterEl.textContent = `${imageStudioHistoryIndex + 1} / ${imageStudioHistory.length}`;
-    historyBackBtnEl.disabled = imageStudioHistoryIndex <= 0;
-    historyForwardBtnEl.disabled = imageStudioHistoryIndex >= imageStudioHistory.length - 1;
+    (historyBackBtnEl as HTMLButtonElement).disabled = imageStudioHistoryIndex <= 0;
+    (historyForwardBtnEl as HTMLButtonElement).disabled = imageStudioHistoryIndex >= imageStudioHistory.length - 1;
   };
   
   // --- PAGE-SPECIFIC LOGIC: Icon Studio ---
@@ -2904,10 +3213,10 @@ Return the 5 suggestions as a JSON array.`;
     
     updateIconStudio3dPrompt();
     
-    downloadSvgBtn.disabled = false;
-    downloadPngBtn.disabled = false;
-    copyJsxBtn.disabled = false;
-    copySnippetBtn.disabled = false;
+    (downloadSvgBtn as HTMLButtonElement).disabled = false;
+    (downloadPngBtn as HTMLButtonElement).disabled = false;
+    (copyJsxBtn as HTMLButtonElement).disabled = false;
+    (copySnippetBtn as HTMLButtonElement).disabled = false;
     
     updateCodeSnippetDisplay();
     applyAllIconStyles();
@@ -4309,7 +4618,246 @@ Return the 5 suggestions as a JSON array.`;
             }
         });
     }
+
+    // GNB scroll effect
+    const appHeader = document.querySelector('.app-header');
+    let lastScrollY = window.scrollY;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY > 50) {
+        appHeader?.classList.add('scrolled');
+      } else {
+        appHeader?.classList.remove('scrolled');
+      }
+      
+      lastScrollY = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    // Generate button functionality (navigate to 3D Studio and prefill)
+    const generateBtn = document.getElementById('generate-btn');
+    const generateInput = document.getElementById('generate-input') as HTMLInputElement;
+
+    generateBtn?.addEventListener('click', handleGenerateImageMain);
+
+    // Enter key support for generate input
+    generateInput?.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        generateBtn?.click();
+      }
+    });
+
+    // Main page reference image upload functionality
+    if (mainReferenceDropZone) {
+      // Drag and drop events
+      mainReferenceDropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        mainReferenceDropZone.classList.add('dragover');
+      });
+
+      mainReferenceDropZone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        mainReferenceDropZone.classList.remove('dragover');
+      });
+
+      mainReferenceDropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        mainReferenceDropZone.classList.remove('dragover');
+        const file = e.dataTransfer?.files[0];
+        if (file && file.type.startsWith('image/')) {
+          handleMainReferenceImageUpload(file);
+        }
+      });
+
+      // Click to upload
+      mainReferenceDropZone.addEventListener('click', () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.addEventListener('change', (e) => {
+          const file = (e.target as HTMLInputElement).files?.[0];
+          if (file) {
+            handleMainReferenceImageUpload(file);
+          }
+        });
+        input.click();
+      });
+    }
+
+    // Main page reference image buttons
+    mainGenerateWithTextBtn?.addEventListener('click', () => {
+      if (mainReferenceImage) {
+        handleGenerateImageMain();
+      }
+    });
+
+    mainAttachImageBtn?.addEventListener('click', () => {
+      if (mainReferenceImage) {
+        handleGenerateImageMain();
+      }
+    });
+
+    mainRemoveReferenceBtn?.addEventListener('click', () => {
+      removeMainReferenceImage();
+    });
+
+    // Logo click handler to navigate to home
+    const logo = $('.logo');
+    logo?.addEventListener('click', () => {
+      // Remove active class from all nav items
+      document.querySelectorAll('.nav-item').forEach(navItem => {
+        navItem.classList.remove('active');
+      });
+      
+      // Show home page
+      currentPage = 'page-usages';
+      pageContainers.forEach(container => {
+        container.classList.add('hidden');
+      });
+      
+      const homePage = $('#page-usages');
+      if (homePage) {
+        homePage.classList.remove('hidden');
+      }
+    });
+
+    // Dynamic placeholder functionality
+    const dynamicPlaceholder = document.getElementById('dynamic-placeholder');
+    const placeholderTexts = [
+      'Creon create a stunning 3D logo animation...',
+      'Creon create a modern icon set for my app...',
+      'Creon create a cinematic video intro...',
+      'Creon create a futuristic UI mockup...',
+      'Creon create a minimalist brand identity...',
+      'Creon create a product showcase video...',
+      'Creon create a social media banner...',
+      'Creon create a mobile app interface...',
+      'Creon create a promotional animation...',
+      'Creon create a website hero section...'
+    ];
+
+    let currentIndex = 0;
+    let isTyping = false;
+    let currentText = '';
+    let charIndex = 0;
+
+    function typeText() {
+      if (charIndex < placeholderTexts[currentIndex].length) {
+        currentText += placeholderTexts[currentIndex].charAt(charIndex);
+        if (dynamicPlaceholder) {
+          dynamicPlaceholder.textContent = currentText;
+        }
+        charIndex++;
+        setTimeout(typeText, 50); // Typing speed
+      } else {
+        // Wait before erasing
+        setTimeout(eraseText, 2000);
+      }
+    }
+
+    function eraseText() {
+      if (currentText.length > 0) {
+        currentText = currentText.slice(0, -1);
+        if (dynamicPlaceholder) {
+          dynamicPlaceholder.textContent = currentText;
+        }
+        setTimeout(eraseText, 30); // Erasing speed
+      } else {
+        // Move to next text
+        currentIndex = (currentIndex + 1) % placeholderTexts.length;
+        charIndex = 0;
+        setTimeout(typeText, 500); // Pause before next text
+      }
+    }
+
+    // Start the dynamic placeholder
+    if (dynamicPlaceholder) {
+      typeText();
+    }
+
+    // Hide placeholder when user starts typing
+    generateInput?.addEventListener('input', () => {
+      if (dynamicPlaceholder) {
+        dynamicPlaceholder.classList.add('hidden');
+      }
+    });
+
+    // Show placeholder when input is empty
+    generateInput?.addEventListener('blur', () => {
+      if (generateInput?.value === '' && dynamicPlaceholder) {
+        dynamicPlaceholder.classList.remove('hidden');
+      }
+    });
   };
+  
+  // Setup 2D Studio accordions
+  const p2dOptionsAccordion = document.querySelector('.accordion-header[data-accordion="p2d-options"]');
+  const p2dOptionsContent = document.getElementById('p2d-options-content');
+  
+  if (p2dOptionsAccordion && p2dOptionsContent) {
+    p2dOptionsAccordion.addEventListener('click', () => {
+      const isActive = p2dOptionsAccordion.getAttribute('data-active') === 'true';
+      p2dOptionsAccordion.setAttribute('data-active', isActive ? 'false' : 'true');
+      p2dOptionsContent.setAttribute('data-active', isActive ? 'false' : 'true');
+    });
+  }
+  
+  const p2dReferenceAccordion = document.querySelector('.accordion-header[data-accordion="p2d-reference"]');
+  const p2dReferenceContent = document.getElementById('p2d-reference-content');
+  
+  if (p2dReferenceAccordion && p2dReferenceContent) {
+    p2dReferenceAccordion.addEventListener('click', () => {
+      const isActive = p2dReferenceAccordion.getAttribute('data-active') === 'true';
+      p2dReferenceAccordion.setAttribute('data-active', isActive ? 'false' : 'true');
+      p2dReferenceContent.setAttribute('data-active', isActive ? 'false' : 'true');
+    });
+  }
+  
+  const p2dLibraryAccordion = document.querySelector('.accordion-header[data-accordion="p2d-library"]');
+  const p2dLibraryContent = document.getElementById('p2d-library-content');
+  
+  if (p2dLibraryAccordion && p2dLibraryContent) {
+    p2dLibraryAccordion.addEventListener('click', () => {
+      const isActive = p2dLibraryAccordion.getAttribute('data-active') === 'true';
+      p2dLibraryAccordion.setAttribute('data-active', isActive ? 'false' : 'true');
+      p2dLibraryContent.setAttribute('data-active', isActive ? 'false' : 'true');
+    });
+  }
+  
+  // Setup 3D Studio accordions
+  const p3dOptionsAccordion = document.querySelector('.accordion-header[data-accordion="3d-options"]');
+  const p3dOptionsContent = document.getElementById('3d-options-content');
+  
+  if (p3dOptionsAccordion && p3dOptionsContent) {
+    p3dOptionsAccordion.addEventListener('click', () => {
+      const isActive = p3dOptionsAccordion.getAttribute('data-active') === 'true';
+      p3dOptionsAccordion.setAttribute('data-active', isActive ? 'false' : 'true');
+      p3dOptionsContent.setAttribute('data-active', isActive ? 'false' : 'true');
+    });
+  }
+  
+  const p3dRefAccordion = document.querySelector('.accordion-header[data-accordion="3d-reference"]');
+  const p3dRefContent = document.getElementById('3d-reference-content');
+  if (p3dRefAccordion && p3dRefContent) {
+    p3dRefAccordion.addEventListener('click', () => {
+      const isActive = p3dRefAccordion.getAttribute('data-active') === 'true';
+      p3dRefAccordion.setAttribute('data-active', isActive ? 'false' : 'true');
+      p3dRefContent.setAttribute('data-active', isActive ? 'false' : 'true');
+    });
+  }
+
+  const p3dLibAccordion = document.querySelector('.accordion-header[data-accordion="3d-library"]');
+  const p3dLibContent = document.getElementById('3d-library-content');
+  if (p3dLibAccordion && p3dLibContent) {
+    p3dLibAccordion.addEventListener('click', () => {
+      const isActive = p3dLibAccordion.getAttribute('data-active') === 'true';
+      p3dLibAccordion.setAttribute('data-active', isActive ? 'false' : 'true');
+      p3dLibContent.setAttribute('data-active', isActive ? 'false' : 'true');
+    });
+  }
   
   init();
 
