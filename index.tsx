@@ -4972,6 +4972,17 @@ Return the 5 suggestions as a JSON array.`;
     });
   }
   
+  // 3D Details Panel: Fix the image accordion
+  const p3dFixAccordion = document.querySelector('.accordion-header[data-accordion="3d-fix"]');
+  const p3dFixContent = document.getElementById('3d-fix-content');
+  if (p3dFixAccordion && p3dFixContent) {
+    p3dFixAccordion.addEventListener('click', () => {
+      const isActive = p3dFixAccordion.getAttribute('data-active') === 'true';
+      p3dFixAccordion.setAttribute('data-active', isActive ? 'false' : 'true');
+      p3dFixContent.setAttribute('data-active', isActive ? 'false' : 'true');
+    });
+  }
+  
   init();
 
 });

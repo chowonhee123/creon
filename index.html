@@ -29,11 +29,9 @@
     <div class="app-container">
       <header class="app-header">
         <div class="logo">
-          <span class="material-symbols-outlined logo-icon">auto_awesome</span>
-          <h1>Contents Builder</h1>
+          <h1>Creon</h1>
         </div>
         <nav class="main-nav">
-          <a href="#" class="nav-item active" data-page="page-usages">Home</a>
           <a href="#" class="nav-item" data-page="page-icons">Icon Studio</a>
           <a href="#" class="nav-item" data-page="page-id-2d">2D Studio</a>
           <a href="#" class="nav-item" data-page="page-id-3d">3D Studio</a>
@@ -65,17 +63,59 @@
         <div class="explore-container">
           <main class="explore-main">
             <input type="file" id="explore-upload-input" multiple class="hidden" accept="image/png,image/jpeg,image/webp,video/mp4,video/webm">
-            <h1 class="explore-title">Contents Builder</h1>
-            <div class="main-content-header">
-              <div class="search-box">
-                <button id="explore-upload-btn">
-                  <span class="material-symbols-outlined">upload</span>
-                  <span>upload</span>
-                </button>
-                <input type="search" id="explore-search-input" placeholder="Find your inspiration" />
-                <button class="icon-button search-icon-btn" aria-label="Search">
-                    <span class="material-symbols-outlined">search</span>
-                </button>
+            
+            <div class="hero-content-wrapper">
+              <!-- Changelog Section -->
+              <div class="changelog-section">
+                <div class="changelog-item">
+                  <div class="changelog-dot"></div>
+                  <span class="changelog-text">New Components: Field, Input Group, Item and more</span>
+                  <span class="changelog-arrow">→</span>
+                </div>
+              </div>
+
+              <!-- Hero Section -->
+              <div class="hero-section">
+                <h1 class="hero-title">Build what you imagine.<br>Create beyond boundaries.</h1>
+                <p class="hero-description">From icons to 3D motion, all in one creative pipeline.</p>
+                <!-- Generate Box moved inside hero-section -->
+                <div class="generate-box">
+                  <input type="text" id="generate-input" placeholder="" />
+                  <div class="dynamic-placeholder" id="dynamic-placeholder">Ask Contents Builder to create...</div>
+                  <button id="generate-btn" class="generate-btn">
+                    <span class="btn-text">Generate</span>
+                  </button>
+                </div>
+                
+                <!-- Reference Image Upload Area -->
+                <div class="main-reference-container" id="main-reference-container" style="display: none;">
+                  <div class="control-card">
+                    <h3>Reference Image</h3>
+                    <div class="image-drop-zone" id="main-reference-drop-zone">
+                      <div class="drop-zone-content">
+                        <div class="drop-zone-prompt">
+                          <span class="material-symbols-outlined">add_photo_alternate</span>
+                          <p>Drop image here or click to upload</p>
+                        </div>
+                        <img class="drop-zone-preview hidden" alt="Reference preview" />
+                      </div>
+                      <div class="drop-zone-overlay">
+                        <button type="button" id="main-generate-with-text-btn">
+                          <span class="material-symbols-outlined">text_fields</span>
+                          <span class="overlay-text-label">Generate with Text</span>
+                        </button>
+                        <div class="overlay-divider"></div>
+                        <button type="button" id="main-attach-image-btn">
+                          <span class="material-symbols-outlined">attach_file</span>
+                          <span class="overlay-text-label">Attach Image</span>
+                        </button>
+                      </div>
+                      <button class="remove-style-image-btn hidden" id="main-remove-reference-btn">
+                        <span class="material-symbols-outlined">close</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
             <div id="explore-feed-container">
@@ -458,51 +498,80 @@
                         </div>
                     </div>
                     
+                    <!-- 1. Prompt Card -->
                     <div class="control-card">
                         <div class="prompt-card-header">
                             <h3>Prompt</h3>
                         </div>
                         <input type="text" id="p2d-image-prompt-subject-input" placeholder="e.g., A cute cat wearing a wizard hat">
+                        
+                        <!-- Generate Button -->
+                        <button id="p2d-image-generate-btn" class="primary-btn">
+                            <span class="material-symbols-outlined">auto_awesome</span>
+                            <span class="btn-text">Generate</span>
+                            <div class="btn-loader"></div>
+                        </button>
+                    </div>
+                    
+                    <!-- 2. Prompt Detail Card -->
+                    <div class="control-card">
+                        <div class="prompt-card-header">
+                            <h3>Prompt Detail</h3>
+                        </div>
                         <textarea id="p2d-image-prompt-display" readonly></textarea>
-                        <div class="filter-group">
-                            <label>Style</label>
-                            <div class="segmented-control">
-                              <input type="radio" id="p2d-style-outlined" name="p2d-icon-family" value="outlined" checked>
-                              <label for="p2d-style-outlined">Outlined</label>
-                              <input type="radio" id="p2d-style-rounded" name="p2d-icon-family" value="rounded">
-                              <label for="p2d-style-rounded">Rounded</label>
-                              <input type="radio" id="p2d-style-sharp" name="p2d-icon-family" value="sharp">
-                              <label for="p2d-style-sharp">Sharp</label>
+                        
+                        <!-- Options Accordion -->
+                        <div class="accordion">
+                            <div class="accordion-header" data-accordion="p2d-options">
+                                <h3>Options</h3>
+                                <span class="material-symbols-outlined accordion-icon">expand_more</span>
                             </div>
-                        </div>
-                        <div class="filter-group">
-                            <div class="control-row">
-                                <label for="p2d-fill-toggle">Fill</label>
-                                <label class="toggle-switch">
-                                <input type="checkbox" id="p2d-fill-toggle">
-                                <span class="toggle-slider"></span>
-                                </label>
+                            <div class="accordion-content" id="p2d-options-content">
+                                <div class="filter-group">
+                                    <label>Style</label>
+                                    <div class="segmented-control">
+                                      <input type="radio" id="p2d-style-outlined" name="p2d-icon-family" value="outlined" checked>
+                                      <label for="p2d-style-outlined">Outlined</label>
+                                      <input type="radio" id="p2d-style-rounded" name="p2d-icon-family" value="rounded">
+                                      <label for="p2d-style-rounded">Rounded</label>
+                                      <input type="radio" id="p2d-style-sharp" name="p2d-icon-family" value="sharp">
+                                      <label for="p2d-style-sharp">Sharp</label>
+                                    </div>
+                                </div>
+                                <div class="filter-group">
+                                    <div class="control-row">
+                                        <label for="p2d-fill-toggle">Fill</label>
+                                        <label class="toggle-switch">
+                                        <input type="checkbox" id="p2d-fill-toggle">
+                                        <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="filter-group">
+                                    <div class="control-row">
+                                        <label for="p2d-weight-slider">Weight (Stroke)</label>
+                                        <span class="slider-value" id="p2d-weight-value">Value: 400</span>
+                                    </div>
+                                    <input type="range" id="p2d-weight-slider" min="100" max="900" value="400" step="100">
+                                </div>
+                                <div class="filter-group">
+                                  <div class="control-row">
+                                    <label for="p2d-color-picker">Color</label>
+                                  </div>
+                                  <input type="color" id="p2d-color-picker" value="#212121" />
+                                </div>
                             </div>
-                        </div>
-                        <div class="filter-group">
-                            <div class="control-row">
-                                <label for="p2d-weight-slider">Weight (Stroke)</label>
-                                <span class="slider-value" id="p2d-weight-value">Value: 400</span>
-                            </div>
-                            <input type="range" id="p2d-weight-slider" min="100" max="900" value="400" step="100">
-                        </div>
-                        <div class="filter-group">
-                          <div class="control-row">
-                            <label for="p2d-color-picker">Color</label>
-                          </div>
-                          <input type="color" id="p2d-color-picker" value="#212121" />
                         </div>
                     </div>
                     <div class="control-card">
-                        <div class="prompt-card-header">
-                            <h3>Reference Images</h3>
-                        </div>
-                        <div id="p2d-edit-reference-image-container-3d" class="reference-image-container">
+                        <!-- Reference Images Accordion -->
+                        <div class="accordion">
+                            <div class="accordion-header" data-accordion="p2d-reference">
+                                <h3>Reference Images</h3>
+                                <span class="material-symbols-outlined accordion-icon">expand_more</span>
+                            </div>
+                            <div class="accordion-content" id="p2d-reference-content">
+                                <div id="p2d-edit-reference-image-container-3d" class="reference-image-container">
                             <div class="image-drop-zone reference-drop-zone" data-index="0">
                                 <span class="slot-title">Fill_On</span>
                                 <div class="drop-zone-prompt"><span class="material-symbols-outlined">add_photo_alternate</span><p>Drop or click</p></div>
@@ -528,26 +597,27 @@
                                 <button class="remove-style-image-btn icon-button hidden" aria-label="Remove image 4"><span class="material-symbols-outlined">delete</span></button>
                             </div>
                         </div>
+                            </div>
+                        </div>
                         <input type="file" id="p2d-edit-reference-image-input-3d" class="hidden" accept="image/*">
                     </div>
+                    <!-- 4. Image Library Accordion Card -->
                     <div class="control-card">
-                        <div class="prompt-card-header">
-                            <h3>Image Library</h3>
-                        </div>
-                        <div id="p2d-image-library-container" class="image-library-container">
-                            <div id="p2d-image-library-placeholder">
-                                <p>Your saved images will appear here.</p>
+                        <div class="accordion">
+                            <div class="accordion-header" data-accordion="p2d-library">
+                                <h3>Image Library</h3>
+                                <span class="material-symbols-outlined accordion-icon">expand_more</span>
                             </div>
-                            <div id="p2d-image-library-list" class="image-library-list"></div>
+                            <div class="accordion-content" id="p2d-library-content">
+                                <div id="p2d-image-library-container" class="image-library-container">
+                                    <div id="p2d-image-library-placeholder">
+                                        <p>Your saved images will appear here.</p>
+                                    </div>
+                                    <div id="p2d-image-library-list" class="image-library-list"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="image-gen-footer">
-                    <button id="p2d-image-generate-btn" class="primary-btn">
-                        <span class="material-symbols-outlined">auto_awesome</span>
-                        <span class="btn-text">Generate</span>
-                        <div class="btn-loader"></div>
-                    </button>
                 </div>
             </div>
             <div class="image-gen-results">
@@ -646,28 +716,55 @@
                             <h3>Prompt</h3>
                         </div>
                         <input type="text" id="image-prompt-subject-input" placeholder="e.g., A cute cat wearing a wizard hat">
-                        <textarea id="image-prompt-display" readonly></textarea>
-                         <div class="shadow-toggle-control">
-                            <label for="shadow-toggle-3d">Add Ground Shadow</label>
-                            <label class="toggle-switch">
-                              <input type="checkbox" id="shadow-toggle-3d">
-                              <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                        <div class="filter-group">
-                          <label for="background-color-picker-3d">Background Color</label>
-                          <input type="color" id="background-color-picker-3d" value="#FFFFFF" />
-                        </div>
-                        <div class="filter-group">
-                          <label for="object-color-picker-3d">Object Color</label>
-                          <input type="color" id="object-color-picker-3d" value="#2962FF" />
-                        </div>
+                        
+                        <!-- Generate Button -->
+                        <button id="image-generate-btn" class="primary-btn">
+                            <span class="material-symbols-outlined">auto_awesome</span>
+                            <span class="btn-text">Generate</span>
+                            <div class="btn-loader"></div>
+                        </button>
+                        
                     </div>
+                    <!-- 2. Prompt Detail Card -->
                     <div class="control-card">
                         <div class="prompt-card-header">
-                            <h3>Reference Images</h3>
+                            <h3>Prompt Detail</h3>
                         </div>
-                        <div id="edit-reference-image-container-3d" class="reference-image-container">
+                        <textarea id="image-prompt-display" readonly></textarea>
+                        <!-- Options Accordion -->
+                        <div class="accordion">
+                            <div class="accordion-header" data-accordion="3d-options">
+                                <h3>Options</h3>
+                                <span class="material-symbols-outlined accordion-icon">expand_more</span>
+                            </div>
+                            <div class="accordion-content" id="3d-options-content">
+                                <div class="shadow-toggle-control">
+                                    <label for="shadow-toggle-3d">Add Ground Shadow</label>
+                                    <label class="toggle-switch">
+                                      <input type="checkbox" id="shadow-toggle-3d">
+                                      <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="filter-group">
+                                  <label for="background-color-picker-3d">Background Color</label>
+                                  <input type="color" id="background-color-picker-3d" value="#FFFFFF" />
+                                </div>
+                                <div class="filter-group">
+                                  <label for="object-color-picker-3d">Object Color</label>
+                                  <input type="color" id="object-color-picker-3d" value="#2962FF" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 3. Reference Images Accordion Card -->
+                    <div class="control-card">
+                        <div class="accordion">
+                            <div class="accordion-header" data-accordion="3d-reference">
+                                <h3>Reference Images</h3>
+                                <span class="material-symbols-outlined accordion-icon">expand_more</span>
+                            </div>
+                            <div class="accordion-content" id="3d-reference-content">
+                                <div id="edit-reference-image-container-3d" class="reference-image-container">
                             <div class="image-drop-zone reference-drop-zone" data-index="0">
                                 <div class="drop-zone-prompt"><span class="material-symbols-outlined">add_photo_alternate</span><p>Drop or click</p></div>
                                 <img class="style-image-preview hidden" alt="Reference image 1">
@@ -683,27 +780,28 @@
                                 <img class="style-image-preview hidden" alt="Reference image 3">
                                 <button class="remove-style-image-btn icon-button hidden" aria-label="Remove image 3"><span class="material-symbols-outlined">delete</span></button>
                             </div>
-                        </div>
-                        <input type="file" id="edit-reference-image-input-3d" class="hidden" accept="image/*">
-                    </div>
-                    <div class="control-card">
-                        <div class="prompt-card-header">
-                            <h3>Image Library</h3>
-                        </div>
-                        <div id="image-library-container" class="image-library-container">
-                            <div id="image-library-placeholder">
-                                <p>Your saved images will appear here.</p>
+                                </div>
+                                <input type="file" id="edit-reference-image-input-3d" class="hidden" accept="image/*">
                             </div>
-                            <div id="image-library-list" class="image-library-list"></div>
                         </div>
                     </div>
-                </div>
-                <div class="image-gen-footer">
-                    <button id="image-generate-btn" class="primary-btn">
-                        <span class="material-symbols-outlined">auto_awesome</span>
-                        <span class="btn-text">Generate</span>
-                        <div class="btn-loader"></div>
-                    </button>
+                    <!-- 4. Image Library Accordion Card -->
+                    <div class="control-card">
+                        <div class="accordion">
+                            <div class="accordion-header" data-accordion="3d-library">
+                                <h3>Image Library</h3>
+                                <span class="material-symbols-outlined accordion-icon">expand_more</span>
+                            </div>
+                            <div class="accordion-content" id="3d-library-content">
+                                <div id="image-library-container" class="image-library-container">
+                                    <div id="image-library-placeholder">
+                                        <p>Your saved images will appear here.</p>
+                                    </div>
+                                    <div id="image-library-list" class="image-library-list"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="image-gen-results">
@@ -772,19 +870,27 @@
                                 <img id="details-preview-image" src="" alt="Details preview">
                             </div>
                             <div class="details-fix-section">
-                                <h4 style="font-size: 14px; font-weight: 600; margin: 0 0 var(--spacing-3);">Adjust Colors & Background</h4>
-                                <div class="filter-group">
-                                    <label for="details-background-color-picker-3d" style="font-size: 13px; margin-bottom: var(--spacing-1);">Background Color</label>
-                                    <input type="color" id="details-background-color-picker-3d" value="#FFFFFF" />
+                                <div class="accordion">
+                                    <div class="accordion-header" data-accordion="3d-fix" data-active="true">
+                                        <h3>Fix the image</h3>
+                                        <span class="material-symbols-outlined accordion-icon">expand_more</span>
+                                    </div>
+                                    <div class="accordion-content" id="3d-fix-content" data-active="true">
+                                        <div class="filter-group">
+                                            <label for="details-background-color-picker-3d" style="font-size: 13px; margin-bottom: var(--spacing-1);">Background Color</label>
+                                            <input type="color" id="details-background-color-picker-3d" value="#FFFFFF" />
+                                        </div>
+                                        <div class="filter-group">
+                                            <label for="details-object-color-picker-3d" style="font-size: 13px; margin-bottom: var(--spacing-1);">Object Color</label>
+                                            <input type="color" id="details-object-color-picker-3d" value="#2962FF" />
+                                        </div>
+                                        <button id="details-fix-btn" class="primary-btn" style="width: 100%; margin-top: var(--spacing-2);">
+                                            <span class="material-symbols-outlined">autorenew</span>
+                                            <span class="btn-text">Regenerate</span>
+                                            <div class="btn-loader"></div>
+                                        </button>
+                                    </div>
                                 </div>
-                                <div class="filter-group">
-                                    <label for="details-object-color-picker-3d" style="font-size: 13px; margin-bottom: var(--spacing-1);">Object Color</label>
-                                    <input type="color" id="details-object-color-picker-3d" value="#2962FF" />
-                                </div>
-                                <button id="details-fix-btn" class="primary-btn" style="width: 100%; margin-top: var(--spacing-2);">
-                                    <span class="material-symbols-outlined">auto_fix_high</span> Apply Fix
-                                    <div class="btn-loader"></div>
-                                </button>
                             </div>
                             <div class="details-actions">
                                 <button id="details-upscale-btn" class="secondary-btn">
@@ -942,6 +1048,13 @@
                             <h3>Prompt</h3>
                         </div>
                         <input type="text" id="image-prompt-subject-input-image" placeholder="e.g., A cute cat wearing a wizard hat">
+                        
+                        <!-- Generate Button -->
+                        <button id="image-generate-btn-image" class="primary-btn">
+                            <span class="material-symbols-outlined">auto_awesome</span>
+                            <span class="btn-text">Generate</span>
+                            <div class="btn-loader"></div>
+                        </button>
                     </div>
                     <!-- Reference Images Container -->
                     <div id="image-studio-reference-container"></div>
@@ -953,13 +1066,6 @@
                             <span class="btn-text">Add Reference Image</span>
                         </button>
                     </div>
-                </div>
-                <div class="image-gen-footer">
-                    <button id="image-generate-btn-image" class="primary-btn">
-                        <span class="material-symbols-outlined">auto_awesome</span>
-                        <span class="btn-text">Generate</span>
-                        <div class="btn-loader"></div>
-                    </button>
                 </div>
             </div>
             <div class="image-gen-results">
@@ -1161,6 +1267,16 @@
 
       <!-- 3D Image Generation Loader Modal -->
       <div id="image-generation-loader-modal" class="image-modal-overlay hidden">
+        <div class="image-modal-content" style="max-width: 420px; text-align: center;">
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--spacing-4); padding: var(--spacing-5);">
+              <div class="loader"></div>
+              <p style="color: var(--text-secondary);">Generating your 3D image...</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Main Page Generation Loader Modal -->
+      <div id="main-generation-loader-modal" class="image-modal-overlay hidden">
         <div class="image-modal-content" style="max-width: 420px; text-align: center;">
           <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--spacing-4); padding: var(--spacing-5);">
               <div class="loader"></div>
