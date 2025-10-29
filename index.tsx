@@ -1645,8 +1645,12 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      // Create a 3D-style prompt similar to 3D Studio
-      const imagePromptText = `Create a high-quality 3D rendered image of ${userPrompt}. The image should be photorealistic, well-lit, with proper shadows and reflections. Use a clean background and ensure the subject is the main focus.`;
+      // Use the same prompt generation logic as 3D Studio
+      const template = JSON.parse(DEFAULT_3D_STYLE_PROMPT_TEMPLATE);
+      // Set the subject from user input
+      template.subject = userPrompt || 'a friendly robot';
+      // Use default values for other options (shadow, colors, etc.)
+      const imagePromptText = createImagePromptFromTemplate(template, '');
       console.log('Generated prompt:', imagePromptText);
 
       // Generate image using the same logic as 3D Studio
