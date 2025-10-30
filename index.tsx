@@ -5232,6 +5232,28 @@ Return the 5 suggestions as a JSON array.`;
         if (p2dCompareModal) p2dCompareModal.classList.add('hidden');
     });
 
+    // Details Panel: Kebab menu
+    const kebabBtn2d = $('#p2d-kebab-btn');
+    const kebabMenu2d = $('#p2d-kebab-menu');
+    const kebabCopy2d = $('#p2d-kebab-copy');
+    const kebabDelete2d = $('#p2d-kebab-delete');
+    const closeKebab = () => kebabMenu2d?.classList.add('hidden');
+    kebabBtn2d?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        kebabMenu2d?.classList.toggle('hidden');
+    });
+    document.addEventListener('click', () => closeKebab());
+    kebabMenu2d?.addEventListener('click', (e) => e.stopPropagation());
+    kebabCopy2d?.addEventListener('click', () => {
+        closeKebab();
+        // Reuse existing copy handler
+        detailsCopyBtn2d?.dispatchEvent(new Event('click'));
+    });
+    kebabDelete2d?.addEventListener('click', () => {
+        closeKebab();
+        detailsDeleteBtn2d?.dispatchEvent(new Event('click'));
+    });
+
     // 3D History Button Listeners
     historyBackBtn?.addEventListener('click', () => {
         if (historyIndex > 0) {

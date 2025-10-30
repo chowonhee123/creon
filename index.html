@@ -720,17 +720,24 @@
                                 </div>
                             </div>
                             
-                            <!-- Bottom Actions: Download, Copy Prompt, Delete -->
-                            <div style="display: flex; flex-direction: column; gap: var(--spacing-3); margin-top: auto; padding-top: var(--spacing-4);">
-                                <a href="#" id="p2d-details-download-btn" class="secondary-btn" download style="width: 100%;">
-                                    <span class="material-symbols-outlined">download</span> Download
+                            <!-- Bottom Actions: Kebab + Download (primary) -->
+                            <div style="display: flex; align-items: center; gap: var(--spacing-2); margin-top: auto; padding-top: var(--spacing-4); position: relative;">
+                                <button id="p2d-kebab-btn" class="icon-button" aria-label="More actions" title="More actions">
+                                    <span class="material-symbols-outlined">more_vert</span>
+                                </button>
+                                <a href="#" id="p2d-details-download-btn" class="primary-btn" download style="flex: 1;">
+                                    <span class="material-symbols-outlined">download</span>
+                                    <span class="btn-text">Download</span>
                                 </a>
-                                <button id="p2d-details-copy-btn" class="secondary-btn" style="width: 100%;">
-                                    <span class="material-symbols-outlined">content_copy</span> Copy Prompt
-                                </button>
-                                <button id="p2d-details-delete-btn" class="secondary-btn danger" style="width: 100%;">
-                                    <span class="material-symbols-outlined">delete</span> Delete
-                                </button>
+                                <!-- Kebab dropdown -->
+                                <div id="p2d-kebab-menu" class="kebab-menu hidden" style="position: absolute; left: 0; bottom: 56px; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); box-shadow: 0 8px 24px rgba(0,0,0,0.12); width: 220px; overflow: hidden; z-index: 20;">
+                                    <button id="p2d-kebab-copy" class="secondary-btn" style="width: 100%; justify-content: flex-start; gap: var(--spacing-2); border: none; background: transparent;">
+                                        <span class="material-symbols-outlined">content_copy</span> Copy Prompt
+                                    </button>
+                                    <button id="p2d-kebab-delete" class="secondary-btn danger" style="width: 100%; justify-content: flex-start; gap: var(--spacing-2); border: none; background: transparent;">
+                                        <span class="material-symbols-outlined">delete</span> Delete
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         
