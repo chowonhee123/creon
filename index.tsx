@@ -1239,6 +1239,10 @@ window.addEventListener('DOMContentLoaded', () => {
             imageHistory2d.splice(historyIndex2d + 1);
             imageHistory2d.push(newImage);
             historyIndex2d = imageHistory2d.length - 1;
+            
+            // Also add to details panel history (right panel)
+            detailsPanelHistory2d.push(newImage);
+            detailsPanelHistoryIndex2d = detailsPanelHistory2d.length - 1;
 
             const dataUrl = `data:${newImage.mimeType};base64,${newImage.data}`;
             const newLibraryItem = { id: newImage.id, dataUrl, mimeType: newImage.mimeType };
@@ -1254,6 +1258,11 @@ window.addEventListener('DOMContentLoaded', () => {
             detailsPanel2d?.classList.remove('hidden');
             detailsPanel2d?.classList.add('is-open');
             renderHistory2d();
+            // Update details panel history if History tab is visible
+            const historyTabContent = $('#p2d-details-history-list')?.closest('.details-tab-content');
+            if (historyTabContent && !historyTabContent.classList.contains('hidden')) {
+                updateDetailsPanelHistory2d();
+            }
         }
     } catch (error) {
         console.error('Error generating 2D image:', error);
