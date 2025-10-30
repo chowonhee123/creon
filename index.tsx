@@ -1352,12 +1352,15 @@ window.addEventListener('DOMContentLoaded', () => {
         // Determine modification type
         let modificationType = item.modificationType || 'Original';
         
+        // Determine if background is transparent for this history item
+        const isTransparent = modificationType === 'Remove Background' || modificationType === 'SVG';
+        
         // Create thumbnail button
         const thumbnailBtn = document.createElement('button');
         thumbnailBtn.type = 'button';
         thumbnailBtn.className = 'details-history-thumbnail-btn';
-        thumbnailBtn.dataset.index = String(historyIndex);
-        thumbnailBtn.setAttribute('aria-label', `Load history item ${historyIndex + 1}`);
+        thumbnailBtn.dataset.index = String(index);
+        thumbnailBtn.setAttribute('aria-label', `Load history item ${index + 1}`);
         thumbnailBtn.style.cssText = `
             position: relative;
             width: 100%;
@@ -1365,12 +1368,20 @@ window.addEventListener('DOMContentLoaded', () => {
             padding: 0;
             border: ${isActive ? '3px solid var(--primary-color, #0070F3)' : '1px solid var(--border-color)'};
             border-radius: var(--border-radius-md);
-            background: transparent;
             cursor: pointer;
             overflow: hidden;
             transition: all 0.2s ease;
             outline: none;
         `;
+        
+        // Apply checkerboard background if transparent
+        if (isTransparent) {
+            thumbnailBtn.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
+            thumbnailBtn.style.backgroundPosition = '0 0, 8px 8px';
+            thumbnailBtn.style.backgroundSize = '16px 16px';
+        } else {
+            thumbnailBtn.style.backgroundColor = '#ffffff';
+        }
         
         // Add hover effect
         thumbnailBtn.addEventListener('mouseenter', () => {
@@ -1407,8 +1418,8 @@ window.addEventListener('DOMContentLoaded', () => {
         const img = document.createElement('img');
         img.src = `data:${item.mimeType};base64,${item.data}`;
         img.loading = 'lazy';
-        img.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
-        img.alt = `History item ${historyIndex + 1}`;
+        img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; pointer-events: none;';
+        img.alt = `History item ${index + 1}`;
         
         thumbnailBtn.appendChild(badge);
         thumbnailBtn.appendChild(img);
@@ -5089,6 +5100,16 @@ Return the 5 suggestions as a JSON array.`;
                 
                 // Store SVG string for download
                 (currentGeneratedImage2d as any).svgString = svgString;
+                
+                // Add to details panel history
+                if (currentGeneratedImage2d) {
+                    detailsPanelHistory2d.push({
+                        ...currentGeneratedImage2d,
+                        modificationType: 'SVG'
+                    });
+                    detailsPanelHistoryIndex2d = detailsPanelHistory2d.length - 1;
+                    updateDetailsPanelHistory2d();
+                }
                 
                 // Hide loader modal and show SVG modal
                 if (p2dLoaderModal) p2dLoaderModal.classList.add('hidden');
