@@ -5529,6 +5529,17 @@ Return the 5 suggestions as a JSON array.`;
     });
   }
   
+  // 2D Details Panel: Fix the icon accordion
+  const p2dFixIconAccordion = document.querySelector('.accordion-header[data-accordion="p2d-fix-icon"]');
+  const p2dFixIconContent = document.getElementById('p2d-fix-icon-content');
+  if (p2dFixIconAccordion && p2dFixIconContent) {
+    p2dFixIconAccordion.addEventListener('click', () => {
+      const isActive = p2dFixIconAccordion.getAttribute('data-active') === 'true';
+      p2dFixIconAccordion.setAttribute('data-active', isActive ? 'false' : 'true');
+      p2dFixIconContent.setAttribute('data-active', isActive ? 'false' : 'true');
+    });
+  }
+  
   // Setup 3D Studio accordions
   const p3dOptionsAccordion = document.querySelector('.accordion-header[data-accordion="3d-options"]');
   const p3dOptionsContent = document.getElementById('3d-options-content');
