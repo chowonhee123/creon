@@ -51,6 +51,10 @@ window.addEventListener('DOMContentLoaded', () => {
   let imageHistory2d: GeneratedImageData[] = [];
   let historyIndex2d = -1;
   let referenceImagesForEdit2d: ({ file: File; dataUrl: string } | null)[] = [null, null, null, null];
+  
+  // 2D Studio: Local state for background removal
+  let p2dOriginalImageData: string | null = null; // Cache original image data
+  let p2dHasBackgroundRemoved = false; // Track if background was removed
 
   let referenceImagesFor3d: ({ file: File; dataUrl: string } | null)[] = [null, null, null];
   let referenceImagesForIconStudio3d: ({ file: File; dataUrl: string } | null)[] = [null, null, null];
@@ -633,6 +637,16 @@ window.addEventListener('DOMContentLoaded', () => {
   const videoLoaderMessage = $('#video-loader-message');
   const p2dLoaderModal = $('#p2d-loader-modal');
   const p2dLoaderMessage = $('#p2d-loader-message');
+  
+  // 2D Studio: New action buttons
+  const p2dRevertBackgroundBtn = $('#p2d-revert-background-btn');
+  const p2dPreviewResultBtn = $('#p2d-preview-result-btn');
+  const p2dCompareBtn = $('#p2d-compare-btn');
+  const p2dCopySvgBtn = $('#p2d-copy-svg-btn');
+  
+  // 2D Studio: Modals
+  const p2dSvgPreviewModal = $('#p2d-svg-preview-modal');
+  const p2dCompareModal = $('#p2d-compare-modal');
   
   // Explore Page
   const explorePage = $('#page-usages');
@@ -1264,6 +1278,23 @@ window.addEventListener('DOMContentLoaded', () => {
         detailsPreviewImage2d.src = resultImage2d.src;
         detailsDownloadBtn2d.href = resultImage2d.src;
         detailsDownloadBtn2d.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}.png`;
+    }
+    
+    // Cache original image data for background removal revert
+    const dataUrl = `data:${currentGeneratedImage2d.mimeType};base64,${currentGeneratedImage2d.data}`;
+    p2dOriginalImageData = dataUrl;
+    
+    // Update button visibility based on background removal state
+    const removeBgBtn = $('#p2d-remove-background-btn');
+    if (removeBgBtn) {
+        removeBgBtn.classList.remove('hidden');
+    }
+    if (p2dRevertBackgroundBtn) {
+        if (p2dHasBackgroundRemoved) {
+            p2dRevertBackgroundBtn.classList.remove('hidden');
+        } else {
+            p2dRevertBackgroundBtn.classList.add('hidden');
+        }
     }
   };
   
@@ -4571,9 +4602,16 @@ Return the 5 suggestions as a JSON array.`;
                 // Update download button
                 if (detailsDownloadBtn2d) {
                     detailsDownloadBtn2d.href = newDataUrl;
+                    detailsDownloadBtn2d.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}-bg-removed.png`;
                 }
                 
-                showToast({ type: 'success', title: 'Background Removed', body: 'Background has been successfully removed.' });
+                // Update UI state
+                p2dHasBackgroundRemoved = true;
+                const removeBgBtn = $('#p2d-remove-background-btn');
+                if (removeBgBtn) removeBgBtn.classList.add('hidden');
+                if (p2dRevertBackgroundBtn) p2dRevertBackgroundBtn.classList.remove('hidden');
+                
+                showToast({ type: 'success', title: 'Background removed ✅', body: 'Background has been successfully removed.' });
             };
             reader.readAsDataURL(blobWithoutBg);
             
@@ -4588,6 +4626,33 @@ Return the 5 suggestions as a JSON array.`;
                 p2dLoaderModal.classList.add('hidden');
             }
         }
+    });
+
+    // 2D Studio: Revert Background
+    p2dRevertBackgroundBtn?.addEventListener('click', () => {
+        if (!p2dOriginalImageData || !currentGeneratedImage2d) {
+            showToast({ type: 'error', title: 'Error', body: 'Original image not found.' });
+            return;
+        }
+
+        // Restore original image
+        currentGeneratedImage2d.data = p2dOriginalImageData.split(',')[1];
+        currentGeneratedImage2d.mimeType = 'image/png';
+        
+        if (detailsPreviewImage2d) detailsPreviewImage2d.src = p2dOriginalImageData;
+        if (resultImage2d) resultImage2d.src = p2dOriginalImageData;
+        if (detailsDownloadBtn2d) {
+            detailsDownloadBtn2d.href = p2dOriginalImageData;
+            detailsDownloadBtn2d.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}.png`;
+        }
+        
+        // Reset state
+        p2dHasBackgroundRemoved = false;
+        const removeBgBtn = $('#p2d-remove-background-btn');
+        if (removeBgBtn) removeBgBtn.classList.remove('hidden');
+        if (p2dRevertBackgroundBtn) p2dRevertBackgroundBtn.classList.add('hidden');
+        
+        showToast({ type: 'success', title: 'Reverted to original ↩️', body: 'Background restoration completed.' });
     });
 
     // 2D Studio: Convert to SVG
@@ -4661,18 +4726,40 @@ Return the 5 suggestions as a JSON array.`;
                 
                 const svgString = ImageTracer.imagedataToSVG(imageData, options);
                 
-                // Create blob and download
-                const blob = new Blob([svgString], { type: 'image/svg+xml' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}.svg`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
+                // Show SVG preview modal instead of immediate download
+                const svgCodeView = $('#p2d-svg-code-view') as HTMLTextAreaElement;
+                const svgPreviewContent = $('#p2d-svg-preview-content');
+                const svgBgToggle = $('#p2d-svg-bg-toggle') as HTMLInputElement;
+                const svgPreviewContainer = $('#p2d-svg-preview-container');
                 
-                showToast({ type: 'success', title: 'SVG Converted', body: 'Image has been converted to SVG and downloaded.' });
+                if (svgCodeView) svgCodeView.value = svgString;
+                
+                // Render SVG preview
+                if (svgPreviewContent) {
+                    svgPreviewContent.innerHTML = svgString;
+                }
+                
+                // Background toggle handler
+                const updateSvgPreview = () => {
+                    if (svgPreviewContainer) {
+                        if (svgBgToggle?.checked) {
+                            svgPreviewContainer.style.backgroundColor = '';
+                            svgPreviewContainer.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
+                        } else {
+                            svgPreviewContainer.style.backgroundColor = 'white';
+                            svgPreviewContainer.style.backgroundImage = 'none';
+                        }
+                    }
+                };
+                svgBgToggle?.addEventListener('change', updateSvgPreview);
+                updateSvgPreview();
+                
+                // Store SVG string for download
+                (currentGeneratedImage2d as any).svgString = svgString;
+                
+                // Hide loader modal and show SVG modal
+                if (p2dLoaderModal) p2dLoaderModal.classList.add('hidden');
+                if (p2dSvgPreviewModal) p2dSvgPreviewModal.classList.remove('hidden');
             };
             
             img.onerror = () => {
@@ -4724,6 +4811,102 @@ Return the 5 suggestions as a JSON array.`;
         showToast({ type: 'success', title: 'Deleted', body: 'Image removed from history.' });
     });
 
+    // 2D Studio: SVG Modal Handlers
+    const svgPreviewCloseBtn = $('#p2d-svg-preview-close-btn');
+    const svgModalCloseBtn = $('#p2d-svg-modal-close-btn');
+    const copySvgCodeBtn = $('#p2d-copy-svg-code-btn');
+    const p2dDownloadSvgBtn = $('#p2d-download-svg-btn');
+    
+    svgPreviewCloseBtn?.addEventListener('click', () => {
+        if (p2dSvgPreviewModal) p2dSvgPreviewModal.classList.add('hidden');
+        showToast({ type: 'success', title: 'SVG conversion completed ✅', body: 'SVG ready for use.' });
+    });
+    
+    svgModalCloseBtn?.addEventListener('click', () => {
+        if (p2dSvgPreviewModal) p2dSvgPreviewModal.classList.add('hidden');
+        showToast({ type: 'success', title: 'SVG conversion completed ✅', body: 'SVG ready for use.' });
+    });
+    
+    copySvgCodeBtn?.addEventListener('click', () => {
+        const svgCodeView = $('#p2d-svg-code-view') as HTMLTextAreaElement;
+        if (svgCodeView && svgCodeView.value) {
+            navigator.clipboard.writeText(svgCodeView.value);
+            showToast({ type: 'success', title: 'Copied', body: 'SVG code copied to clipboard.' });
+        }
+    });
+    
+    p2dDownloadSvgBtn?.addEventListener('click', () => {
+        if (!currentGeneratedImage2d || !(currentGeneratedImage2d as any).svgString) {
+            showToast({ type: 'error', title: 'Error', body: 'SVG not found.' });
+            return;
+        }
+        
+        const svgString = (currentGeneratedImage2d as any).svgString;
+        const blob = new Blob([svgString], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}-converted.svg`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showToast({ type: 'success', title: 'Downloaded', body: 'SVG file downloaded.' });
+    });
+
+    // 2D Studio: Preview Result
+    p2dPreviewResultBtn?.addEventListener('click', () => {
+        if (!currentGeneratedImage2d) {
+            showToast({ type: 'error', title: 'No Image', body: 'Please generate an image first.' });
+            return;
+        }
+        
+        const dataUrl = `data:${currentGeneratedImage2d.mimeType};base64,${currentGeneratedImage2d.data}`;
+        window.open(dataUrl, '_blank');
+    });
+
+    // 2D Studio: Compare
+    p2dCompareBtn?.addEventListener('click', () => {
+        if (!currentGeneratedImage2d || !p2dOriginalImageData) {
+            showToast({ type: 'error', title: 'Error', body: 'Cannot compare images.' });
+            return;
+        }
+        
+        const currentDataUrl = `data:${currentGeneratedImage2d.mimeType};base64,${currentGeneratedImage2d.data}`;
+        const compareOriginal = $('#p2d-compare-original') as HTMLImageElement;
+        const compareCurrent = $('#p2d-compare-current') as HTMLImageElement;
+        const compareSlider = $('#p2d-compare-slider') as HTMLInputElement;
+        const compareDivider = $('#p2d-compare-divider');
+        
+        if (compareOriginal) compareOriginal.src = p2dOriginalImageData;
+        if (compareCurrent) compareCurrent.src = currentDataUrl;
+        
+        // Slider handler
+        const handleSliderChange = () => {
+            const value = compareSlider.valueAsNumber;
+            if (compareDivider && compareCurrent) {
+                compareDivider.style.left = `${value}%`;
+                compareCurrent.style.clipPath = `inset(0 ${100 - value}% 0 0)`;
+            }
+        };
+        compareSlider?.removeEventListener('input', handleSliderChange);
+        compareSlider?.addEventListener('input', handleSliderChange);
+        handleSliderChange();
+        
+        if (p2dCompareModal) p2dCompareModal.classList.remove('hidden');
+    });
+    
+    const compareCloseBtn = $('#p2d-compare-close-btn');
+    const compareModalCloseBtn = $('#p2d-compare-modal-close-btn');
+    
+    compareCloseBtn?.addEventListener('click', () => {
+        if (p2dCompareModal) p2dCompareModal.classList.add('hidden');
+    });
+    
+    compareModalCloseBtn?.addEventListener('click', () => {
+        if (p2dCompareModal) p2dCompareModal.classList.add('hidden');
+    });
 
     // 3D History Button Listeners
     historyBackBtn?.addEventListener('click', () => {

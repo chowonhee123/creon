@@ -666,19 +666,44 @@
                             <div class="details-preview">
                                 <img id="p2d-details-preview-image" src="" alt="Details preview">
                             </div>
-                            <div class="details-actions">
+                            <!-- Actions grouped by section -->
+                            <!-- Conversion Group -->
+                            <div class="action-group">
+                                <div class="action-group-label">Conversion</div>
                                 <button id="p2d-remove-background-btn" class="secondary-btn">
                                     <span class="material-symbols-outlined">back_hand</span> Remove Background
+                                </button>
+                                <button id="p2d-revert-background-btn" class="secondary-btn hidden">
+                                    <span class="material-symbols-outlined">undo</span> Revert Background
                                 </button>
                                 <button id="p2d-convert-to-svg-btn" class="secondary-btn">
                                     <span class="material-symbols-outlined">code</span> Convert to SVG
                                 </button>
+                            </div>
+                            
+                            <!-- Result Group -->
+                            <div class="action-group">
+                                <div class="action-group-label">Result</div>
+                                <button id="p2d-preview-result-btn" class="secondary-btn">
+                                    <span class="material-symbols-outlined">preview</span> Preview Result
+                                </button>
+                                <button id="p2d-compare-btn" class="secondary-btn">
+                                    <span class="material-symbols-outlined">compare</span> Compare
+                                </button>
                                 <a href="#" id="p2d-details-download-btn" class="secondary-btn" download>
                                     <span class="material-symbols-outlined">download</span> Download
                                 </a>
+                                <button id="p2d-copy-svg-btn" class="secondary-btn hidden">
+                                    <span class="material-symbols-outlined">content_copy</span> Copy SVG
+                                </button>
                                 <button id="p2d-details-copy-btn" class="secondary-btn">
                                     <span class="material-symbols-outlined">content_copy</span> Copy Prompt
                                 </button>
+                            </div>
+                            
+                            <!-- Management Group -->
+                            <div class="action-group">
+                                <div class="action-group-label">Management</div>
                                 <button id="p2d-details-delete-btn" class="secondary-btn danger">
                                     <span class="material-symbols-outlined">delete</span> Delete
                                 </button>
@@ -1327,6 +1352,76 @@
                 <div class="loader"></div>
                 <p id="p2d-loader-message" style="color: var(--text-secondary);">Processing...</p>
             </div>
+        </div>
+      </div>
+      
+      <!-- 2D Studio: SVG Preview Modal -->
+      <div id="p2d-svg-preview-modal" class="image-modal-overlay hidden">
+        <div class="image-modal-content" style="width: 800px; max-height: 90vh; padding: var(--spacing-5);">
+            <header class="image-studio-modal-header">
+                <h3>SVG Preview</h3>
+                <button id="p2d-svg-preview-close-btn" class="icon-button" aria-label="Close">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </header>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-4); margin-top: var(--spacing-4);">
+                <!-- SVG Code View -->
+                <div>
+                    <label style="display: block; font-weight: 500; margin-bottom: var(--spacing-2);">SVG Code</label>
+                    <textarea id="p2d-svg-code-view" readonly style="width: 100%; height: 400px; padding: var(--spacing-3); border-radius: var(--border-radius-md); border: 1px solid var(--border-color); font-family: 'Courier New', monospace; font-size: 12px; background-color: var(--bg-color); color: var(--text-primary); resize: none;"></textarea>
+                    <div style="display: flex; gap: var(--spacing-2); margin-top: var(--spacing-2);">
+                        <button id="p2d-copy-svg-code-btn" class="secondary-btn" style="flex: 1;">
+                            <span class="material-symbols-outlined">content_copy</span> Copy SVG
+                        </button>
+                    </div>
+                </div>
+                <!-- SVG Preview -->
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-2);">
+                        <label style="font-weight: 500;">Preview</label>
+                        <label style="display: flex; align-items: center; gap: var(--spacing-2); cursor: pointer;">
+                            <input type="checkbox" id="p2d-svg-bg-toggle" checked>
+                            <span style="font-size: 13px;">Checkerboard</span>
+                        </label>
+                    </div>
+                    <div id="p2d-svg-preview-container" style="width: 100%; height: 400px; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); display: flex; align-items: center; justify-content: center; background-image: repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0); background-position: 0 0, 8px 8px; background-size: 16px 16px; overflow: auto;">
+                        <div id="p2d-svg-preview-content"></div>
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: var(--spacing-2); margin-top: var(--spacing-4);">
+                <button id="p2d-download-svg-btn" class="primary-btn">
+                    <span class="material-symbols-outlined">download</span> Download .svg
+                </button>
+                <button id="p2d-svg-modal-close-btn" class="secondary-btn">Close</button>
+            </div>
+        </div>
+      </div>
+      
+      <!-- 2D Studio: Compare Modal -->
+      <div id="p2d-compare-modal" class="image-modal-overlay hidden">
+        <div class="image-modal-content" style="width: 900px; max-height: 90vh; padding: var(--spacing-5);">
+            <header class="image-studio-modal-header">
+                <h3>Compare Images</h3>
+                <button id="p2d-compare-close-btn" class="icon-button" aria-label="Close">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </header>
+            <div style="position: relative; margin-top: var(--spacing-4);">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0; overflow: hidden; border-radius: var(--border-radius-md); border: 1px solid var(--border-color);">
+                    <div style="position: relative; overflow: hidden;">
+                        <label style="position: absolute; top: var(--spacing-2); left: var(--spacing-2); background: rgba(0,0,0,0.6); color: white; padding: var(--spacing-1) var(--spacing-2); border-radius: var(--border-radius-sm); font-size: 12px; z-index: 1;">Original</label>
+                        <img id="p2d-compare-original" src="" alt="Original" style="width: 100%; height: 500px; object-fit: contain; display: block;">
+                    </div>
+                    <div style="position: relative; overflow: hidden;">
+                        <label style="position: absolute; top: var(--spacing-2); right: var(--spacing-2); background: rgba(0,0,0,0.6); color: white; padding: var(--spacing-1) var(--spacing-2); border-radius: var(--border-radius-sm); font-size: 12px; z-index: 1;">Current</label>
+                        <img id="p2d-compare-current" src="" alt="Current" style="width: 100%; height: 500px; object-fit: contain; display: block;">
+                    </div>
+                </div>
+                <input type="range" id="p2d-compare-slider" min="0" max="100" value="50" style="position: absolute; top: 50%; left: 0; right: 0; width: 100%; z-index: 2; opacity: 0; cursor: ew-resize;">
+                <div id="p2d-compare-divider" style="position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: #0070F3; pointer-events: none; z-index: 1;"></div>
+            </div>
+            <button id="p2d-compare-modal-close-btn" class="secondary-btn" style="margin-top: var(--spacing-4); width: 100%;">Close</button>
         </div>
       </div>
       
