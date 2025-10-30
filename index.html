@@ -666,45 +666,65 @@
                             <div class="details-preview">
                                 <img id="p2d-details-preview-image" src="" alt="Details preview">
                             </div>
-                            <!-- Actions grouped by section -->
-                            <!-- Conversion Group -->
-                            <div class="action-group">
-                                <div class="action-group-label">Conversion</div>
-                                <button id="p2d-remove-background-btn" class="secondary-btn">
-                                    <span class="material-symbols-outlined">back_hand</span> Remove Background
-                                </button>
-                                <button id="p2d-revert-background-btn" class="secondary-btn hidden">
-                                    <span class="material-symbols-outlined">undo</span> Revert Background
-                                </button>
-                                <button id="p2d-convert-to-svg-btn" class="secondary-btn">
-                                    <span class="material-symbols-outlined">code</span> Convert to SVG
-                                </button>
+                            
+                            <!-- Fix the icon accordion -->
+                            <div class="accordion" style="margin-top: var(--spacing-4);">
+                                <div class="accordion-header" data-accordion="p2d-fix-icon">
+                                    <h3>Fix the icon</h3>
+                                    <span class="material-symbols-outlined accordion-icon">expand_more</span>
+                                </div>
+                                <div class="accordion-content" id="p2d-fix-icon-content">
+                                    <div style="display: flex; flex-direction: column; gap: var(--spacing-3);">
+                                        <!-- Background Color Picker -->
+                                        <div>
+                                            <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: var(--spacing-2); color: var(--text-secondary);">
+                                                Background Color
+                                                <span id="p2d-bg-transparent-note" style="margin-left: var(--spacing-2); font-size: 12px; color: var(--text-tertiary);" class="hidden">(transparent)</span>
+                                            </label>
+                                            <div style="display: flex; gap: var(--spacing-2); align-items: center;">
+                                                <input type="color" id="p2d-background-color-picker" value="#ffffff" style="width: 48px; height: 32px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); cursor: pointer; pointer-events: auto;">
+                                                <label style="display: flex; align-items: center; gap: var(--spacing-1); font-size: 12px; cursor: pointer; pointer-events: auto;">
+                                                    <input type="checkbox" id="p2d-bg-checkerboard-toggle" checked>
+                                                    <span>Checkerboard preview</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Object Color Picker -->
+                                        <div>
+                                            <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: var(--spacing-2); color: var(--text-secondary);">Object Color</label>
+                                            <input type="color" id="p2d-object-color-picker" value="#000000" style="width: 100%; height: 32px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); cursor: pointer; pointer-events: auto;">
+                                        </div>
+                                        
+                                        <!-- Regenerate Button -->
+                                        <button id="p2d-regenerate-btn" class="primary-btn" style="width: 100%;">
+                                            <span class="material-symbols-outlined">auto_awesome</span>
+                                            <span class="btn-text">Regenerate</span>
+                                            <div class="btn-loader"></div>
+                                        </button>
+                                        
+                                        <!-- Transform Row -->
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-2); margin-top: var(--spacing-2);">
+                                            <button id="p2d-remove-background-btn" class="secondary-btn">
+                                                <span class="material-symbols-outlined">content_cut</span> Remove Background
+                                            </button>
+                                            <button id="p2d-convert-to-svg-btn" class="secondary-btn">
+                                                <span class="material-symbols-outlined">code</span> Convert to SVG
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             
-                            <!-- Result Group -->
-                            <div class="action-group">
-                                <div class="action-group-label">Result</div>
-                                <button id="p2d-preview-result-btn" class="secondary-btn">
-                                    <span class="material-symbols-outlined">preview</span> Preview Result
-                                </button>
-                                <button id="p2d-compare-btn" class="secondary-btn">
-                                    <span class="material-symbols-outlined">compare</span> Compare
-                                </button>
-                                <a href="#" id="p2d-details-download-btn" class="secondary-btn" download>
+                            <!-- Bottom Actions: Download, Copy Prompt, Delete -->
+                            <div style="display: flex; flex-direction: column; gap: var(--spacing-3); margin-top: auto; padding-top: var(--spacing-4);">
+                                <a href="#" id="p2d-details-download-btn" class="secondary-btn" download style="width: 100%;">
                                     <span class="material-symbols-outlined">download</span> Download
                                 </a>
-                                <button id="p2d-copy-svg-btn" class="secondary-btn hidden">
-                                    <span class="material-symbols-outlined">content_copy</span> Copy SVG
-                                </button>
-                                <button id="p2d-details-copy-btn" class="secondary-btn">
+                                <button id="p2d-details-copy-btn" class="secondary-btn" style="width: 100%;">
                                     <span class="material-symbols-outlined">content_copy</span> Copy Prompt
                                 </button>
-                            </div>
-                            
-                            <!-- Management Group -->
-                            <div class="action-group">
-                                <div class="action-group-label">Management</div>
-                                <button id="p2d-details-delete-btn" class="secondary-btn danger">
+                                <button id="p2d-details-delete-btn" class="secondary-btn danger" style="width: 100%;">
                                     <span class="material-symbols-outlined">delete</span> Delete
                                 </button>
                             </div>

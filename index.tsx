@@ -1286,15 +1286,16 @@ window.addEventListener('DOMContentLoaded', () => {
     
     // Update button visibility based on background removal state
     const removeBgBtn = $('#p2d-remove-background-btn');
+    const bgTransparentNote = $('#p2d-bg-transparent-note');
+    
+    // Reset background removal state when new image loads
+    p2dHasBackgroundRemoved = false;
+    
     if (removeBgBtn) {
         removeBgBtn.classList.remove('hidden');
     }
-    if (p2dRevertBackgroundBtn) {
-        if (p2dHasBackgroundRemoved) {
-            p2dRevertBackgroundBtn.classList.remove('hidden');
-        } else {
-            p2dRevertBackgroundBtn.classList.add('hidden');
-        }
+    if (bgTransparentNote) {
+        bgTransparentNote.classList.add('hidden');
     }
   };
   
@@ -1322,7 +1323,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
         li.innerHTML = `
         <div class="history-item-main">
-            <img src="data:${item.mimeType};base64,${item.data}" class="history-thumbnail" alt="History item thumbnail">
+            <div style="position: relative;">
+                <img src="data:${item.mimeType};base64,${item.data}" class="history-thumbnail" alt="History item thumbnail">
+                <button class="history-item-compare-btn" aria-label="Compare" title="Compare with current" style="position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; padding: 0; border: none; background: rgba(255,255,255,0.9); backdrop-filter: blur(4px); border-radius: var(--border-radius-sm); cursor: pointer; opacity: 0; transition: opacity 0.2s; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); pointer-events: none;">
+                    <span class="material-symbols-outlined" style="font-size: 16px; color: var(--text-primary);">compare</span>
+                </button>
+            </div>
             <div class="history-item-info">
             <span class="history-item-label">${item.subject}</span>
             <span class="history-item-timestamp">${timeString}</span>
@@ -1332,6 +1338,58 @@ window.addEventListener('DOMContentLoaded', () => {
             </button>
         </div>
         `;
+        
+        // Show Compare button on hover
+        li.addEventListener('mouseenter', () => {
+            const compareBtn = li.querySelector('.history-item-compare-btn') as HTMLElement;
+            if (compareBtn) {
+                compareBtn.style.opacity = '1';
+                compareBtn.style.pointerEvents = 'auto';
+            }
+        });
+        
+        li.addEventListener('mouseleave', () => {
+            const compareBtn = li.querySelector('.history-item-compare-btn') as HTMLElement;
+            if (compareBtn) {
+                compareBtn.style.opacity = '0';
+                compareBtn.style.pointerEvents = 'none';
+            }
+        });
+        
+        // Compare button event
+        const compareBtn = li.querySelector('.history-item-compare-btn') as HTMLButtonElement;
+        compareBtn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            
+            if (!currentGeneratedImage2d || !p2dOriginalImageData) {
+                showToast({ type: 'error', title: 'Error', body: 'Cannot compare images.' });
+                return;
+            }
+            
+            const historyDataUrl = `data:${item.mimeType};base64,${item.data}`;
+            const currentDataUrl = `data:${currentGeneratedImage2d.mimeType};base64,${currentGeneratedImage2d.data}`;
+            
+            const compareOriginal = $('#p2d-compare-original') as HTMLImageElement;
+            const compareCurrent = $('#p2d-compare-current') as HTMLImageElement;
+            const compareSlider = $('#p2d-compare-slider') as HTMLInputElement;
+            const compareDivider = $('#p2d-compare-divider');
+            
+            if (compareOriginal) compareOriginal.src = historyDataUrl;
+            if (compareCurrent) compareCurrent.src = currentDataUrl;
+            
+            const handleSliderChange = () => {
+                const value = compareSlider.valueAsNumber;
+                if (compareDivider && compareCurrent) {
+                    compareDivider.style.left = `${value}%`;
+                    compareCurrent.style.clipPath = `inset(0 ${100 - value}% 0 0)`;
+                }
+            };
+            compareSlider?.removeEventListener('input', handleSliderChange);
+            compareSlider?.addEventListener('input', handleSliderChange);
+            handleSliderChange();
+            
+            if (p2dCompareModal) p2dCompareModal.classList.remove('hidden');
+        });
         
         // Delete button event
         const deleteBtn = li.querySelector('.history-item-delete-btn') as HTMLButtonElement;
@@ -4552,6 +4610,87 @@ Return the 5 suggestions as a JSON array.`;
         handleCopyCode(currentGeneratedImage2d.styleConstraints, '2D Prompt');
     });
 
+    // 2D Studio: Fix Icon handlers
+    const backgroundColorPicker = $('#p2d-background-color-picker') as HTMLInputElement;
+    const objectColorPicker = $('#p2d-object-color-picker') as HTMLInputElement;
+    const bgCheckerboardToggle = $('#p2d-bg-checkerboard-toggle') as HTMLInputElement;
+    const p2dRegenerateBtn = $('#p2d-regenerate-btn');
+    
+    // Checkerboard toggle for details preview
+    bgCheckerboardToggle?.addEventListener('change', (e) => {
+        const checked = (e.target as HTMLInputElement).checked;
+        const preview = $('#p2d-details-preview-image') as HTMLImageElement;
+        if (!preview) return;
+        
+        if (checked) {
+            preview.style.backgroundColor = '';
+            preview.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
+            preview.style.backgroundPosition = '0 0, 8px 8px';
+            preview.style.backgroundSize = '16px 16px';
+        } else {
+            preview.style.backgroundImage = '';
+            preview.style.backgroundColor = backgroundColorPicker.value;
+        }
+    });
+    
+    // Regenerate handler
+    p2dRegenerateBtn?.addEventListener('click', async () => {
+        if (!currentGeneratedImage2d) {
+            showToast({ type: 'error', title: 'No Image', body: 'Please generate an image first.' });
+            return;
+        }
+        
+        const bgColor = backgroundColorPicker?.value || '#ffffff';
+        const objColor = objectColorPicker?.value || '#000000';
+        
+        // Update prompt with colors
+        const originalPrompt = currentGeneratedImage2d.subject;
+        const colorPrompt = `Background color: ${bgColor}, Icon color: ${objColor}. ${originalPrompt}`;
+        
+        // Show loading
+        if (p2dRegenerateBtn) {
+            p2dRegenerateBtn.setAttribute('disabled', 'true');
+            p2dRegenerateBtn.classList.add('loading');
+        }
+        
+        if (p2dLoaderModal && p2dLoaderMessage) {
+            p2dLoaderMessage.textContent = 'Regenerating icon with new colors...';
+            p2dLoaderModal.classList.remove('hidden');
+        }
+        
+        try {
+            // Re-generate using the existing generation logic
+            await generateImage(
+                colorPrompt,
+                resultImage2d,
+                resultPlaceholder2d,
+                resultError2d,
+                resultIdlePlaceholder2d,
+                p2dRegenerateBtn,
+                referenceImagesForEdit2d.filter(ref => ref !== null) as { file: File; dataUrl: string; }[]
+            );
+            
+            // Update history
+            if (currentGeneratedImage2d) {
+                imageHistory2d.push({...currentGeneratedImage2d});
+                historyIndex2d = imageHistory2d.length - 1;
+                update2dViewFromState();
+                renderHistory2d();
+                
+                showToast({ type: 'success', title: 'Icon regenerated ✅', body: 'New version added to history.' });
+            }
+        } catch (error) {
+            console.error('Regeneration failed:', error);
+            showToast({ type: 'error', title: 'Regeneration Failed', body: 'Failed to regenerate icon.' });
+        } finally {
+            p2dRegenerateBtn?.removeAttribute('disabled');
+            p2dRegenerateBtn?.classList.remove('loading');
+            if (p2dLoaderModal) {
+                p2dLoaderModal.classList.add('hidden');
+            }
+        }
+    });
+
     // 2D Studio: Remove Background
     const removeBackgroundBtn2d = $('#p2d-remove-background-btn');
     removeBackgroundBtn2d?.addEventListener('click', async () => {
@@ -4608,8 +4747,9 @@ Return the 5 suggestions as a JSON array.`;
                 // Update UI state
                 p2dHasBackgroundRemoved = true;
                 const removeBgBtn = $('#p2d-remove-background-btn');
+                const bgTransparentNote = $('#p2d-bg-transparent-note');
                 if (removeBgBtn) removeBgBtn.classList.add('hidden');
-                if (p2dRevertBackgroundBtn) p2dRevertBackgroundBtn.classList.remove('hidden');
+                if (bgTransparentNote) bgTransparentNote.classList.remove('hidden');
                 
                 showToast({ type: 'success', title: 'Background removed ✅', body: 'Background has been successfully removed.' });
             };
