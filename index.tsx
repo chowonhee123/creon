@@ -31,6 +31,7 @@ type GeneratedImageData = {
   motionPrompt?: { json: any, korean: string, english:string } | null;
   originalData?: string; // Original image data before fix
   originalMimeType?: string; // Original image mimeType before fix
+  modificationType?: string; // Type of modification: Original, Remove Background, SVG, Modified
 };
 
 // --- WRAP IN DOMCONTENTLOADED TO PREVENT RACE CONDITIONS ---
@@ -1228,7 +1229,8 @@ window.addEventListener('DOMContentLoaded', () => {
                 mimeType: imageData.mimeType,
                 subject: imagePromptSubjectInput2d.value,
                 styleConstraints: imagePromptDisplay2d.value,
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                modificationType: 'Original'
             };
             
             currentGeneratedImage2d = newImage;
@@ -1314,12 +1316,12 @@ window.addEventListener('DOMContentLoaded', () => {
     
     detailsHistoryList.innerHTML = '';
     
-    // Show most recent first
-    const recentHistory = imageHistory2d.slice().reverse();
-    
-    recentHistory.forEach((item, index) => {
-        const historyIndex = imageHistory2d.length - 1 - index;
+    // Show in chronological order (oldest first, newest last)
+    imageHistory2d.forEach((item, historyIndex) => {
         const isActive = historyIndex === historyIndex2d;
+        
+        // Determine modification type
+        let modificationType = item.modificationType || 'Original';
         
         // Create thumbnail button
         const thumbnailBtn = document.createElement('button');
@@ -1356,6 +1358,22 @@ window.addEventListener('DOMContentLoaded', () => {
             }
         });
         
+        // Create modification type badge
+        const badge = document.createElement('div');
+        badge.textContent = modificationType;
+        badge.style.cssText = `
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: var(--border-radius-sm);
+            font-size: 11px;
+            font-weight: 500;
+            z-index: 1;
+        `;
+        
         // Create thumbnail image
         const img = document.createElement('img');
         img.src = `data:${item.mimeType};base64,${item.data}`;
@@ -1363,6 +1381,7 @@ window.addEventListener('DOMContentLoaded', () => {
         img.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
         img.alt = `History item ${historyIndex + 1}`;
         
+        thumbnailBtn.appendChild(badge);
         thumbnailBtn.appendChild(img);
         
         // Add keyboard support
@@ -4774,7 +4793,10 @@ Return the 5 suggestions as a JSON array.`;
             
             // Update history
             if (currentGeneratedImage2d) {
-                imageHistory2d.push({...currentGeneratedImage2d});
+                imageHistory2d.push({
+                    ...currentGeneratedImage2d,
+                    modificationType: 'Modified'
+                });
                 historyIndex2d = imageHistory2d.length - 1;
                 update2dViewFromState();
                 renderHistory2d();
@@ -4855,7 +4877,10 @@ Return the 5 suggestions as a JSON array.`;
                 
                 // Add to history
                 if (currentGeneratedImage2d) {
-                    imageHistory2d.push({...currentGeneratedImage2d});
+                    imageHistory2d.push({
+                        ...currentGeneratedImage2d,
+                        modificationType: 'Remove Background'
+                    });
                     historyIndex2d = imageHistory2d.length - 1;
                     updateDetailsPanelHistory2d();
                     renderHistory2d();
