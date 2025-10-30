@@ -1318,38 +1318,72 @@ window.addEventListener('DOMContentLoaded', () => {
     const recentHistory = imageHistory2d.slice().reverse();
     
     recentHistory.forEach((item, index) => {
-        const historyItem = document.createElement('div');
-        historyItem.className = 'details-history-item';
-        historyItem.style.cssText = 'display: flex; gap: var(--spacing-2); padding: var(--spacing-2); border-radius: var(--border-radius-md); cursor: pointer; transition: background-color 0.2s;';
-        historyItem.dataset.index = String(imageHistory2d.length - 1 - index);
+        const historyIndex = imageHistory2d.length - 1 - index;
+        const isActive = historyIndex === historyIndex2d;
         
-        const date = new Date(item.timestamp);
-        const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        
-        historyItem.innerHTML = `
-            <img src="data:${item.mimeType};base64,${item.data}" style="width: 60px; height: 60px; object-fit: cover; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color);" alt="History thumbnail">
-            <div style="flex: 1; display: flex; flex-direction: column; gap: var(--spacing-1); overflow: hidden;">
-                <span style="font-size: 13px; font-weight: 500; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.subject}</span>
-                <span style="font-size: 11px; color: var(--text-secondary);">${timeString}</span>
-            </div>
+        // Create thumbnail button
+        const thumbnailBtn = document.createElement('button');
+        thumbnailBtn.type = 'button';
+        thumbnailBtn.className = 'details-history-thumbnail-btn';
+        thumbnailBtn.dataset.index = String(historyIndex);
+        thumbnailBtn.setAttribute('aria-label', `Load history item ${historyIndex + 1}`);
+        thumbnailBtn.style.cssText = `
+            position: relative;
+            width: 100%;
+            height: 270px;
+            padding: 0;
+            border: ${isActive ? '3px solid var(--primary-color, #0070F3)' : '1px solid var(--border-color)'};
+            border-radius: var(--border-radius-md);
+            background: transparent;
+            cursor: pointer;
+            overflow: hidden;
+            transition: all 0.2s ease;
+            outline: none;
         `;
         
-        historyItem.addEventListener('mouseenter', () => {
-            historyItem.style.backgroundColor = 'var(--surface-color)';
+        // Add hover effect
+        thumbnailBtn.addEventListener('mouseenter', () => {
+            if (!isActive) {
+                thumbnailBtn.style.transform = 'scale(1.02)';
+                thumbnailBtn.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+            }
         });
         
-        historyItem.addEventListener('mouseleave', () => {
-            historyItem.style.backgroundColor = '';
+        thumbnailBtn.addEventListener('mouseleave', () => {
+            if (!isActive) {
+                thumbnailBtn.style.transform = '';
+                thumbnailBtn.style.boxShadow = '';
+            }
         });
         
-        historyItem.addEventListener('click', () => {
-            historyIndex2d = parseInt(historyItem.dataset.index || '0');
+        // Create thumbnail image
+        const img = document.createElement('img');
+        img.src = `data:${item.mimeType};base64,${item.data}`;
+        img.loading = 'lazy';
+        img.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
+        img.alt = `History item ${historyIndex + 1}`;
+        
+        thumbnailBtn.appendChild(img);
+        
+        // Add keyboard support
+        thumbnailBtn.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                thumbnailBtn.click();
+            }
+        });
+        
+        // Click handler to load preview
+        thumbnailBtn.addEventListener('click', () => {
+            historyIndex2d = historyIndex;
             currentGeneratedImage2d = imageHistory2d[historyIndex2d];
             update2dViewFromState();
             renderHistory2d();
+            // Re-render history to update active state
+            updateDetailsPanelHistory2d();
         });
         
-        detailsHistoryList.appendChild(historyItem);
+        detailsHistoryList.appendChild(thumbnailBtn);
     });
   };
   

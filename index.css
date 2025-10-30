@@ -3911,3 +3911,14 @@ a.secondary-btn[disabled] {
     margin-top: auto;
     margin-bottom: 0;
 }
+
+/* Details Panel History Thumbnails */
+.details-history-thumbnail-btn:focus-visible {
+    outline: 2px solid var(--primary-color, #0070F3);
+    outline-offset: 2px;
+}
+
+.details-history-thumbnail-btn:focus {
+    outline: none;
+}
+
