@@ -1297,15 +1297,18 @@ window.addEventListener('DOMContentLoaded', () => {
     if (bgTransparentNote) {
         bgTransparentNote.classList.add('hidden');
     }
-    
-    // Update details panel history
-    updateDetailsPanelHistory2d();
   };
   
   const updateDetailsPanelHistory2d = () => {
     const detailsHistoryList = $('#p2d-details-history-list');
-    if (!detailsHistoryList || imageHistory2d.length === 0) {
-        if (detailsHistoryList) detailsHistoryList.innerHTML = '<p style="padding: var(--spacing-4); text-align: center; color: var(--text-secondary);">No history available</p>';
+    const historyTabContent = detailsHistoryList?.closest('.details-tab-content[data-tab-content="history"]');
+    
+    // Only update if History tab is visible
+    if (!detailsHistoryList || !historyTabContent) return;
+    if (historyTabContent.classList.contains('hidden')) return;
+    
+    if (imageHistory2d.length === 0) {
+        detailsHistoryList.innerHTML = '<p style="padding: var(--spacing-4); text-align: center; color: var(--text-secondary);">No history available</p>';
         return;
     }
     
@@ -4596,6 +4599,19 @@ Return the 5 suggestions as a JSON array.`;
     setupTabs($('#image-details-panel'));
     setupTabs($('#image-details-panel-image'));
     setupTabs($('#p2d-image-details-panel'));
+    
+    // 2D Studio Details Panel: Update history when History tab is opened
+    const p2dDetailsPanelTabs = $('#p2d-image-details-panel')?.querySelectorAll('.tab-item');
+    p2dDetailsPanelTabs?.forEach(tab => {
+        tab.addEventListener('click', () => {
+            if (tab.getAttribute('data-tab') === 'history') {
+                // Delay to ensure tab content is visible before updating
+                setTimeout(() => {
+                    updateDetailsPanelHistory2d();
+                }, 50);
+            }
+        });
+    });
     
     // Icon Studio Details Listeners
     downloadSvgBtn?.addEventListener('click', handleDownloadSVG);
