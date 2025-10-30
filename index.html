@@ -661,6 +661,10 @@
                             <span class="material-symbols-outlined">close</span>
                         </button>
                     </header>
+                    <div class="details-panel-tabs">
+                        <button class="tab-item active" data-tab="detail">Detail</button>
+                        <button class="tab-item" data-tab="history">History</button>
+                    </div>
                     <div class="details-panel-body">
                         <div class="details-tab-content" data-tab-content="detail">
                             <div class="details-preview">
@@ -727,6 +731,13 @@
                                 <button id="p2d-details-delete-btn" class="secondary-btn danger" style="width: 100%;">
                                     <span class="material-symbols-outlined">delete</span> Delete
                                 </button>
+                            </div>
+                        </div>
+                        
+                        <!-- History Tab Content -->
+                        <div class="details-tab-content" data-tab-content="history">
+                            <div id="p2d-details-history-list" style="display: flex; flex-direction: column; gap: var(--spacing-2);">
+                                <!-- History items will be rendered here -->
                             </div>
                         </div>
                     </div>

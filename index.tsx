@@ -1297,6 +1297,57 @@ window.addEventListener('DOMContentLoaded', () => {
     if (bgTransparentNote) {
         bgTransparentNote.classList.add('hidden');
     }
+    
+    // Update details panel history
+    updateDetailsPanelHistory2d();
+  };
+  
+  const updateDetailsPanelHistory2d = () => {
+    const detailsHistoryList = $('#p2d-details-history-list');
+    if (!detailsHistoryList || imageHistory2d.length === 0) {
+        if (detailsHistoryList) detailsHistoryList.innerHTML = '<p style="padding: var(--spacing-4); text-align: center; color: var(--text-secondary);">No history available</p>';
+        return;
+    }
+    
+    detailsHistoryList.innerHTML = '';
+    
+    // Show most recent first
+    const recentHistory = imageHistory2d.slice().reverse();
+    
+    recentHistory.forEach((item, index) => {
+        const historyItem = document.createElement('div');
+        historyItem.className = 'details-history-item';
+        historyItem.style.cssText = 'display: flex; gap: var(--spacing-2); padding: var(--spacing-2); border-radius: var(--border-radius-md); cursor: pointer; transition: background-color 0.2s;';
+        historyItem.dataset.index = String(imageHistory2d.length - 1 - index);
+        
+        const date = new Date(item.timestamp);
+        const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        historyItem.innerHTML = `
+            <img src="data:${item.mimeType};base64,${item.data}" style="width: 60px; height: 60px; object-fit: cover; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color);" alt="History thumbnail">
+            <div style="flex: 1; display: flex; flex-direction: column; gap: var(--spacing-1); overflow: hidden;">
+                <span style="font-size: 13px; font-weight: 500; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.subject}</span>
+                <span style="font-size: 11px; color: var(--text-secondary);">${timeString}</span>
+            </div>
+        `;
+        
+        historyItem.addEventListener('mouseenter', () => {
+            historyItem.style.backgroundColor = 'var(--surface-color)';
+        });
+        
+        historyItem.addEventListener('mouseleave', () => {
+            historyItem.style.backgroundColor = '';
+        });
+        
+        historyItem.addEventListener('click', () => {
+            historyIndex2d = parseInt(historyItem.dataset.index || '0');
+            currentGeneratedImage2d = imageHistory2d[historyIndex2d];
+            update2dViewFromState();
+            renderHistory2d();
+        });
+        
+        detailsHistoryList.appendChild(historyItem);
+    });
   };
   
   const renderHistory2d = () => {
@@ -4544,6 +4595,7 @@ Return the 5 suggestions as a JSON array.`;
     setupTabs($('#settings-panel'));
     setupTabs($('#image-details-panel'));
     setupTabs($('#image-details-panel-image'));
+    setupTabs($('#p2d-image-details-panel'));
     
     // Icon Studio Details Listeners
     downloadSvgBtn?.addEventListener('click', handleDownloadSVG);
@@ -4750,6 +4802,14 @@ Return the 5 suggestions as a JSON array.`;
                 const bgTransparentNote = $('#p2d-bg-transparent-note');
                 if (removeBgBtn) removeBgBtn.classList.add('hidden');
                 if (bgTransparentNote) bgTransparentNote.classList.remove('hidden');
+                
+                // Add to history
+                if (currentGeneratedImage2d) {
+                    imageHistory2d.push({...currentGeneratedImage2d});
+                    historyIndex2d = imageHistory2d.length - 1;
+                    updateDetailsPanelHistory2d();
+                    renderHistory2d();
+                }
                 
                 showToast({ type: 'success', title: 'Background removed ✅', body: 'Background has been successfully removed.' });
             };
