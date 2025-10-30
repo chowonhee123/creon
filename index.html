@@ -1398,19 +1398,17 @@
                     <span class="material-symbols-outlined">close</span>
                 </button>
             </header>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-4); margin-top: var(--spacing-4);">
-                <!-- SVG Code View -->
-                <div>
-                    <label style="display: block; font-weight: 500; margin-bottom: var(--spacing-2);">SVG Code</label>
-                    <textarea id="p2d-svg-code-view" readonly style="width: 100%; height: 400px; padding: var(--spacing-3); border-radius: var(--border-radius-md); border: 1px solid var(--border-color); font-family: 'Courier New', monospace; font-size: 12px; background-color: var(--bg-color); color: var(--text-primary); resize: none;"></textarea>
-                    <div style="display: flex; gap: var(--spacing-2); margin-top: var(--spacing-2);">
-                        <button id="p2d-copy-svg-code-btn" class="secondary-btn" style="flex: 1;">
-                            <span class="material-symbols-outlined">content_copy</span> Copy SVG
-                        </button>
-                    </div>
-                </div>
-                <!-- SVG Preview -->
-                <div>
+            
+            <!-- Tabs -->
+            <div class="details-panel-tabs" style="margin-top: var(--spacing-4);">
+                <button class="tab-item active" data-tab="preview">Preview</button>
+                <button class="tab-item" data-tab="code">Code</button>
+            </div>
+            
+            <!-- Tab Content -->
+            <div style="margin-top: var(--spacing-4);">
+                <!-- Preview Tab -->
+                <div class="details-tab-content" data-tab-content="preview">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-2);">
                         <label style="font-weight: 500;">Preview</label>
                         <label style="display: flex; align-items: center; gap: var(--spacing-2); cursor: pointer;">
@@ -1418,11 +1416,23 @@
                             <span style="font-size: 13px;">Checkerboard</span>
                         </label>
                     </div>
-                    <div id="p2d-svg-preview-container" style="width: 100%; height: 400px; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); display: flex; align-items: center; justify-content: center; background-image: repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0); background-position: 0 0, 8px 8px; background-size: 16px 16px; overflow: auto;">
+                    <div id="p2d-svg-preview-container" style="width: 100%; height: 500px; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); display: flex; align-items: center; justify-content: center; background-image: repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0); background-position: 0 0, 8px 8px; background-size: 16px 16px; overflow: auto;">
                         <div id="p2d-svg-preview-content"></div>
                     </div>
                 </div>
+                
+                <!-- Code Tab -->
+                <div class="details-tab-content hidden" data-tab-content="code">
+                    <label style="display: block; font-weight: 500; margin-bottom: var(--spacing-2);">SVG Code</label>
+                    <textarea id="p2d-svg-code-view" readonly style="width: 100%; height: 500px; padding: var(--spacing-3); border-radius: var(--border-radius-md); border: 1px solid var(--border-color); font-family: 'Courier New', monospace; font-size: 12px; background-color: var(--bg-color); color: var(--text-primary); resize: none;"></textarea>
+                    <div style="display: flex; gap: var(--spacing-2); margin-top: var(--spacing-2);">
+                        <button id="p2d-copy-svg-code-btn" class="secondary-btn" style="flex: 1;">
+                            <span class="material-symbols-outlined">content_copy</span> Copy SVG
+                        </button>
+                    </div>
+                </div>
             </div>
+            
             <div style="display: flex; justify-content: flex-end; gap: var(--spacing-2); margin-top: var(--spacing-4);">
                 <button id="p2d-download-svg-btn" class="primary-btn">
                     <span class="material-symbols-outlined">download</span> Download .svg

@@ -4699,6 +4699,7 @@ Return the 5 suggestions as a JSON array.`;
     setupTabs($('#image-details-panel'));
     setupTabs($('#image-details-panel-image'));
     setupTabs($('#p2d-image-details-panel'));
+    setupTabs($('#p2d-svg-preview-modal'));
     
     // 2D Studio Details Panel: Update history when History tab is opened
     const p2dDetailsPanelTabs = $('#p2d-image-details-panel')?.querySelectorAll('.tab-item');
