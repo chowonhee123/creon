@@ -1425,16 +1425,16 @@ window.addEventListener('DOMContentLoaded', () => {
     historyList2d.innerHTML = '';
 
     // Filter to only show Original (prompt-based generations), not Fix modifications
-    const originalHistory = imageHistory2d.filter(item => 
+    const originalHistoryList = imageHistory2d.filter(item => 
         !item.modificationType || item.modificationType === 'Original'
     );
     
-    if (originalHistory.length === 0) {
+    if (originalHistoryList.length === 0) {
         historyPanel2d.classList.add('hidden');
         return;
     }
 
-    originalHistory.forEach((item, listIndex) => {
+    originalHistoryList.forEach((item, listIndex) => {
         // Find the actual index in imageHistory2d
         const index = imageHistory2d.findIndex(h => h.id === item.id);
         const li = document.createElement('li');
@@ -1559,15 +1559,15 @@ window.addEventListener('DOMContentLoaded', () => {
         historyList2d.prepend(li);
     });
 
-    const originalHistory = imageHistory2d.filter(item => 
+    const originalHistoryForCounter = imageHistory2d.filter(item => 
         !item.modificationType || item.modificationType === 'Original'
     );
-    const originalIndex = originalHistory.findIndex(h => imageHistory2d[historyIndex2d]?.id === h.id);
+    const originalIndex = originalHistoryForCounter.findIndex(h => imageHistory2d[historyIndex2d]?.id === h.id);
     
-    if (originalHistory.length > 0 && originalIndex !== -1) {
-        historyCounter2d.textContent = `${originalIndex + 1} / ${originalHistory.length}`;
+    if (originalHistoryForCounter.length > 0 && originalIndex !== -1) {
+        historyCounter2d.textContent = `${originalIndex + 1} / ${originalHistoryForCounter.length}`;
         (historyBackBtn2d as HTMLButtonElement).disabled = originalIndex <= 0;
-        (historyForwardBtn2d as HTMLButtonElement).disabled = originalIndex >= originalHistory.length - 1;
+        (historyForwardBtn2d as HTMLButtonElement).disabled = originalIndex >= originalHistoryForCounter.length - 1;
     } else {
         historyCounter2d.textContent = '0 / 0';
         (historyBackBtn2d as HTMLButtonElement).disabled = true;
