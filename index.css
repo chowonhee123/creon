@@ -809,9 +809,8 @@ input[type='range']::-moz-range-thumb {
   border-color: var(--accent-color);
   color: var(--accent-text-color);
   box-shadow: none;
-  height: 48px;
 }
-  height: 48px;
+.primary-btn:hover {
   background-color: var(--accent-color-hover); border-color: var(--accent-color-hover);
 }
 .primary-btn:disabled {
@@ -2299,7 +2298,7 @@ a.secondary-btn[disabled] {
 @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
 @keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-30px); } 60% { transform: translateY(-15px); } }
 @keyframes scale { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
-@keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 10% { transform: translate(-1px, -2px) rotate(-1deg); } 20% { transform: translate(-3px, 0px) rotate(1deg); } 30% { transform: translate(3px, 2px) rotate(0deg); } 40% { transform: translate(1px, -1px) rotate(1deg); } 50% { transform: translate(-1px, 2px) rotate(-1deg); } 60% { transform: translate(-3px, 1px) rotate(0deg); } 70% { translate(3px, 1px) rotate(-1deg); } 80% { transform: translate(-1px, -1px) rotate(1deg); } 90% { transform: translate(1px, 2px) rotate(0deg); } 100% { transform: translate(1px, -2px) rotate(-1deg); } }
+@keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 10% { transform: translate(-1px, -2px) rotate(-1deg); } 20% { transform: translate(-3px, 0px) rotate(1deg); } 30% { transform: translate(3px, 2px) rotate(0deg); } 40% { transform: translate(1px, -1px) rotate(1deg); } 50% { transform: translate(-1px, 2px) rotate(-1deg); } 60% { transform: translate(-3px, 1px) rotate(0deg); } 70% { transform: translate(3px, 1px) rotate(-1deg); } 80% { transform: translate(-1px, -1px) rotate(1deg); } 90% { transform: translate(1px, 2px) rotate(0deg); } 100% { transform: translate(1px, -2px) rotate(-1deg); } }
 @keyframes rotate { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 @keyframes breathe { 0% { transform: scale(0.9); } 25% { transform: scale(1); } 50% { transform: scale(0.9); } 75% { transform: scale(1); } 100% { transform: scale(0.9); } }
 @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
@@ -3922,3 +3921,14 @@ a.secondary-btn[disabled] {
     outline: none;
 }
 
+
+/* Size normalization: make all buttons 44px height */
+.primary-btn, .secondary-btn {
+  height: 44px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.icon-button {
+  width: 44px;
+  height: 44px;
+}
