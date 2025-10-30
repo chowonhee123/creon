@@ -1436,8 +1436,41 @@ window.addEventListener('DOMContentLoaded', () => {
         thumbnailBtn.addEventListener('click', () => {
             detailsPanelHistoryIndex2d = index;
             currentGeneratedImage2d = detailsPanelHistory2d[index];
-            update2dViewFromState();
+            
+            // Update main preview area
+            if (resultImage2d && currentGeneratedImage2d) {
+                resultImage2d.src = `data:${currentGeneratedImage2d.mimeType};base64,${currentGeneratedImage2d.data}`;
+            }
+            
+            // Update details panel preview
+            if (detailsPreviewImage2d && currentGeneratedImage2d) {
+                detailsPreviewImage2d.src = `data:${currentGeneratedImage2d.mimeType};base64,${currentGeneratedImage2d.data}`;
+            }
+            
+            // Update download button
+            if (detailsDownloadBtn2d && currentGeneratedImage2d) {
+                const downloadUrl = `data:${currentGeneratedImage2d.mimeType};base64,${currentGeneratedImage2d.data}`;
+                detailsDownloadBtn2d.href = downloadUrl;
+                detailsDownloadBtn2d.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}.png`;
+            }
+            
+            // Apply checkerboard if needed
+            const isTransparent = currentGeneratedImage2d.modificationType === 'Remove Background';
+            const detailsPreview = $('#p2d-details-preview-image') as HTMLImageElement;
+            if (detailsPreview) {
+                if (isTransparent) {
+                    detailsPreview.style.backgroundColor = '';
+                    detailsPreview.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
+                    detailsPreview.style.backgroundPosition = '0 0, 8px 8px';
+                    detailsPreview.style.backgroundSize = '16px 16px';
+                } else {
+                    detailsPreview.style.backgroundImage = '';
+                    detailsPreview.style.backgroundColor = '#ffffff';
+                }
+            }
+            
             updateDetailsPanelHistory2d();
+            
             // Also update left sidebar history to match
             const matchingIndex = imageHistory2d.findIndex(h => h.id === currentGeneratedImage2d?.id);
             if (matchingIndex !== -1) {
