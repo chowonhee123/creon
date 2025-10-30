@@ -1284,6 +1284,23 @@ window.addEventListener('DOMContentLoaded', () => {
         detailsDownloadBtn2d.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}.png`;
     }
     
+    // Apply checkerboard background to thumbnail only when background is transparent
+    const isTransparent = currentGeneratedImage2d.modificationType === 'Remove Background';
+    const detailsPreview = $('#p2d-details-preview-image') as HTMLImageElement;
+    if (detailsPreview) {
+        if (isTransparent) {
+            detailsPreview.style.backgroundColor = '';
+            detailsPreview.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
+            detailsPreview.style.backgroundPosition = '0 0, 8px 8px';
+            detailsPreview.style.backgroundSize = '16px 16px';
+            detailsPreview.setAttribute('aria-label', 'Transparent background');
+        } else {
+            detailsPreview.style.backgroundImage = '';
+            detailsPreview.style.backgroundColor = '#ffffff';
+            detailsPreview.setAttribute('aria-label', 'Solid background');
+        }
+    }
+    
     // Cache original image data for background removal revert
     const dataUrl = `data:${currentGeneratedImage2d.mimeType};base64,${currentGeneratedImage2d.data}`;
     p2dOriginalImageData = dataUrl;
@@ -4774,25 +4791,7 @@ Return the 5 suggestions as a JSON array.`;
     // 2D Studio: Fix Icon handlers
     const backgroundColorPicker = $('#p2d-background-color-picker') as HTMLInputElement;
     const objectColorPicker = $('#p2d-object-color-picker') as HTMLInputElement;
-    const bgCheckerboardToggle = $('#p2d-bg-checkerboard-toggle') as HTMLInputElement;
     const p2dRegenerateBtn = $('#p2d-regenerate-btn');
-    
-    // Checkerboard toggle for details preview
-    bgCheckerboardToggle?.addEventListener('change', (e) => {
-        const checked = (e.target as HTMLInputElement).checked;
-        const preview = $('#p2d-details-preview-image') as HTMLImageElement;
-        if (!preview) return;
-        
-        if (checked) {
-            preview.style.backgroundColor = '';
-            preview.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
-            preview.style.backgroundPosition = '0 0, 8px 8px';
-            preview.style.backgroundSize = '16px 16px';
-        } else {
-            preview.style.backgroundImage = '';
-            preview.style.backgroundColor = backgroundColorPicker.value;
-        }
-    });
     
     // Regenerate handler
     p2dRegenerateBtn?.addEventListener('click', async () => {
