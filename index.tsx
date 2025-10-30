@@ -49,8 +49,10 @@ window.addEventListener('DOMContentLoaded', () => {
   
   // 2D Page State
   let currentGeneratedImage2d: GeneratedImageData | null = null;
-  let imageHistory2d: GeneratedImageData[] = [];
+  let imageHistory2d: GeneratedImageData[] = []; // Left sidebar history (all prompts)
   let historyIndex2d = -1;
+  let detailsPanelHistory2d: GeneratedImageData[] = []; // Right panel history (only Fix modifications)
+  let detailsPanelHistoryIndex2d = -1;
   let referenceImagesForEdit2d: ({ file: File; dataUrl: string } | null)[] = [null, null, null, null];
   
   // 2D Studio: Local state for background removal
@@ -1309,16 +1311,17 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!detailsHistoryList || !historyTabContent) return;
     if (historyTabContent.classList.contains('hidden')) return;
     
-    if (imageHistory2d.length === 0) {
-        detailsHistoryList.innerHTML = '<p style="padding: var(--spacing-4); text-align: center; color: var(--text-secondary);">No history available</p>';
+    if (detailsPanelHistory2d.length === 0) {
+        detailsHistoryList.innerHTML = '<p style="padding: var(--spacing-4); text-align: center; color: var(--text-secondary);">No Fix history available</p>';
         return;
     }
     
     detailsHistoryList.innerHTML = '';
     
     // Show in chronological order (oldest first, newest last)
-    imageHistory2d.forEach((item, historyIndex) => {
-        const isActive = historyIndex === historyIndex2d;
+    // Only show Fix modifications, not original generations
+    detailsPanelHistory2d.forEach((item, index) => {
+        const isActive = index === detailsPanelHistoryIndex2d;
         
         // Determine modification type
         let modificationType = item.modificationType || 'Original';
@@ -1394,12 +1397,16 @@ window.addEventListener('DOMContentLoaded', () => {
         
         // Click handler to load preview
         thumbnailBtn.addEventListener('click', () => {
-            historyIndex2d = historyIndex;
-            currentGeneratedImage2d = imageHistory2d[historyIndex2d];
+            detailsPanelHistoryIndex2d = index;
+            currentGeneratedImage2d = detailsPanelHistory2d[index];
             update2dViewFromState();
-            renderHistory2d();
-            // Re-render history to update active state
             updateDetailsPanelHistory2d();
+            // Also update left sidebar history to match
+            const matchingIndex = imageHistory2d.findIndex(h => h.id === currentGeneratedImage2d?.id);
+            if (matchingIndex !== -1) {
+                historyIndex2d = matchingIndex;
+                renderHistory2d();
+            }
         });
         
         detailsHistoryList.appendChild(thumbnailBtn);
@@ -1417,7 +1424,19 @@ window.addEventListener('DOMContentLoaded', () => {
     historyPanel2d.classList.remove('hidden');
     historyList2d.innerHTML = '';
 
-    imageHistory2d.forEach((item, index) => {
+    // Filter to only show Original (prompt-based generations), not Fix modifications
+    const originalHistory = imageHistory2d.filter(item => 
+        !item.modificationType || item.modificationType === 'Original'
+    );
+    
+    if (originalHistory.length === 0) {
+        historyPanel2d.classList.add('hidden');
+        return;
+    }
+
+    originalHistory.forEach((item, listIndex) => {
+        // Find the actual index in imageHistory2d
+        const index = imageHistory2d.findIndex(h => h.id === item.id);
         const li = document.createElement('li');
         li.className = 'history-item';
         if (index === historyIndex2d) {
@@ -1540,9 +1559,20 @@ window.addEventListener('DOMContentLoaded', () => {
         historyList2d.prepend(li);
     });
 
-    historyCounter2d.textContent = `${historyIndex2d + 1} / ${imageHistory2d.length}`;
-    (historyBackBtn2d as HTMLButtonElement).disabled = historyIndex2d <= 0;
-    (historyForwardBtn2d as HTMLButtonElement).disabled = historyIndex2d >= imageHistory2d.length - 1;
+    const originalHistory = imageHistory2d.filter(item => 
+        !item.modificationType || item.modificationType === 'Original'
+    );
+    const originalIndex = originalHistory.findIndex(h => imageHistory2d[historyIndex2d]?.id === h.id);
+    
+    if (originalHistory.length > 0 && originalIndex !== -1) {
+        historyCounter2d.textContent = `${originalIndex + 1} / ${originalHistory.length}`;
+        (historyBackBtn2d as HTMLButtonElement).disabled = originalIndex <= 0;
+        (historyForwardBtn2d as HTMLButtonElement).disabled = originalIndex >= originalHistory.length - 1;
+    } else {
+        historyCounter2d.textContent = '0 / 0';
+        (historyBackBtn2d as HTMLButtonElement).disabled = true;
+        (historyForwardBtn2d as HTMLButtonElement).disabled = true;
+    }
   };
   
   
@@ -4692,8 +4722,13 @@ Return the 5 suggestions as a JSON array.`;
 
     // 2D History Button Listeners
     historyBackBtn2d?.addEventListener('click', () => {
-        if (historyIndex2d > 0) {
-            historyIndex2d--;
+        const originalHistory = imageHistory2d.filter(item => 
+            !item.modificationType || item.modificationType === 'Original'
+        );
+        const originalIndex = originalHistory.findIndex(h => imageHistory2d[historyIndex2d]?.id === h.id);
+        
+        if (originalIndex > 0) {
+            historyIndex2d = imageHistory2d.findIndex(h => h.id === originalHistory[originalIndex - 1].id);
             currentGeneratedImage2d = imageHistory2d[historyIndex2d];
             update2dViewFromState();
             renderHistory2d();
@@ -4701,8 +4736,13 @@ Return the 5 suggestions as a JSON array.`;
     });
 
     historyForwardBtn2d?.addEventListener('click', () => {
-        if (historyIndex2d < imageHistory2d.length - 1) {
-            historyIndex2d++;
+        const originalHistory = imageHistory2d.filter(item => 
+            !item.modificationType || item.modificationType === 'Original'
+        );
+        const originalIndex = originalHistory.findIndex(h => imageHistory2d[historyIndex2d]?.id === h.id);
+        
+        if (originalIndex < originalHistory.length - 1) {
+            historyIndex2d = imageHistory2d.findIndex(h => h.id === originalHistory[originalIndex + 1].id);
             currentGeneratedImage2d = imageHistory2d[historyIndex2d];
             update2dViewFromState();
             renderHistory2d();
@@ -4791,15 +4831,25 @@ Return the 5 suggestions as a JSON array.`;
                 referenceImagesForEdit2d.filter(ref => ref !== null) as { file: File; dataUrl: string; }[]
             );
             
-            // Update history
+            // Update history - add to left sidebar (all prompts) and details panel (Fix only)
             if (currentGeneratedImage2d) {
+                // Add to left sidebar history
                 imageHistory2d.push({
                     ...currentGeneratedImage2d,
                     modificationType: 'Modified'
                 });
                 historyIndex2d = imageHistory2d.length - 1;
+                
+                // Add to details panel history
+                detailsPanelHistory2d.push({
+                    ...currentGeneratedImage2d,
+                    modificationType: 'Modified'
+                });
+                detailsPanelHistoryIndex2d = detailsPanelHistory2d.length - 1;
+                
                 update2dViewFromState();
                 renderHistory2d();
+                updateDetailsPanelHistory2d();
                 
                 showToast({ type: 'success', title: 'Icon regenerated ✅', body: 'New version added to history.' });
             }
@@ -4875,15 +4925,14 @@ Return the 5 suggestions as a JSON array.`;
                 if (removeBgBtn) removeBgBtn.classList.add('hidden');
                 if (bgTransparentNote) bgTransparentNote.classList.remove('hidden');
                 
-                // Add to history
+                // Add to details panel history only (not left sidebar)
                 if (currentGeneratedImage2d) {
-                    imageHistory2d.push({
+                    detailsPanelHistory2d.push({
                         ...currentGeneratedImage2d,
                         modificationType: 'Remove Background'
                     });
-                    historyIndex2d = imageHistory2d.length - 1;
+                    detailsPanelHistoryIndex2d = detailsPanelHistory2d.length - 1;
                     updateDetailsPanelHistory2d();
-                    renderHistory2d();
                 }
                 
                 showToast({ type: 'success', title: 'Background removed ✅', body: 'Background has been successfully removed.' });
