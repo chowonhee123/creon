@@ -3932,3 +3932,28 @@ a.secondary-btn[disabled] {
   width: 44px;
   height: 44px;
 }
+
+/* Header Action Buttons */
+.header-action-btn {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s, color 0.2s;
+  margin-left: var(--spacing-1);
+}
+
+.header-action-btn:hover {
+  background-color: var(--input-bg);
+}
+
+.header-action-btn .material-symbols-outlined {
+  font-size: 24px;
+}
+
