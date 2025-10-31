@@ -1402,12 +1402,24 @@ window.addEventListener('DOMContentLoaded', () => {
                 thumbnailBtn.style.transform = 'scale(1.02)';
                 thumbnailBtn.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
             }
+            // Show compare button on hover
+            const compareBtn = thumbnailBtn.querySelector('.details-history-compare-btn') as HTMLElement;
+            if (compareBtn && modificationType !== 'Original') {
+                compareBtn.style.opacity = '1';
+                compareBtn.style.pointerEvents = 'auto';
+            }
         });
         
         thumbnailBtn.addEventListener('mouseleave', () => {
             if (!isActive) {
                 thumbnailBtn.style.transform = '';
                 thumbnailBtn.style.boxShadow = '';
+            }
+            // Hide compare button on leave
+            const compareBtn = thumbnailBtn.querySelector('.details-history-compare-btn') as HTMLElement;
+            if (compareBtn) {
+                compareBtn.style.opacity = '0';
+                compareBtn.style.pointerEvents = 'none';
             }
         });
         
@@ -1427,6 +1439,36 @@ window.addEventListener('DOMContentLoaded', () => {
             z-index: 1;
         `;
         
+        // Create compare button (only for non-Original items)
+        let compareBtn = null;
+        if (modificationType !== 'Original') {
+            compareBtn = document.createElement('button');
+            compareBtn.className = 'details-history-compare-btn';
+            compareBtn.setAttribute('aria-label', 'Compare with original');
+            compareBtn.style.cssText = `
+                position: absolute;
+                top: 4px;
+                right: 4px;
+                width: 28px;
+                height: 28px;
+                padding: 0;
+                border: none;
+                background: rgba(255,255,255,0.9);
+                backdrop-filter: blur(4px);
+                border-radius: var(--border-radius-sm);
+                cursor: pointer;
+                opacity: 0;
+                transition: opacity 0.2s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                pointer-events: none;
+                z-index: 2;
+            `;
+            compareBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 16px; color: var(--text-primary);">compare</span>';
+        }
+        
         // Create thumbnail image
         const img = document.createElement('img');
         img.src = `data:${item.mimeType};base64,${item.data}`;
@@ -1435,6 +1477,9 @@ window.addEventListener('DOMContentLoaded', () => {
         img.alt = `History item ${index + 1}`;
         
         thumbnailBtn.appendChild(badge);
+        if (compareBtn) {
+            thumbnailBtn.appendChild(compareBtn);
+        }
         thumbnailBtn.appendChild(img);
         
         // Add keyboard support
@@ -1444,6 +1489,44 @@ window.addEventListener('DOMContentLoaded', () => {
                 thumbnailBtn.click();
             }
         });
+        
+        // Compare button event handler (only for non-Original items)
+        if (compareBtn && modificationType !== 'Original') {
+            compareBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                
+                // Find the Original entry to compare with
+                const originalEntry = detailsPanelHistory2d.find(item => item.modificationType === 'Original');
+                if (!originalEntry) {
+                    showToast({ type: 'error', title: 'Error', body: 'Original image not found.' });
+                    return;
+                }
+                
+                const currentDataUrl = `data:${item.mimeType};base64,${item.data}`;
+                const originalDataUrl = `data:${originalEntry.mimeType};base64,${originalEntry.data}`;
+                
+                const compareOriginal = $('#p2d-compare-original') as HTMLImageElement;
+                const compareCurrent = $('#p2d-compare-current') as HTMLImageElement;
+                const compareSlider = $('#p2d-compare-slider') as HTMLInputElement;
+                const compareDivider = $('#p2d-compare-divider');
+                
+                if (compareOriginal) compareOriginal.src = originalDataUrl;
+                if (compareCurrent) compareCurrent.src = currentDataUrl;
+                
+                const handleSliderChange = () => {
+                    const value = compareSlider.valueAsNumber;
+                    if (compareDivider && compareCurrent) {
+                        compareDivider.style.left = `${value}%`;
+                        compareCurrent.style.clipPath = `inset(0 ${100 - value}% 0 0)`;
+                    }
+                };
+                compareSlider?.removeEventListener('input', handleSliderChange);
+                compareSlider?.addEventListener('input', handleSliderChange);
+                handleSliderChange();
+                
+                if (p2dCompareModal) p2dCompareModal.classList.remove('hidden');
+            });
+        }
         
         // Click handler to load preview
         thumbnailBtn.addEventListener('click', () => {
@@ -1531,9 +1614,6 @@ window.addEventListener('DOMContentLoaded', () => {
         <div class="history-item-main">
             <div style="position: relative;">
                 <img src="data:${item.mimeType};base64,${item.data}" class="history-thumbnail" alt="History item thumbnail">
-                <button class="history-item-compare-btn" aria-label="Compare" title="Compare with current" style="position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; padding: 0; border: none; background: rgba(255,255,255,0.9); backdrop-filter: blur(4px); border-radius: var(--border-radius-sm); cursor: pointer; opacity: 0; transition: opacity 0.2s; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); pointer-events: none;">
-                    <span class="material-symbols-outlined" style="font-size: 16px; color: var(--text-primary);">compare</span>
-                </button>
             </div>
             <div class="history-item-info">
             <span class="history-item-label">${item.subject}</span>
@@ -1544,58 +1624,6 @@ window.addEventListener('DOMContentLoaded', () => {
             </button>
         </div>
         `;
-        
-        // Show Compare button on hover
-        li.addEventListener('mouseenter', () => {
-            const compareBtn = li.querySelector('.history-item-compare-btn') as HTMLElement;
-            if (compareBtn) {
-                compareBtn.style.opacity = '1';
-                compareBtn.style.pointerEvents = 'auto';
-            }
-        });
-        
-        li.addEventListener('mouseleave', () => {
-            const compareBtn = li.querySelector('.history-item-compare-btn') as HTMLElement;
-            if (compareBtn) {
-                compareBtn.style.opacity = '0';
-                compareBtn.style.pointerEvents = 'none';
-            }
-        });
-        
-        // Compare button event
-        const compareBtn = li.querySelector('.history-item-compare-btn') as HTMLButtonElement;
-        compareBtn?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            
-            if (!currentGeneratedImage2d || !p2dOriginalImageData) {
-                showToast({ type: 'error', title: 'Error', body: 'Cannot compare images.' });
-                return;
-            }
-            
-            const historyDataUrl = `data:${item.mimeType};base64,${item.data}`;
-            const currentDataUrl = `data:${currentGeneratedImage2d.mimeType};base64,${currentGeneratedImage2d.data}`;
-            
-            const compareOriginal = $('#p2d-compare-original') as HTMLImageElement;
-            const compareCurrent = $('#p2d-compare-current') as HTMLImageElement;
-            const compareSlider = $('#p2d-compare-slider') as HTMLInputElement;
-            const compareDivider = $('#p2d-compare-divider');
-            
-            if (compareOriginal) compareOriginal.src = historyDataUrl;
-            if (compareCurrent) compareCurrent.src = currentDataUrl;
-            
-            const handleSliderChange = () => {
-                const value = compareSlider.valueAsNumber;
-                if (compareDivider && compareCurrent) {
-                    compareDivider.style.left = `${value}%`;
-                    compareCurrent.style.clipPath = `inset(0 ${100 - value}% 0 0)`;
-                }
-            };
-            compareSlider?.removeEventListener('input', handleSliderChange);
-            compareSlider?.addEventListener('input', handleSliderChange);
-            handleSliderChange();
-            
-            if (p2dCompareModal) p2dCompareModal.classList.remove('hidden');
-        });
         
         // Delete button event
         const deleteBtn = li.querySelector('.history-item-delete-btn') as HTMLButtonElement;
