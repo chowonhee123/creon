@@ -679,20 +679,9 @@
                                 </div>
                                 <div class="accordion-content" id="p2d-fix-icon-content" data-active="false">
                                     <div style="display: flex; flex-direction: column; gap: var(--spacing-3);">
-                                        <!-- Background Color Picker -->
+                                        <!-- Icon Color Picker -->
                                         <div>
-                                            <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: var(--spacing-2); color: var(--text-secondary);">
-                                                Background Color
-                                                <span id="p2d-bg-transparent-note" style="margin-left: var(--spacing-2); font-size: 12px; color: var(--text-tertiary);" class="hidden">(transparent)</span>
-                                            </label>
-                                            <div style="display: flex; gap: var(--spacing-2); align-items: center;">
-                                                <input type="color" id="p2d-background-color-picker" value="#ffffff" style="width: 48px; height: 32px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); cursor: pointer; pointer-events: auto;">
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- Object Color Picker -->
-                                        <div>
-                                            <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: var(--spacing-2); color: var(--text-secondary);">Object Color</label>
+                                            <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: var(--spacing-2); color: var(--text-secondary);">Icon Color</label>
                                             <input type="color" id="p2d-object-color-picker" value="#000000" style="width: 100%; height: 32px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); cursor: pointer; pointer-events: auto;">
                                         </div>
                                         
@@ -716,24 +705,20 @@
                                 </div>
                             </div>
                             
-                            <!-- Bottom Actions: Kebab + Download (primary) -->
-                            <div style="display: flex; align-items: center; gap: var(--spacing-2); margin-top: auto; padding-top: var(--spacing-4); position: relative;">
-                                <button id="p2d-kebab-btn" class="icon-button" aria-label="More actions" title="More actions">
-                                    <span class="material-symbols-outlined">more_vert</span>
+                            <!-- Bottom Actions: Download + Copy + Delete -->
+                            <div style="display: flex; align-items: center; gap: var(--spacing-2); margin-top: auto; padding-top: var(--spacing-4);">
+                                <button id="p2d-details-copy-btn" class="secondary-btn" style="flex: 1;">
+                                    <span class="material-symbols-outlined">content_copy</span>
+                                    <span class="btn-text">Copy</span>
                                 </button>
                                 <a href="#" id="p2d-details-download-btn" class="primary-btn" download style="flex: 1;">
                                     <span class="material-symbols-outlined">download</span>
                                     <span class="btn-text">Download</span>
                                 </a>
-                                <!-- Kebab dropdown -->
-                                <div id="p2d-kebab-menu" class="kebab-menu hidden" style="position: absolute; left: 0; bottom: 56px; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); box-shadow: 0 8px 24px rgba(0,0,0,0.12); width: 220px; overflow: hidden; z-index: 20;">
-                                    <button id="p2d-kebab-copy" class="secondary-btn" style="width: 100%; justify-content: flex-start; gap: var(--spacing-2); border: none; background: transparent;">
-                                        <span class="material-symbols-outlined">content_copy</span> Copy Prompt
-                                    </button>
-                                    <button id="p2d-kebab-delete" class="secondary-btn danger" style="width: 100%; justify-content: flex-start; gap: var(--spacing-2); border: none; background: transparent;">
-                                        <span class="material-symbols-outlined">delete</span> Delete
-                                    </button>
-                                </div>
+                                <button id="p2d-details-delete-btn" class="secondary-btn danger" style="flex: 1;">
+                                    <span class="material-symbols-outlined">delete</span>
+                                    <span class="btn-text">Delete</span>
+                                </button>
                             </div>
                         </div>
                         

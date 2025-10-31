@@ -1316,16 +1316,12 @@ window.addEventListener('DOMContentLoaded', () => {
     
     // Update button visibility based on background removal state
     const removeBgBtn = $('#p2d-remove-background-btn');
-    const bgTransparentNote = $('#p2d-bg-transparent-note');
     
     // Reset background removal state when new image loads
     p2dHasBackgroundRemoved = false;
     
     if (removeBgBtn) {
         removeBgBtn.classList.remove('hidden');
-    }
-    if (bgTransparentNote) {
-        bgTransparentNote.classList.add('hidden');
     }
   };
   
@@ -4843,8 +4839,7 @@ Return the 5 suggestions as a JSON array.`;
     });
 
     // 2D Studio: Fix Icon handlers
-    const backgroundColorPicker = $('#p2d-background-color-picker') as HTMLInputElement;
-    const objectColorPicker = $('#p2d-object-color-picker') as HTMLInputElement;
+    const iconColorPicker = $('#p2d-object-color-picker') as HTMLInputElement;
     const p2dRegenerateBtn = $('#p2d-regenerate-btn');
     
     // Regenerate handler
@@ -4854,12 +4849,11 @@ Return the 5 suggestions as a JSON array.`;
             return;
         }
         
-        const bgColor = backgroundColorPicker?.value || '#ffffff';
-        const objColor = objectColorPicker?.value || '#000000';
+        const iconColor = iconColorPicker?.value || '#000000';
         
-        // Update prompt with colors
+        // Update prompt with icon color
         const originalPrompt = currentGeneratedImage2d.subject;
-        const colorPrompt = `Background color: ${bgColor}, Icon color: ${objColor}. ${originalPrompt}`;
+        const colorPrompt = `Icon color: ${iconColor}. ${originalPrompt}`;
         
         // Show loading
         if (p2dRegenerateBtn) {
@@ -4974,9 +4968,7 @@ Return the 5 suggestions as a JSON array.`;
                 // Update UI state
                 p2dHasBackgroundRemoved = true;
                 const removeBgBtn = $('#p2d-remove-background-btn');
-                const bgTransparentNote = $('#p2d-bg-transparent-note');
                 if (removeBgBtn) removeBgBtn.classList.add('hidden');
-                if (bgTransparentNote) bgTransparentNote.classList.remove('hidden');
                 
                 // Add to details panel history only (not left sidebar)
                 if (currentGeneratedImage2d) {
@@ -5295,27 +5287,6 @@ Return the 5 suggestions as a JSON array.`;
         if (p2dCompareModal) p2dCompareModal.classList.add('hidden');
     });
 
-    // Details Panel: Kebab menu
-    const kebabBtn2d = $('#p2d-kebab-btn');
-    const kebabMenu2d = $('#p2d-kebab-menu');
-    const kebabCopy2d = $('#p2d-kebab-copy');
-    const kebabDelete2d = $('#p2d-kebab-delete');
-    const closeKebab = () => kebabMenu2d?.classList.add('hidden');
-    kebabBtn2d?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        kebabMenu2d?.classList.toggle('hidden');
-    });
-    document.addEventListener('click', () => closeKebab());
-    kebabMenu2d?.addEventListener('click', (e) => e.stopPropagation());
-    kebabCopy2d?.addEventListener('click', () => {
-        closeKebab();
-        // Reuse existing copy handler
-        detailsCopyBtn2d?.dispatchEvent(new Event('click'));
-    });
-    kebabDelete2d?.addEventListener('click', () => {
-        closeKebab();
-        detailsDeleteBtn2d?.dispatchEvent(new Event('click'));
-    });
 
     // 3D History Button Listeners
     historyBackBtn?.addEventListener('click', () => {
