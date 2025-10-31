@@ -5287,6 +5287,27 @@ Return the 5 suggestions as a JSON array.`;
         if (p2dCompareModal) p2dCompareModal.classList.add('hidden');
     });
 
+    // Details Panel: More menu (Copy/Delete)
+    const moreMenuBtn2d = $('#p2d-more-menu-btn');
+    const moreMenu2d = $('#p2d-more-menu');
+    const moreCopy2d = $('#p2d-more-copy');
+    const moreDelete2d = $('#p2d-more-delete');
+    const closeMoreMenu = () => moreMenu2d?.classList.add('hidden');
+    moreMenuBtn2d?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        moreMenu2d?.classList.toggle('hidden');
+    });
+    document.addEventListener('click', () => closeMoreMenu());
+    moreMenu2d?.addEventListener('click', (e) => e.stopPropagation());
+    moreCopy2d?.addEventListener('click', () => {
+        closeMoreMenu();
+        // Reuse existing copy handler
+        detailsCopyBtn2d?.dispatchEvent(new Event('click'));
+    });
+    moreDelete2d?.addEventListener('click', () => {
+        closeMoreMenu();
+        detailsDeleteBtn2d?.dispatchEvent(new Event('click'));
+    });
 
     // 3D History Button Listeners
     historyBackBtn?.addEventListener('click', () => {
