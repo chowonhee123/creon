@@ -4885,6 +4885,20 @@ Return the 5 suggestions as a JSON array.`;
             
             const colorPrompt = JSON.stringify(template, null, 2);
             
+            // Get the original image from the first entry in details panel history
+            const originalEntry = detailsPanelHistory2d.find(item => item.modificationType === 'Original');
+            if (!originalEntry) {
+                showToast({ type: 'error', title: 'Error', body: 'Original image not found.' });
+                return;
+            }
+            
+            // Convert original image to File for reference
+            const originalDataUrl = `data:${originalEntry.mimeType};base64,${originalEntry.data}`;
+            const response = await fetch(originalDataUrl);
+            const blob = await response.blob();
+            const originalFile = new File([blob], 'original-icon.png', { type: originalEntry.mimeType });
+            const originalReference = { file: originalFile, dataUrl: originalDataUrl };
+            
             // Show loading
             if (p2dRegenerateBtn) {
                 p2dRegenerateBtn.setAttribute('disabled', 'true');
@@ -4896,7 +4910,7 @@ Return the 5 suggestions as a JSON array.`;
                 p2dLoaderModal.classList.remove('hidden');
             }
             
-            // Re-generate using the existing generation logic with full template
+            // Re-generate using the existing generation logic with full template AND original image reference
             const imageData = await generateImage(
                 colorPrompt,
                 resultImage2d,
@@ -4904,7 +4918,7 @@ Return the 5 suggestions as a JSON array.`;
                 resultError2d,
                 resultIdlePlaceholder2d,
                 p2dRegenerateBtn,
-                referenceImagesForEdit2d.filter(ref => ref !== null) as { file: File; dataUrl: string; }[]
+                [originalReference] // Pass original image as reference to maintain shape
             );
             
             // Update history - add to right panel history only (edit history for current base asset)
