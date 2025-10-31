@@ -559,6 +559,13 @@ window.addEventListener('DOMContentLoaded', () => {
   const previewSwitcherImageBtn = $('.preview-switcher .preview-tab-item[data-tab="image"]');
   const previewSwitcherVideoBtn = $('.preview-switcher .preview-tab-item[data-tab="video"]');
   const motionPromptPlaceholder = $('#motion-prompt-placeholder');
+
+  // 3D Details: More menu (Upscale / Copy Prompt / Delete)
+  const detailsMoreMenuBtn = $('#details-more-menu-btn');
+  const detailsMoreMenu = $('#details-more-menu');
+  const detailsMoreUpscale = $('#details-more-upscale');
+  const detailsMoreCopy = $('#details-more-copy');
+  const detailsMoreDelete = $('#details-more-delete');
   
   // 2D Page Elements
   const imageGenerateBtn2d = $('#p2d-image-generate-btn');
@@ -1148,7 +1155,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const template = JSON.parse(DEFAULT_2D_STYLE_PROMPT_TEMPLATE);
       const subject = imagePromptSubjectInput2d.value || 'a friendly robot';
       
-      const style = document.querySelector<HTMLInputElement>('input[name="p2d-icon-family"]:checked')?.value || 'outlined';
+      const style = 'outlined'; // Style selector removed, default to outlined
       const fill = (document.querySelector('#p2d-fill-toggle') as HTMLInputElement).checked;
       const weight = parseInt((document.querySelector('#p2d-weight-slider') as HTMLInputElement).value);
       const color = (document.querySelector('#p2d-color-picker') as HTMLInputElement).value;
@@ -3591,14 +3598,22 @@ Return the 5 suggestions as a JSON array.`;
     URL.revokeObjectURL(url);
   };
 
-  const handleDownloadSVG = () => {
+  const handleDownloadSVG = async () => {
     const styles = getSelectedIconStyles();
     if (!styles) return;
-  
+
     const { name, style, size, color, fontVariationSettings } = styles;
-    const fontUrl = `https://fonts.googleapis.com/css2?family=Material+Symbols+${style}:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200`;
-  
-    const svgContent = `
+
+    // Show a loader while preparing SVG
+    imageGenerationLoaderModal?.classList.remove('hidden');
+
+    try {
+      const fontUrl = `https://fonts.googleapis.com/css2?family=Material+Symbols+${style}:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200`;
+
+      // Yield to the UI thread so the modal can render before heavy work
+      await new Promise(requestAnimationFrame);
+
+      const svgContent = `
   <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
     <style>
       @import url('${fontUrl}');
@@ -3611,9 +3626,12 @@ Return the 5 suggestions as a JSON array.`;
     </style>
     <text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" class="icon">${name}</text>
   </svg>
-    `.trim();
-  
-    downloadText(svgContent, `${name}.svg`, 'image/svg+xml');
+      `.trim();
+
+      downloadText(svgContent, `${name}.svg`, 'image/svg+xml');
+    } finally {
+      imageGenerationLoaderModal?.classList.add('hidden');
+    }
   };
 
   const handleDownloadPNG = async () => {
@@ -4897,7 +4915,51 @@ Return the 5 suggestions as a JSON array.`;
 
     // 2D Studio: Fix Icon handlers
     const iconColorPicker = $('#p2d-object-color-picker') as HTMLInputElement;
+    const strokeHexInput = $('#p2d-stroke-hex') as HTMLInputElement;
     const p2dRegenerateBtn = $('#p2d-regenerate-btn');
+
+    // Simple HEX normalize/validation
+    let lastValidHex = '#000000';
+    const normalizeHex = (value: string) => {
+        const raw = (value || '').trim().replace(/^#/,'').toUpperCase();
+        if (/^[0-9A-F]{3}$/.test(raw)) return `#${raw}`;
+        if (/^[0-9A-F]{6}$/.test(raw)) return `#${raw}`;
+        return null;
+    };
+
+    // HEX input syncs with hidden color picker
+    iconColorPicker?.addEventListener('input', () => {
+        const hex = (iconColorPicker.value || '#000000').toUpperCase();
+        lastValidHex = hex;
+        if (strokeHexInput) strokeHexInput.value = hex;
+    });
+
+    // HEX input UX: Enter apply, Esc revert; invalid disables Regenerate
+    const setRegenerateDisabled = (disabled: boolean) => {
+        if (!p2dRegenerateBtn) return;
+        if (disabled) p2dRegenerateBtn.setAttribute('disabled', 'true');
+        else p2dRegenerateBtn.removeAttribute('disabled');
+    };
+    strokeHexInput?.addEventListener('input', () => {
+        const normalized = normalizeHex(strokeHexInput.value);
+        const valid = !!normalized;
+        strokeHexInput.style.borderColor = valid ? 'var(--border-color)' : 'var(--danger-color)';
+        setRegenerateDisabled(!valid);
+        if (valid) {
+            lastValidHex = normalized as string;
+            if (iconColorPicker) iconColorPicker.value = lastValidHex;
+        }
+    });
+    strokeHexInput?.addEventListener('keydown', (e: KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            const normalized = normalizeHex(strokeHexInput.value) || lastValidHex;
+            strokeHexInput.value = normalized;
+            lastValidHex = normalized;
+            if (iconColorPicker) iconColorPicker.value = normalized;
+        } else if (e.key === 'Escape') {
+            strokeHexInput.value = lastValidHex;
+        }
+    });
     
     // Regenerate handler
     p2dRegenerateBtn?.addEventListener('click', async () => {
@@ -5413,6 +5475,57 @@ Return the 5 suggestions as a JSON array.`;
         detailsPanel?.classList.toggle('is-open');
     });
     
+  // 3D Details: More menu handlers
+  const close3dMoreMenu = () => detailsMoreMenu?.classList.add('hidden');
+  detailsMoreMenuBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    detailsMoreMenu?.classList.toggle('hidden');
+  });
+  document.addEventListener('click', () => close3dMoreMenu());
+  detailsMoreMenu?.addEventListener('click', (e) => e.stopPropagation());
+  detailsMoreUpscale?.addEventListener('click', () => {
+    close3dMoreMenu();
+    // Reuse existing Upscale action
+    detailsUpscaleBtn?.dispatchEvent(new Event('click'));
+  });
+  detailsMoreCopy?.addEventListener('click', async () => {
+    close3dMoreMenu();
+    const basePrompt = (imagePromptDisplay as HTMLTextAreaElement)?.value || '';
+    const userExtra = (userPrompt3d as HTMLInputElement)?.value || '';
+    const text = [basePrompt, userExtra].filter(Boolean).join('\n');
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast({ type: 'success', title: 'Copied', body: 'Prompt copied to clipboard.' });
+    } catch (err) {
+      showToast({ type: 'error', title: 'Copy Failed', body: 'Could not copy prompt.' });
+    }
+  });
+  detailsMoreDelete?.addEventListener('click', () => {
+    close3dMoreMenu();
+    // Delete current item from 3D history
+    if (imageHistory.length === 1) {
+      showToast({ type: 'error', title: 'Cannot Delete', body: 'Cannot delete the last item in history.' });
+      return;
+    }
+    if (historyIndex < 0 || historyIndex >= imageHistory.length) return;
+    imageHistory.splice(historyIndex, 1);
+    if (historyIndex >= imageHistory.length) {
+      historyIndex = imageHistory.length - 1;
+    }
+    if (imageHistory.length > 0) {
+      currentGeneratedImage = imageHistory[historyIndex];
+      update3dViewFromState();
+    } else {
+      currentGeneratedImage = null;
+      resultImage.src = '';
+      resultImage.classList.add('hidden');
+      resultIdlePlaceholder?.classList.remove('hidden');
+      mainResultContentHeader?.classList.add('hidden');
+    }
+    renderHistory();
+    showToast({ type: 'success', title: 'Deleted', body: 'Item removed from history.' });
+  });
+
     detailsCloseBtn?.addEventListener('click', () => {
         detailsPanel?.classList.add('hidden');
         detailsPanel?.classList.remove('is-open');

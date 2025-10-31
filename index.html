@@ -537,17 +537,6 @@
                             </div>
                             <div class="accordion-content" id="p2d-options-content">
                                 <div class="filter-group">
-                                    <label>Style</label>
-                                    <div class="segmented-control">
-                                      <input type="radio" id="p2d-style-outlined" name="p2d-icon-family" value="outlined" checked>
-                                      <label for="p2d-style-outlined">Outlined</label>
-                                      <input type="radio" id="p2d-style-rounded" name="p2d-icon-family" value="rounded">
-                                      <label for="p2d-style-rounded">Rounded</label>
-                                      <input type="radio" id="p2d-style-sharp" name="p2d-icon-family" value="sharp">
-                                      <label for="p2d-style-sharp">Sharp</label>
-                                    </div>
-                                </div>
-                                <div class="filter-group">
                                     <div class="control-row">
                                         <label for="p2d-fill-toggle">Fill</label>
                                         <label class="toggle-switch">
@@ -688,10 +677,11 @@
                                 </div>
                                 <div class="accordion-content" id="p2d-fix-icon-content" data-active="false">
                                     <div class="filter-group" style="gap: var(--spacing-3);">
-                                        <!-- Icon Color Picker -->
+                                        <!-- Stroke -->
                                         <div class="filter-group">
-                                            <label for="p2d-object-color-picker" style="font-size: 13px; margin-bottom: var(--spacing-1);">Icon Color</label>
-                                            <input type="color" id="p2d-object-color-picker" value="#000000">
+                                            <label for="p2d-stroke-hex" style="font-size: 13px; margin-bottom: var(--spacing-1);">Stroke</label>
+                                            <input id="p2d-stroke-hex" aria-label="Stroke HEX color" placeholder="#000000" value="#000000" style="width: 100%; padding: var(--spacing-2); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); background: var(--input-bg); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; text-transform: uppercase;">
+                                            <input type="color" id="p2d-object-color-picker" value="#000000" class="hidden">
                                         </div>
                                         
                                         <!-- Regenerate Button -->
@@ -728,7 +718,7 @@
                                         <span class="material-symbols-outlined">delete</span> Delete
                                     </button>
                                 </div>
-                                <a href="#" id="p2d-details-download-btn" class="primary-btn" download style="flex: 1;">
+                                <a href="#" id="p2d-details-download-btn" class="secondary-btn" download style="flex: 1;">
                                     <span class="material-symbols-outlined">download</span>
                                     <span class="btn-text">Download</span>
                                 </a>
@@ -955,20 +945,24 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="details-actions">
-                                <button id="details-upscale-btn" class="secondary-btn">
-                                    <span class="material-symbols-outlined">photo_size_select_actual</span> Upscale
-                                    <div class="btn-loader"></div>
+                            <div class="details-actions" style="display: flex; flex-direction: row; align-items: center; gap: var(--spacing-2); margin-top: auto; padding-top: var(--spacing-4); position: relative;">
+                                <button id="details-more-menu-btn" class="icon-button" aria-label="More actions" title="More actions">
+                                    <span class="material-symbols-outlined">more_horiz</span>
                                 </button>
-                                <a href="#" id="details-download-btn" class="secondary-btn" download>
+                                <div id="details-more-menu" class="kebab-menu hidden" style="position: absolute; left: 0; bottom: 56px; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); box-shadow: 0 8px 24px rgba(0,0,0,0.12); width: 200px; overflow: hidden; z-index: 20;">
+                                    <button id="details-more-upscale" class="secondary-btn" style="width: 100%; justify-content: flex-start; gap: var(--spacing-2); border: none; background: transparent;">
+                                        <span class="material-symbols-outlined">photo_size_select_actual</span> Upscale
+                                    </button>
+                                    <button id="details-more-copy" class="secondary-btn" style="width: 100%; justify-content: flex-start; gap: var(--spacing-2); border: none; background: transparent;">
+                                        <span class="material-symbols-outlined">content_copy</span> Copy Prompt
+                                    </button>
+                                    <button id="details-more-delete" class="secondary-btn danger" style="width: 100%; justify-content: flex-start; gap: var(--spacing-2); border: none; background: transparent;">
+                                        <span class="material-symbols-outlined">delete</span> Delete
+                                    </button>
+                                </div>
+                                <a href="#" id="details-download-btn" class="secondary-btn" download style="flex: 1;">
                                     <span class="material-symbols-outlined">download</span> Download
                                 </a>
-                                <button id="details-copy-btn" class="secondary-btn">
-                                    <span class="material-symbols-outlined">content_copy</span> Copy Prompt
-                                </button>
-                                <button id="details-delete-btn" class="secondary-btn danger">
-                                    <span class="material-symbols-outlined">delete</span> Delete
-                                </button>
                             </div>
                         </div>
                         <div class="details-tab-content hidden" data-tab-content="motion">
@@ -1308,7 +1302,7 @@
                 <button id="image-modal-regenerate-btn" class="secondary-btn">
                     <span class="material-symbols-outlined">refresh</span> Regenerate
                 </button>
-                <a href="#" id="image-modal-download-btn" class="primary-btn" download>
+                <a href="#" id="image-modal-download-btn" class="secondary-btn" download>
                     <span class="material-symbols-outlined">download</span> Download
                 </a>
             </div>
@@ -1432,7 +1426,7 @@
             </div>
             
             <div style="display: flex; justify-content: flex-end; gap: var(--spacing-2); margin-top: var(--spacing-4);">
-                <button id="p2d-download-svg-btn" class="primary-btn">
+                <button id="p2d-download-svg-btn" class="secondary-btn">
                     <span class="material-symbols-outlined">download</span> Download .svg
                 </button>
                 <button id="p2d-svg-modal-close-btn" class="secondary-btn">Close</button>
