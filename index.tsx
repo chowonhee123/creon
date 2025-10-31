@@ -4876,23 +4876,27 @@ Return the 5 suggestions as a JSON array.`;
         
         const iconColor = iconColorPicker?.value || '#000000';
         
-        // Update prompt with icon color
-        const originalPrompt = currentGeneratedImage2d.subject;
-        const colorPrompt = `Icon color: ${iconColor}. ${originalPrompt}`;
-        
-        // Show loading
-        if (p2dRegenerateBtn) {
-            p2dRegenerateBtn.setAttribute('disabled', 'true');
-            p2dRegenerateBtn.classList.add('loading');
-        }
-        
-        if (p2dLoaderModal && p2dLoaderMessage) {
-            p2dLoaderMessage.textContent = 'Regenerating icon with new colors...';
-            p2dLoaderModal.classList.remove('hidden');
-        }
-        
+        // Parse the original template and update icon color only
         try {
-            // Re-generate using the existing generation logic
+            const template = JSON.parse(currentGeneratedImage2d.styleConstraints);
+            template.controls.color.primary = iconColor;
+            // Ensure background stays white
+            template.output.background = '#FFFFFF';
+            
+            const colorPrompt = JSON.stringify(template, null, 2);
+            
+            // Show loading
+            if (p2dRegenerateBtn) {
+                p2dRegenerateBtn.setAttribute('disabled', 'true');
+                p2dRegenerateBtn.classList.add('loading');
+            }
+            
+            if (p2dLoaderModal && p2dLoaderMessage) {
+                p2dLoaderMessage.textContent = 'Regenerating icon with new colors...';
+                p2dLoaderModal.classList.remove('hidden');
+            }
+            
+            // Re-generate using the existing generation logic with full template
             const imageData = await generateImage(
                 colorPrompt,
                 resultImage2d,
@@ -4908,6 +4912,7 @@ Return the 5 suggestions as a JSON array.`;
                 // Update current image with regenerated data
                 currentGeneratedImage2d.data = imageData.data;
                 currentGeneratedImage2d.mimeType = imageData.mimeType;
+                currentGeneratedImage2d.styleConstraints = colorPrompt;
                 
                 // Create regenerated entry for history
                 const regeneratedImage: GeneratedImageData = {
@@ -4924,9 +4929,9 @@ Return the 5 suggestions as a JSON array.`;
                 
                 showToast({ type: 'success', title: 'Icon regenerated ✅', body: 'New version added to history.' });
             }
-        } catch (error) {
-            console.error('Regeneration failed:', error);
-            showToast({ type: 'error', title: 'Regeneration Failed', body: 'Failed to regenerate icon.' });
+        } catch (parseError) {
+            console.error('Failed to parse template:', parseError);
+            showToast({ type: 'error', title: 'Regeneration Failed', body: 'Failed to parse icon template.' });
         } finally {
             p2dRegenerateBtn?.removeAttribute('disabled');
             p2dRegenerateBtn?.classList.remove('loading');
