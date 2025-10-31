@@ -53,6 +53,7 @@ window.addEventListener('DOMContentLoaded', () => {
   let historyIndex2d = -1;
   let detailsPanelHistory2d: GeneratedImageData[] = []; // Right panel history (only Fix modifications)
   let detailsPanelHistoryIndex2d = -1;
+  let currentBaseAssetId2d: string | null = null; // Track the base asset ID for scoping right history
   let referenceImagesForEdit2d: ({ file: File; dataUrl: string } | null)[] = [null, null, null, null];
   
   // 2D Studio: Local state for background removal
@@ -1240,9 +1241,8 @@ window.addEventListener('DOMContentLoaded', () => {
             imageHistory2d.push(newImage);
             historyIndex2d = imageHistory2d.length - 1;
             
-            // Also add to details panel history (right panel)
-            detailsPanelHistory2d.push(newImage);
-            detailsPanelHistoryIndex2d = detailsPanelHistory2d.length - 1;
+            // Reset right panel history and seed with "Original" entry for this new base asset
+            resetRightHistoryForBaseAsset(newImage);
 
             const dataUrl = `data:${newImage.mimeType};base64,${newImage.data}`;
             const newLibraryItem = { id: newImage.id, dataUrl, mimeType: newImage.mimeType };
@@ -1294,7 +1294,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     
     // Apply checkerboard background to thumbnail only when background is transparent
-    const isTransparent = currentGeneratedImage2d.modificationType === 'Remove Background';
+    const isTransparent = currentGeneratedImage2d.modificationType === 'BG Removed' || currentGeneratedImage2d.modificationType === 'SVG';
     const detailsPreview = $('#p2d-details-preview-image') as HTMLImageElement;
     if (detailsPreview) {
         if (isTransparent) {
@@ -1324,6 +1324,23 @@ window.addEventListener('DOMContentLoaded', () => {
         removeBgBtn.classList.remove('hidden');
     }
   };
+
+  // Reset right panel history and seed with "Original" entry for a new base asset
+  const resetRightHistoryForBaseAsset = (baseAsset: GeneratedImageData) => {
+    currentBaseAssetId2d = baseAsset.id;
+    // Clear existing right history
+    detailsPanelHistory2d = [];
+    // Seed with one "Original" entry
+    const originalEntry: GeneratedImageData = {
+      ...baseAsset,
+      modificationType: 'Original'
+    };
+    detailsPanelHistory2d.push(originalEntry);
+    detailsPanelHistoryIndex2d = 0;
+    // Reset background removal state
+    p2dHasBackgroundRemoved = false;
+    p2dOriginalImageData = `data:${baseAsset.mimeType};base64,${baseAsset.data}`;
+  };
   
   const updateDetailsPanelHistory2d = () => {
     const detailsHistoryList = $('#p2d-details-history-list');
@@ -1349,7 +1366,7 @@ window.addEventListener('DOMContentLoaded', () => {
         let modificationType = item.modificationType || 'Original';
         
         // Determine if background is transparent for this history item
-        const isTransparent = modificationType === 'Remove Background' || modificationType === 'SVG';
+        const isTransparent = modificationType === 'BG Removed' || modificationType === 'SVG';
         
         // Create thumbnail button
         const thumbnailBtn = document.createElement('button');
@@ -1450,8 +1467,8 @@ window.addEventListener('DOMContentLoaded', () => {
                 detailsDownloadBtn2d.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}.png`;
             }
             
-            // Apply checkerboard if needed
-            const isTransparent = currentGeneratedImage2d.modificationType === 'Remove Background';
+            // Apply checkerboard if needed (for transparent backgrounds)
+            const isTransparent = currentGeneratedImage2d.modificationType === 'BG Removed' || currentGeneratedImage2d.modificationType === 'SVG';
             const detailsPreview = $('#p2d-details-preview-image') as HTMLImageElement;
             if (detailsPreview) {
                 if (isTransparent) {
@@ -1465,14 +1482,11 @@ window.addEventListener('DOMContentLoaded', () => {
                 }
             }
             
+            // Update Details > Detail tab preview and download link
+            update2dViewFromState();
             updateDetailsPanelHistory2d();
             
-            // Also update left sidebar history to match
-            const matchingIndex = imageHistory2d.findIndex(h => h.id === currentGeneratedImage2d?.id);
-            if (matchingIndex !== -1) {
-                historyIndex2d = matchingIndex;
-                renderHistory2d();
-            }
+            // Note: Do NOT sync with left sidebar history - they are separate tracks
         });
         
         detailsHistoryList.appendChild(thumbnailBtn);
@@ -1618,9 +1632,20 @@ window.addEventListener('DOMContentLoaded', () => {
         
         li.addEventListener('click', () => {
             historyIndex2d = index;
-            currentGeneratedImage2d = imageHistory2d[historyIndex2d];
+            const selectedItem = imageHistory2d[historyIndex2d];
+            currentGeneratedImage2d = selectedItem;
+            
+            // Reset right panel history and seed with "Original" entry for this base asset
+            resetRightHistoryForBaseAsset(selectedItem);
+            
             update2dViewFromState();
             renderHistory2d();
+            
+            // Update details panel history if History tab is visible
+            const historyTabContent = $('#p2d-details-history-list')?.closest('.details-tab-content');
+            if (historyTabContent && !historyTabContent.classList.contains('hidden')) {
+                updateDetailsPanelHistory2d();
+            }
         });
         historyList2d.prepend(li);
     });
@@ -4868,7 +4893,7 @@ Return the 5 suggestions as a JSON array.`;
         
         try {
             // Re-generate using the existing generation logic
-            await generateImage(
+            const imageData = await generateImage(
                 colorPrompt,
                 resultImage2d,
                 resultPlaceholder2d,
@@ -4878,24 +4903,23 @@ Return the 5 suggestions as a JSON array.`;
                 referenceImagesForEdit2d.filter(ref => ref !== null) as { file: File; dataUrl: string; }[]
             );
             
-            // Update history - add to left sidebar (all prompts) and details panel (Fix only)
-            if (currentGeneratedImage2d) {
-                // Add to left sidebar history
-                imageHistory2d.push({
-                    ...currentGeneratedImage2d,
-                    modificationType: 'Modified'
-                });
-                historyIndex2d = imageHistory2d.length - 1;
+            // Update history - add to right panel history only (edit history for current base asset)
+            if (imageData && currentGeneratedImage2d && currentBaseAssetId2d) {
+                // Update current image with regenerated data
+                currentGeneratedImage2d.data = imageData.data;
+                currentGeneratedImage2d.mimeType = imageData.mimeType;
                 
-                // Add to details panel history
-                detailsPanelHistory2d.push({
+                // Create regenerated entry for history
+                const regeneratedImage: GeneratedImageData = {
                     ...currentGeneratedImage2d,
-                    modificationType: 'Modified'
-                });
+                    modificationType: 'Regenerated'
+                };
+                
+                // Add to details panel history (right panel) only
+                detailsPanelHistory2d.push(regeneratedImage);
                 detailsPanelHistoryIndex2d = detailsPanelHistory2d.length - 1;
                 
                 update2dViewFromState();
-                renderHistory2d();
                 updateDetailsPanelHistory2d();
                 
                 showToast({ type: 'success', title: 'Icon regenerated ✅', body: 'New version added to history.' });
@@ -4970,11 +4994,11 @@ Return the 5 suggestions as a JSON array.`;
                 const removeBgBtn = $('#p2d-remove-background-btn');
                 if (removeBgBtn) removeBgBtn.classList.add('hidden');
                 
-                // Add to details panel history only (not left sidebar)
-                if (currentGeneratedImage2d) {
+                // Add to details panel history only (edit history for current base asset)
+                if (currentGeneratedImage2d && currentBaseAssetId2d) {
                     detailsPanelHistory2d.push({
                         ...currentGeneratedImage2d,
-                        modificationType: 'Remove Background'
+                        modificationType: 'BG Removed'
                     });
                     detailsPanelHistoryIndex2d = detailsPanelHistory2d.length - 1;
                     updateDetailsPanelHistory2d();
@@ -5126,8 +5150,8 @@ Return the 5 suggestions as a JSON array.`;
                 // Store SVG string for download
                 (currentGeneratedImage2d as any).svgString = svgString;
                 
-                // Add to details panel history
-                if (currentGeneratedImage2d) {
+                // Add to details panel history (edit history for current base asset)
+                if (currentGeneratedImage2d && currentBaseAssetId2d) {
                     detailsPanelHistory2d.push({
                         ...currentGeneratedImage2d,
                         modificationType: 'SVG'
