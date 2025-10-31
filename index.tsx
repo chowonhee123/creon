@@ -1515,9 +1515,13 @@ window.addEventListener('DOMContentLoaded', () => {
                 
                 const handleSliderChange = () => {
                     const value = compareSlider.valueAsNumber;
-                    if (compareDivider && compareCurrent) {
+                    if (compareDivider) {
                         compareDivider.style.left = `${value}%`;
-                        compareCurrent.style.clipPath = `inset(0 ${100 - value}% 0 0)`;
+                    }
+                    // Clip current image to show only right side from divider
+                    if (compareCurrent) {
+                        const clipPercentage = 100 - value;
+                        compareCurrent.style.clipPath = `inset(0 ${clipPercentage}% 0 0)`;
                     }
                 };
                 compareSlider?.removeEventListener('input', handleSliderChange);
@@ -5335,9 +5339,13 @@ Return the 5 suggestions as a JSON array.`;
         // Slider handler
         const handleSliderChange = () => {
             const value = compareSlider.valueAsNumber;
-            if (compareDivider && compareCurrent) {
+            if (compareDivider) {
                 compareDivider.style.left = `${value}%`;
-                compareCurrent.style.clipPath = `inset(0 ${100 - value}% 0 0)`;
+            }
+            // Clip current image to show only right side from divider
+            if (compareCurrent) {
+                const clipPercentage = 100 - value;
+                compareCurrent.style.clipPath = `inset(0 ${clipPercentage}% 0 0)`;
             }
         };
         compareSlider?.removeEventListener('input', handleSliderChange);
