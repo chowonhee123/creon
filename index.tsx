@@ -46,6 +46,9 @@ window.addEventListener('DOMContentLoaded', () => {
   let currentGeneratedImage: GeneratedImageData | null = null;
   let imageHistory: GeneratedImageData[] = [];
   let historyIndex = -1;
+  let detailsPanelHistory3d: GeneratedImageData[] = []; // Right panel history (Original and Fix modifications)
+  let detailsPanelHistoryIndex3d = -1;
+  let currentBaseAssetId3d: string | null = null; // Track the base asset ID for scoping right history
   
   // 2D Page State
   let currentGeneratedImage2d: GeneratedImageData | null = null;
@@ -536,6 +539,113 @@ window.addEventListener('DOMContentLoaded', () => {
   const resultImage = $('#page-id-3d .result-image') as HTMLImageElement;
   const resultVideo = $('#page-id-3d .result-video') as HTMLVideoElement;
   const resultError = $('#page-id-3d .result-error');
+
+  // Initialize 3D Studio placeholder images from assets folder
+  const initialize3DPlaceholder = async () => {
+    const container = document.getElementById('animated-samples-container');
+    const placeholder = document.getElementById('result-idle-placeholder');
+    if (!container || !placeholder) return;
+    
+    try {
+      // Load assets list from JSON
+      const response = await fetch('/assets_images.json');
+      if (!response.ok) {
+        throw new Error('Failed to load assets list');
+      }
+      const assetsImages = await response.json();
+      
+      if (assetsImages.length === 0) {
+        console.warn('No assets images found');
+        return;
+      }
+      
+      container.innerHTML = '';
+      
+      // Use all images (16 total), repeating them 3 times for seamless loop
+      const imagesToShow = [...assetsImages, ...assetsImages, ...assetsImages];
+      
+      imagesToShow.forEach((asset: { url: string; name: string }, index: number) => {
+        const img = document.createElement('img');
+        img.src = asset.url;
+        img.alt = 'preview';
+        img.className = 'sample-preview-img';
+        img.style.cssText = 'width: 240px; height: 240px; object-fit: cover; border-radius: 16px; filter: grayscale(100%); background: #f3f4f6;';
+        img.style.setProperty('--img-index', index.toString());
+        img.onerror = () => {
+          console.warn(`Failed to load image: ${asset.url}`);
+          img.style.display = 'none';
+        };
+        container.appendChild(img);
+      });
+
+      // Update scale based on position relative to center
+      const updateImageScales = () => {
+        const placeholderRect = placeholder.getBoundingClientRect();
+        const centerX = placeholderRect.left + placeholderRect.width / 2;
+        const images = container.querySelectorAll('.sample-preview-img') as NodeListOf<HTMLElement>;
+        
+        images.forEach((img) => {
+          const imgRect = img.getBoundingClientRect();
+          const imgCenterX = imgRect.left + imgRect.width / 2;
+          const distanceFromCenter = Math.abs(centerX - imgCenterX);
+          const maxDistance = placeholderRect.width / 2;
+          const normalizedDistance = Math.min(distanceFromCenter / maxDistance, 1);
+          
+          // Scale: 0.6 (far) to 1.0 (center), opacity: 0.3 (far) to 0.5 (center)
+          const scale = 0.6 + (1 - normalizedDistance) * 0.4;
+          const opacity = 0.3 + (1 - normalizedDistance) * 0.2;
+          
+          img.style.setProperty('--scale-factor', scale.toString());
+          img.style.transform = `scale(${scale})`;
+          img.style.opacity = opacity.toString();
+        });
+      };
+
+      // Update scales on scroll/animation
+      let animationFrameId: number;
+      const animate = () => {
+        updateImageScales();
+        animationFrameId = requestAnimationFrame(animate);
+      };
+      animate();
+
+      // Cleanup on page change
+      const observer = new MutationObserver(() => {
+        if (placeholder.classList.contains('hidden') || !placeholder.offsetParent) {
+          cancelAnimationFrame(animationFrameId);
+        }
+      });
+      observer.observe(placeholder, { attributes: true, attributeFilter: ['class'] });
+      
+    } catch (error) {
+      console.error('Failed to initialize placeholder images:', error);
+      // Fallback: hide container if JSON load fails
+      if (container) {
+        container.innerHTML = '';
+      }
+    }
+  };
+
+  // Initialize placeholder when 3D page is shown
+  const pageId3d = $('#page-id-3d');
+  if (pageId3d) {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          const target = mutation.target as HTMLElement;
+          if (!target.classList.contains('hidden')) {
+            initialize3DPlaceholder();
+          }
+        }
+      });
+    });
+    observer.observe(pageId3d, { attributes: true, attributeFilter: ['class'] });
+    
+    // Also initialize immediately if page is already visible
+    if (!pageId3d.classList.contains('hidden')) {
+      setTimeout(initialize3DPlaceholder, 100);
+    }
+  }
   const retryGenerateBtn = $('#retry-generate-btn');
   const historyPanel = $('#page-id-3d .history-panel');
   const historyList = $('#history-list');
@@ -553,6 +663,14 @@ window.addEventListener('DOMContentLoaded', () => {
   const detailsFixBtn = $('#details-fix-btn');
   const detailsBackgroundColorPicker = $('#details-background-color-picker-3d') as HTMLInputElement;
   const detailsObjectColorPicker = $('#details-object-color-picker-3d') as HTMLInputElement;
+  
+  // 3D Studio: Color control elements
+  const detailsBackgroundColorSwatch = $('#details-background-color-swatch-3d') as HTMLButtonElement;
+  const detailsBackgroundColorHex = $('#details-background-color-hex-3d') as HTMLInputElement;
+  const detailsBackgroundColorOpacity = $('#details-background-color-opacity-3d') as HTMLInputElement;
+  const detailsObjectColorSwatch = $('#details-object-color-swatch-3d') as HTMLButtonElement;
+  const detailsObjectColorHex = $('#details-object-color-hex-3d') as HTMLInputElement;
+  const detailsObjectColorOpacity = $('#details-object-color-opacity-3d') as HTMLInputElement;
   const shadowToggleIcons = $('#shadow-toggle-icons') as HTMLInputElement;
   const shadowToggle3d = $('#shadow-toggle-3d') as HTMLInputElement;
   const toggleDetailsPanelBtn = $('#toggle-details-panel-btn');
@@ -577,6 +695,114 @@ window.addEventListener('DOMContentLoaded', () => {
   const resultError2d = $('#page-id-2d .result-error');
   const retryGenerateBtn2d = $('#p2d-retry-generate-btn');
   const historyPanel2d = $('#page-id-2d .history-panel');
+
+  // Initialize 2D Studio placeholder images from assets folder (same as 3D)
+  const initialize2DPlaceholder = async () => {
+    const container = document.getElementById('p2d-animated-samples-container');
+    const placeholder = document.getElementById('p2d-result-idle-placeholder');
+    if (!container || !placeholder) return;
+    
+    try {
+      // Load assets list from JSON
+      const response = await fetch('/assets_images.json');
+      if (!response.ok) {
+        throw new Error('Failed to load assets list');
+      }
+      const assetsImages = await response.json();
+      
+      if (assetsImages.length === 0) {
+        console.warn('No assets images found');
+        return;
+      }
+      
+      container.innerHTML = '';
+      
+      // Use all images (16 total), repeating them 3 times for seamless loop
+      const imagesToShow = [...assetsImages, ...assetsImages, ...assetsImages];
+      
+      imagesToShow.forEach((asset: { url: string; name: string }, index: number) => {
+        const img = document.createElement('img');
+        img.src = asset.url;
+        img.alt = 'preview';
+        img.className = 'sample-preview-img';
+        img.style.cssText = 'width: 240px; height: 240px; object-fit: cover; border-radius: 16px; filter: grayscale(100%); background: #f3f4f6;';
+        img.style.setProperty('--img-index', index.toString());
+        img.onerror = () => {
+          console.warn(`Failed to load image: ${asset.url}`);
+          img.style.display = 'none';
+        };
+        container.appendChild(img);
+      });
+
+      // Update scale based on position relative to center
+      const updateImageScales = () => {
+        const placeholderRect = placeholder.getBoundingClientRect();
+        const centerX = placeholderRect.left + placeholderRect.width / 2;
+        const images = container.querySelectorAll('.sample-preview-img') as NodeListOf<HTMLElement>;
+        
+        images.forEach((img) => {
+          const imgRect = img.getBoundingClientRect();
+          const imgCenterX = imgRect.left + imgRect.width / 2;
+          const distanceFromCenter = Math.abs(centerX - imgCenterX);
+          const maxDistance = placeholderRect.width / 2;
+          const normalizedDistance = Math.min(distanceFromCenter / maxDistance, 1);
+          
+          // Scale: 0.6 (far) to 1.0 (center), opacity: 0.3 (far) to 0.5 (center)
+          const scale = 0.6 + (1 - normalizedDistance) * 0.4;
+          const opacity = 0.3 + (1 - normalizedDistance) * 0.2;
+          
+          img.style.setProperty('--scale-factor', scale.toString());
+          img.style.transform = `scale(${scale})`;
+          img.style.opacity = opacity.toString();
+        });
+      };
+
+      // Update scales on scroll/animation
+      let animationFrameId: number;
+      const animate = () => {
+        updateImageScales();
+        animationFrameId = requestAnimationFrame(animate);
+      };
+      animate();
+
+      // Cleanup on page change
+      const observer = new MutationObserver(() => {
+        if (placeholder.classList.contains('hidden') || !placeholder.offsetParent) {
+          cancelAnimationFrame(animationFrameId);
+        }
+      });
+      observer.observe(placeholder, { attributes: true, attributeFilter: ['class'] });
+      
+    } catch (error) {
+      console.error('Failed to initialize 2D placeholder images:', error);
+      // Fallback: hide container if JSON load fails
+      if (container) {
+        container.innerHTML = '';
+      }
+    }
+  };
+
+  // Initialize placeholder when 2D page is shown
+  const pageId2d = $('#page-id-2d');
+  if (pageId2d) {
+    const observer2d = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          const target = mutation.target as HTMLElement;
+          if (!target.classList.contains('hidden')) {
+            initialize2DPlaceholder();
+          }
+        }
+      });
+    });
+    observer2d.observe(pageId2d, { attributes: true, attributeFilter: ['class'] });
+    
+    // Also initialize immediately if page is already visible
+    if (!pageId2d.classList.contains('hidden')) {
+      setTimeout(initialize2DPlaceholder, 100);
+    }
+  }
+
   const historyList2d = $('#p2d-history-list');
   const historyBackBtn2d = $('#p2d-history-back-btn') as HTMLButtonElement;
   const historyForwardBtn2d = $('#p2d-history-forward-btn') as HTMLButtonElement;
@@ -1918,6 +2144,17 @@ window.addEventListener('DOMContentLoaded', () => {
             imageHistory.splice(historyIndex + 1);
             imageHistory.push(newImage);
             historyIndex = imageHistory.length - 1;
+            
+            // Initialize details panel history with Original entry (only on first generation)
+            if (detailsPanelHistory3d.length === 0 || currentBaseAssetId3d !== newImage.id) {
+                const originalEntry: GeneratedImageData = {
+                    ...newImage,
+                    modificationType: 'Original'
+                };
+                detailsPanelHistory3d = [originalEntry];
+                detailsPanelHistoryIndex3d = 0;
+                currentBaseAssetId3d = newImage.id;
+            }
 
             const dataUrl = `data:${newImage.mimeType};base64,${newImage.data}`;
             const newLibraryItem = { id: newImage.id, dataUrl, mimeType: newImage.mimeType };
@@ -3292,20 +3529,232 @@ Return the 5 suggestions as a JSON array.`;
     }
   };
 
-  const updateHistoryTab = () => {
-    if (!currentGeneratedImage) return;
+  const updateDetailsPanelHistory3d = () => {
+    const detailsHistoryList = $('#details-history-list-3d');
+    const historyTabContent = detailsHistoryList?.closest('.details-tab-content[data-tab-content="history"]');
     
-    const historyOriginalImage = $('#history-original-image') as HTMLImageElement;
-    const historyFixedImage = $('#history-fixed-image') as HTMLImageElement;
+    // Only update if History tab is visible
+    if (!detailsHistoryList || !historyTabContent) return;
+    if (historyTabContent.classList.contains('hidden')) return;
     
-    if (historyOriginalImage && currentGeneratedImage.originalData) {
-        const originalDataUrl = `data:${currentGeneratedImage.originalMimeType};base64,${currentGeneratedImage.originalData}`;
-        historyOriginalImage.src = originalDataUrl;
+    if (detailsPanelHistory3d.length === 0) {
+        detailsHistoryList.innerHTML = '<p style="padding: var(--spacing-4); text-align: center; color: var(--text-secondary);">No history available</p>';
+        return;
     }
     
-    if (historyFixedImage) {
-        const fixedDataUrl = `data:${currentGeneratedImage.mimeType};base64,${currentGeneratedImage.data}`;
-        historyFixedImage.src = fixedDataUrl;
+    detailsHistoryList.innerHTML = '';
+    
+    // Show in chronological order (oldest first, newest last)
+    detailsPanelHistory3d.forEach((item, index) => {
+        const isActive = index === detailsPanelHistoryIndex3d;
+        
+        // Determine modification type
+        let modificationType = item.modificationType || 'Original';
+        
+        // Create thumbnail button
+        const thumbnailBtn = document.createElement('button');
+        thumbnailBtn.type = 'button';
+        thumbnailBtn.className = 'details-history-thumbnail-btn';
+        thumbnailBtn.dataset.index = String(index);
+        thumbnailBtn.setAttribute('aria-label', `Load history item ${index + 1}`);
+        thumbnailBtn.style.cssText = `
+            position: relative;
+            width: 100%;
+            height: 270px;
+            padding: 0;
+            border: ${isActive ? '3px solid var(--primary-color, #0070F3)' : '1px solid var(--border-color)'};
+            border-radius: var(--border-radius-md);
+            cursor: pointer;
+            overflow: hidden;
+            transition: all 0.2s ease;
+            outline: none;
+            background-color: #ffffff;
+        `;
+        
+        // Add hover effect
+        thumbnailBtn.addEventListener('mouseenter', () => {
+            if (!isActive) {
+                thumbnailBtn.style.transform = 'scale(1.02)';
+                thumbnailBtn.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+            }
+            // Show compare button on hover (only for non-Original items)
+            const compareBtn = thumbnailBtn.querySelector('.details-history-compare-btn') as HTMLElement;
+            if (compareBtn && modificationType !== 'Original') {
+                compareBtn.style.opacity = '1';
+                compareBtn.style.pointerEvents = 'auto';
+            }
+        });
+        
+        thumbnailBtn.addEventListener('mouseleave', () => {
+            if (!isActive) {
+                thumbnailBtn.style.transform = '';
+                thumbnailBtn.style.boxShadow = '';
+            }
+            // Hide compare button on leave
+            const compareBtn = thumbnailBtn.querySelector('.details-history-compare-btn') as HTMLElement;
+            if (compareBtn) {
+                compareBtn.style.opacity = '0';
+                compareBtn.style.pointerEvents = 'none';
+            }
+        });
+        
+        // Create modification type badge
+        const badge = document.createElement('div');
+        badge.textContent = modificationType;
+        badge.style.cssText = `
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: var(--border-radius-sm);
+            font-size: 11px;
+            font-weight: 500;
+            z-index: 1;
+        `;
+        
+        // Create compare button (only for non-Original items)
+        let compareBtn = null;
+        if (modificationType !== 'Original') {
+            compareBtn = document.createElement('button');
+            compareBtn.className = 'details-history-compare-btn';
+            compareBtn.setAttribute('aria-label', 'Compare with original');
+            compareBtn.style.cssText = `
+                position: absolute;
+                top: 4px;
+                right: 4px;
+                width: 28px;
+                height: 28px;
+                padding: 0;
+                border: none;
+                background: rgba(255,255,255,0.9);
+                backdrop-filter: blur(4px);
+                border-radius: var(--border-radius-sm);
+                cursor: pointer;
+                opacity: 0;
+                transition: opacity 0.2s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                pointer-events: none;
+                z-index: 2;
+            `;
+            compareBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 16px; color: var(--text-primary);">compare</span>';
+        }
+        
+        // Create thumbnail image
+        const img = document.createElement('img');
+        img.src = `data:${item.mimeType};base64,${item.data}`;
+        img.loading = 'lazy';
+        img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; pointer-events: none;';
+        img.alt = `History item ${index + 1}`;
+        
+        thumbnailBtn.appendChild(badge);
+        if (compareBtn) {
+            thumbnailBtn.appendChild(compareBtn);
+        }
+        thumbnailBtn.appendChild(img);
+        
+        // Add keyboard support
+        thumbnailBtn.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                thumbnailBtn.click();
+            }
+        });
+        
+        // Compare button event handler (only for non-Original items)
+        if (compareBtn && modificationType !== 'Original') {
+            compareBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                
+                // Find the Original entry to compare with
+                const originalEntry = detailsPanelHistory3d.find(item => item.modificationType === 'Original');
+                if (!originalEntry) {
+                    showToast({ type: 'error', title: 'Error', body: 'Original image not found.' });
+                    return;
+                }
+                
+                const currentDataUrl = `data:${item.mimeType};base64,${item.data}`;
+                const originalDataUrl = `data:${originalEntry.mimeType};base64,${originalEntry.data}`;
+                
+                // Show original and current in main canvas side by side (simplified - just show original)
+                if (resultImage && originalEntry) {
+                    resultImage.src = originalDataUrl;
+                    resultImage.classList.remove('hidden');
+                    resultImage.classList.add('visible');
+                    
+                    // Show toast with option to switch
+                    showToast({ 
+                        type: 'success', 
+                        title: 'Showing Original', 
+                        body: 'Click the image again to see the fixed version.',
+                        duration: 3000
+                    });
+                }
+            });
+        }
+        
+        // Click handler to load preview
+        thumbnailBtn.addEventListener('click', () => {
+            detailsPanelHistoryIndex3d = index;
+            currentGeneratedImage = detailsPanelHistory3d[index];
+            
+            // Update main preview area
+            if (resultImage && currentGeneratedImage) {
+                resultImage.src = `data:${currentGeneratedImage.mimeType};base64,${currentGeneratedImage.data}`;
+                resultImage.classList.remove('hidden');
+                resultImage.classList.add('visible');
+            }
+            
+            // Update details panel preview
+            if (detailsPreviewImage && currentGeneratedImage) {
+                detailsPreviewImage.src = `data:${currentGeneratedImage.mimeType};base64,${currentGeneratedImage.data}`;
+            }
+            
+            // Update download button
+            if (detailsDownloadBtn && currentGeneratedImage) {
+                const downloadUrl = `data:${currentGeneratedImage.mimeType};base64,${currentGeneratedImage.data}`;
+                detailsDownloadBtn.href = downloadUrl;
+                detailsDownloadBtn.download = `${currentGeneratedImage.subject.replace(/\s+/g, '_')}.png`;
+            }
+            
+            // Update UI
+            update3dViewFromState();
+            updateDetailsPanelHistory3d();
+        });
+        
+        detailsHistoryList.appendChild(thumbnailBtn);
+    });
+  };
+
+  const updateHistoryTab = () => {
+    // Legacy function for backward compatibility, now uses updateDetailsPanelHistory3d
+    updateDetailsPanelHistory3d();
+  };
+
+  // 3D Studio: Color control helpers
+  let lastValidBgHex = '#FFFFFF';
+  let lastValidObjHex = '#2962FF';
+  
+  const hexToRgb = (hex: string) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : null;
+  };
+
+  const updateColorSwatch = (swatch: HTMLElement | null, hex: string, opacity: number) => {
+    if (!swatch) return;
+    const rgb = hexToRgb(hex);
+    if (rgb) {
+      swatch.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity / 100})`;
+    } else {
+      swatch.style.backgroundColor = hex;
     }
   };
 
@@ -3344,11 +3793,34 @@ Return the 5 suggestions as a JSON array.`;
     if (currentGeneratedImage.styleConstraints) {
         try {
             const styleData = JSON.parse(currentGeneratedImage.styleConstraints);
-            if (detailsBackgroundColorPicker && styleData.background?.color) {
-                detailsBackgroundColorPicker.value = styleData.background.color;
+            const bgColor = styleData.background?.color || '#FFFFFF';
+            const objColor = styleData.colors?.dominant_blue || '#2962FF';
+            
+            if (detailsBackgroundColorPicker) {
+                detailsBackgroundColorPicker.value = bgColor;
+                if (detailsBackgroundColorHex) {
+                    detailsBackgroundColorHex.value = bgColor.toUpperCase();
+                    lastValidBgHex = bgColor.toUpperCase();
+                }
+                if (detailsBackgroundColorOpacity) {
+                    detailsBackgroundColorOpacity.value = '100';
+                }
+                if (detailsBackgroundColorSwatch) {
+                    updateColorSwatch(detailsBackgroundColorSwatch, bgColor, 100);
+                }
             }
-            if (detailsObjectColorPicker && styleData.colors?.dominant_blue) {
-                detailsObjectColorPicker.value = styleData.colors.dominant_blue;
+            if (detailsObjectColorPicker) {
+                detailsObjectColorPicker.value = objColor;
+                if (detailsObjectColorHex) {
+                    detailsObjectColorHex.value = objColor.toUpperCase();
+                    lastValidObjHex = objColor.toUpperCase();
+                }
+                if (detailsObjectColorOpacity) {
+                    detailsObjectColorOpacity.value = '100';
+                }
+                if (detailsObjectColorSwatch) {
+                    updateColorSwatch(detailsObjectColorSwatch, objColor, 100);
+                }
             }
         } catch (e) {
             console.error('Failed to parse style constraints:', e);
@@ -3356,7 +3828,7 @@ Return the 5 suggestions as a JSON array.`;
     }
 
     updateMotionUI();
-    updateHistoryTab();
+    updateDetailsPanelHistory3d();
   };
 
   const renderHistory = () => {
@@ -5543,13 +6015,14 @@ Return the 5 suggestions as a JSON array.`;
         imageGenerationLoaderModal?.classList.remove('hidden');
         
         try {
-            const backgroundColor = detailsBackgroundColorPicker?.value || '#FFFFFF';
-            const objectColor = detailsObjectColorPicker?.value || '#2962FF';
+            const backgroundColor = detailsBackgroundColorHex?.value || detailsBackgroundColorPicker?.value || '#FFFFFF';
+            const objectColor = detailsObjectColorHex?.value || detailsObjectColorPicker?.value || '#2962FF';
             
-            // Save original image data if not already saved
-            if (!currentGeneratedImage.originalData) {
-                currentGeneratedImage.originalData = currentGeneratedImage.data;
-                currentGeneratedImage.originalMimeType = currentGeneratedImage.mimeType;
+            // Get the original image from details panel history
+            const originalEntry = detailsPanelHistory3d.find(item => item.modificationType === 'Original');
+            if (!originalEntry) {
+                showToast({ type: 'error', title: 'Error', body: 'Original image not found.' });
+                return;
             }
             
             // Parse current style constraints
@@ -5559,40 +6032,57 @@ Return the 5 suggestions as a JSON array.`;
             template.background.color = backgroundColor;
             template.colors.dominant_blue = objectColor;
             
-            // Create new prompt with updated colors (Fix mode)
-            const imagePromptText = createImagePromptFromTemplate(template, userPrompt3d?.value || '', true);
+            // Ensure background stays white
+            template.output = template.output || {};
+            template.output.background = '#FFFFFF';
             
+            const colorPrompt = JSON.stringify(template, null, 2);
+            
+            // Convert original image to File for reference
+            const originalDataUrl = `data:${originalEntry.mimeType};base64,${originalEntry.data}`;
+            const response = await fetch(originalDataUrl);
+            const blob = await response.blob();
+            const originalFile = new File([blob], 'original-icon-3d.png', { type: originalEntry.mimeType });
+            const originalReference = { file: originalFile, dataUrl: originalDataUrl };
+            
+            // Re-generate using the existing generation logic with full template AND original image reference
             const imageData = await generateImage(
-                imagePromptText,
+                colorPrompt,
                 resultImage,
                 resultPlaceholder,
                 resultError,
                 resultIdlePlaceholder,
                 imageGenerateBtn,
-                referenceImagesFor3d
+                [originalReference] // Pass original image as reference to maintain 3D object shape
             );
             
             if (imageData) {
-                // Update current image with new data
+                // Update current image with regenerated data
                 currentGeneratedImage.data = imageData.data;
                 currentGeneratedImage.mimeType = imageData.mimeType;
-                currentGeneratedImage.styleConstraints = JSON.stringify(template, null, 2);
+                currentGeneratedImage.styleConstraints = colorPrompt;
                 
-                // Update in history
+                // Create fixed entry for details panel history
+                const fixedImage: GeneratedImageData = {
+                    ...currentGeneratedImage,
+                    modificationType: 'Fixed'
+                };
+                
+                // Add to details panel history (right panel) only
+                detailsPanelHistory3d.push(fixedImage);
+                detailsPanelHistoryIndex3d = detailsPanelHistory3d.length - 1;
+                
+                // Update in main history too
                 const historyItem = imageHistory.find(item => item.id === currentGeneratedImage!.id);
                 if (historyItem) {
                     historyItem.data = imageData.data;
                     historyItem.mimeType = imageData.mimeType;
-                    historyItem.styleConstraints = JSON.stringify(template, null, 2);
-                    if (!historyItem.originalData) {
-                        historyItem.originalData = currentGeneratedImage.originalData;
-                        historyItem.originalMimeType = currentGeneratedImage.originalMimeType;
-                    }
+                    historyItem.styleConstraints = colorPrompt;
                 }
                 
                 // Update UI
                 update3dViewFromState();
-                updateHistoryTab();
+                updateDetailsPanelHistory3d();
                 
                 showToast({ type: 'success', title: 'Fixed!', body: 'Image updated with new colors.' });
             }
@@ -5706,32 +6196,165 @@ Return the 5 suggestions as a JSON array.`;
         openMotionCategoryModal();
     });
     
-    // History tab thumbnail click handlers
-    $('#history-original-image')?.addEventListener('click', () => {
-        if (!currentGeneratedImage || !currentGeneratedImage.originalData) return;
-        
-        const dataUrl = `data:${currentGeneratedImage.originalMimeType};base64,${currentGeneratedImage.originalData}`;
-        resultImage.src = dataUrl;
-        resultImage.classList.remove('hidden');
-        resultImage.classList.add('visible');
-        
-        // Switch to image tab
-        previewSwitcherImageBtn?.classList.add('active');
-        previewSwitcherVideoBtn?.classList.remove('active');
-    });
-    
-    $('#history-fixed-image')?.addEventListener('click', () => {
-        if (!currentGeneratedImage) return;
-        
-        const dataUrl = `data:${currentGeneratedImage.mimeType};base64,${currentGeneratedImage.data}`;
-        resultImage.src = dataUrl;
-        resultImage.classList.remove('hidden');
-        resultImage.classList.add('visible');
-        
-        // Switch to image tab
-        previewSwitcherImageBtn?.classList.add('active');
-        previewSwitcherVideoBtn?.classList.remove('active');
-    });
+    // 3D Studio: Color control handlers
+    const normalizeHex3d = (value: string) => {
+        const raw = (value || '').trim().replace(/^#/, '').toUpperCase();
+        if (/^[0-9A-F]{3}$/.test(raw)) return `#${raw}`;
+        if (/^[0-9A-F]{6}$/.test(raw)) return `#${raw}`;
+        return null;
+    };
+
+    // Background Color handlers
+    if (detailsBackgroundColorPicker && detailsBackgroundColorHex && detailsBackgroundColorSwatch && detailsBackgroundColorOpacity) {
+        // Color picker -> HEX input sync
+        detailsBackgroundColorPicker.addEventListener('input', () => {
+            const hex = (detailsBackgroundColorPicker.value || '#FFFFFF').toUpperCase();
+            lastValidBgHex = hex;
+            if (detailsBackgroundColorHex) detailsBackgroundColorHex.value = hex;
+            const opacity = parseInt(detailsBackgroundColorOpacity.value) || 100;
+            updateColorSwatch(detailsBackgroundColorSwatch, hex, opacity);
+        });
+
+        // Swatch button -> open color picker
+        detailsBackgroundColorSwatch.addEventListener('click', () => {
+            detailsBackgroundColorPicker.click();
+        });
+
+        // HEX input validation (auto-prepend # if missing)
+        detailsBackgroundColorHex.addEventListener('input', () => {
+            let value = detailsBackgroundColorHex.value.trim();
+            // Auto-prepend # if missing
+            if (value && !value.startsWith('#')) {
+                value = '#' + value;
+            }
+            const normalized = normalizeHex3d(value);
+            const valid = !!normalized;
+            detailsBackgroundColorHex.style.borderColor = valid ? 'var(--border-color)' : 'var(--danger-color)';
+            if (valid) {
+                lastValidBgHex = normalized as string;
+                detailsBackgroundColorPicker.value = lastValidBgHex;
+                const opacity = parseInt(detailsBackgroundColorOpacity.value) || 100;
+                updateColorSwatch(detailsBackgroundColorSwatch, lastValidBgHex, opacity);
+            }
+        });
+
+        detailsBackgroundColorHex.addEventListener('keydown', (e: KeyboardEvent) => {
+            if (e.key === 'Enter') {
+                const normalized = normalizeHex3d(detailsBackgroundColorHex.value) || lastValidBgHex;
+                detailsBackgroundColorHex.value = normalized;
+                lastValidBgHex = normalized;
+                detailsBackgroundColorPicker.value = normalized;
+                const opacity = parseInt(detailsBackgroundColorOpacity.value) || 100;
+                updateColorSwatch(detailsBackgroundColorSwatch, normalized, opacity);
+            } else if (e.key === 'Escape') {
+                detailsBackgroundColorHex.value = lastValidBgHex;
+            }
+        });
+
+        // Opacity input
+        detailsBackgroundColorOpacity.addEventListener('input', () => {
+            let value = parseInt(detailsBackgroundColorOpacity.value) || 100;
+            if (value < 0) value = 0;
+            if (value > 100) value = 100;
+            detailsBackgroundColorOpacity.value = value.toString();
+            updateColorSwatch(detailsBackgroundColorSwatch, lastValidBgHex, value);
+        });
+
+        detailsBackgroundColorOpacity.addEventListener('keydown', (e: KeyboardEvent) => {
+            const current = parseInt(detailsBackgroundColorOpacity.value) || 100;
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                const newValue = e.shiftKey ? Math.min(current + 10, 100) : Math.min(current + 1, 100);
+                detailsBackgroundColorOpacity.value = newValue.toString();
+                updateColorSwatch(detailsBackgroundColorSwatch, lastValidBgHex, newValue);
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const newValue = e.shiftKey ? Math.max(current - 10, 0) : Math.max(current - 1, 0);
+                detailsBackgroundColorOpacity.value = newValue.toString();
+                updateColorSwatch(detailsBackgroundColorSwatch, lastValidBgHex, newValue);
+            }
+        });
+    }
+
+    // Object Color handlers
+    if (detailsObjectColorPicker && detailsObjectColorHex && detailsObjectColorSwatch && detailsObjectColorOpacity) {
+        // Color picker -> HEX input sync
+        detailsObjectColorPicker.addEventListener('input', () => {
+            const hex = (detailsObjectColorPicker.value || '#2962FF').toUpperCase();
+            lastValidObjHex = hex;
+            if (detailsObjectColorHex) detailsObjectColorHex.value = hex;
+            const opacity = parseInt(detailsObjectColorOpacity.value) || 100;
+            updateColorSwatch(detailsObjectColorSwatch, hex, opacity);
+        });
+
+        // Swatch button -> open color picker
+        detailsObjectColorSwatch.addEventListener('click', () => {
+            detailsObjectColorPicker.click();
+        });
+
+        // HEX input validation (auto-prepend # if missing)
+        detailsObjectColorHex.addEventListener('input', () => {
+            let value = detailsObjectColorHex.value.trim();
+            // Auto-prepend # if missing
+            if (value && !value.startsWith('#')) {
+                value = '#' + value;
+            }
+            const normalized = normalizeHex3d(value);
+            const valid = !!normalized;
+            detailsObjectColorHex.style.borderColor = valid ? 'var(--border-color)' : 'var(--danger-color)';
+            if (valid) {
+                lastValidObjHex = normalized as string;
+                detailsObjectColorPicker.value = lastValidObjHex;
+                const opacity = parseInt(detailsObjectColorOpacity.value) || 100;
+                updateColorSwatch(detailsObjectColorSwatch, lastValidObjHex, opacity);
+            }
+        });
+
+        detailsObjectColorHex.addEventListener('keydown', (e: KeyboardEvent) => {
+            if (e.key === 'Enter') {
+                const normalized = normalizeHex3d(detailsObjectColorHex.value) || lastValidObjHex;
+                detailsObjectColorHex.value = normalized;
+                lastValidObjHex = normalized;
+                detailsObjectColorPicker.value = normalized;
+                const opacity = parseInt(detailsObjectColorOpacity.value) || 100;
+                updateColorSwatch(detailsObjectColorSwatch, normalized, opacity);
+            } else if (e.key === 'Escape') {
+                detailsObjectColorHex.value = lastValidObjHex;
+            }
+        });
+
+        // Opacity input
+        detailsObjectColorOpacity.addEventListener('input', () => {
+            let value = parseInt(detailsObjectColorOpacity.value) || 100;
+            if (value < 0) value = 0;
+            if (value > 100) value = 100;
+            detailsObjectColorOpacity.value = value.toString();
+            updateColorSwatch(detailsObjectColorSwatch, lastValidObjHex, value);
+        });
+
+        detailsObjectColorOpacity.addEventListener('keydown', (e: KeyboardEvent) => {
+            const current = parseInt(detailsObjectColorOpacity.value) || 100;
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                const newValue = e.shiftKey ? Math.min(current + 10, 100) : Math.min(current + 1, 100);
+                detailsObjectColorOpacity.value = newValue.toString();
+                updateColorSwatch(detailsObjectColorSwatch, lastValidObjHex, newValue);
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const newValue = e.shiftKey ? Math.max(current - 10, 0) : Math.max(current - 1, 0);
+                detailsObjectColorOpacity.value = newValue.toString();
+                updateColorSwatch(detailsObjectColorSwatch, lastValidObjHex, newValue);
+            }
+        });
+    }
+
+    // 3D Details Panel: Update history when History tab is opened
+    const detailsHistoryTabBtn3d = detailsPanel?.querySelector('.tab-item[data-tab="history"]');
+    if (detailsHistoryTabBtn3d) {
+        detailsHistoryTabBtn3d.addEventListener('click', () => {
+            updateDetailsPanelHistory3d();
+        });
+    }
     
     // Image Studio preview switcher handlers
     if (previewSwitcherImageBtnStudio && previewSwitcherVideoBtnStudio) {

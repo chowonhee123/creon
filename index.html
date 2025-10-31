@@ -630,9 +630,13 @@
                                 </div>
                             </div>
                             <div class="result-media-container">
-                                <div id="p2d-result-idle-placeholder" class="result-placeholder-content">
-                                    <span class="material-symbols-outlined">space_dashboard</span>
-                                    <p>Your generation will appear here</p>
+                                <div id="p2d-result-idle-placeholder" class="result-placeholder-content" style="display: flex; justify-content: center; align-items: center; height: 100%; background: #ffffff; position: relative; overflow: hidden;">
+                                    <div id="p2d-animated-samples-container" style="position: absolute; display: flex; flex-direction: row; gap: 48px; opacity: 0.3; animation: scrollLeft 130s linear infinite; align-items: center;">
+                                        <!-- Images will be loaded dynamically from assets_images.json -->
+                                    </div>
+                                    <div style="position: absolute; bottom: 40px; color: #9ca3af; font-size: 14px; z-index: 10;">
+                                        ✨ Ready when you are — Let's create something 2D!
+                                    </div>
                                 </div>
                                 <div class="result-placeholder hidden">
                                     <div class="result-loading">
@@ -873,9 +877,13 @@
                                 </div>
                             </div>
                             <div class="result-media-container">
-                                <div id="result-idle-placeholder" class="result-placeholder-content">
-                                    <span class="material-symbols-outlined">space_dashboard</span>
-                                    <p>Your generation will appear here</p>
+                                <div id="result-idle-placeholder" class="result-placeholder-content" style="display: flex; justify-content: center; align-items: center; height: 100%; background: #ffffff; position: relative; overflow: hidden;">
+                                    <div id="animated-samples-container" style="position: absolute; display: flex; flex-direction: row; gap: 48px; opacity: 0.3; animation: scrollLeft 130s linear infinite; align-items: center;">
+                                        <!-- Images will be loaded dynamically from assets_images.json -->
+                                    </div>
+                                    <div style="position: absolute; bottom: 40px; color: #9ca3af; font-size: 14px; z-index: 10;">
+                                        ✨ Ready when you are — Let's create something 3D!
+                                    </div>
                                 </div>
                                 <div class="result-placeholder hidden">
                                     <div class="result-loading">
@@ -928,20 +936,41 @@
                                         <h3>Fix the image</h3>
                                         <span class="material-symbols-outlined accordion-icon">expand_more</span>
                                     </div>
-                                    <div class="accordion-content" id="3d-fix-content" data-active="true">
-                                        <div class="filter-group">
-                                            <label for="details-background-color-picker-3d" style="font-size: 13px; margin-bottom: var(--spacing-1);">Background Color</label>
-                                            <input type="color" id="details-background-color-picker-3d" value="#FFFFFF" />
+                                    <div class="accordion-content" id="3d-fix-content" data-active="true" style="background: transparent; padding-top: var(--spacing-3);">
+                                        <!-- Background Color -->
+                                        <div class="filter-group" style="gap: var(--spacing-2);">
+                                            <label style="font-size: 13px; margin-bottom: var(--spacing-1);">Background color</label>
+                                            <div style="display: flex; align-items: center; gap: var(--spacing-2); width: 100%;">
+                                                <button type="button" id="details-background-color-swatch-3d" style="width: 24px; height: 24px; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); background: #FFFFFF; cursor: pointer; flex-shrink: 0; padding: 0;"></button>
+                                                <input type="text" id="details-background-color-hex-3d" placeholder="#FFFFFF" value="#FFFFFF" style="width: auto; min-width: 100px; padding: var(--spacing-2); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); background: var(--input-bg); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; text-transform: uppercase; font-size: 13px;">
+                                                <input type="text" id="details-background-color-opacity-3d" placeholder="100" value="100" style="width: auto; min-width: 50px; padding: var(--spacing-2); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); background: var(--input-bg); font-size: 13px; text-align: center;">
+                                                <span style="font-size: 13px; color: var(--text-secondary); flex-shrink: 0;">%</span>
+                                                <input type="color" id="details-background-color-picker-3d" value="#FFFFFF" class="hidden" style="position: absolute; opacity: 0; pointer-events: none;">
+                                            </div>
                                         </div>
-                                        <div class="filter-group">
-                                            <label for="details-object-color-picker-3d" style="font-size: 13px; margin-bottom: var(--spacing-1);">Object Color</label>
-                                            <input type="color" id="details-object-color-picker-3d" value="#2962FF" />
+                                        <!-- Object Color -->
+                                        <div class="filter-group" style="gap: var(--spacing-2);">
+                                            <label style="font-size: 13px; margin-bottom: var(--spacing-1);">Object color</label>
+                                            <div style="display: flex; align-items: center; gap: var(--spacing-2); width: 100%;">
+                                                <button type="button" id="details-object-color-swatch-3d" style="width: 24px; height: 24px; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); background: #2962FF; cursor: pointer; flex-shrink: 0; padding: 0;"></button>
+                                                <input type="text" id="details-object-color-hex-3d" placeholder="#2962FF" value="#2962FF" style="width: auto; min-width: 100px; padding: var(--spacing-2); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); background: var(--input-bg); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; text-transform: uppercase; font-size: 13px;">
+                                                <input type="text" id="details-object-color-opacity-3d" placeholder="100" value="100" style="width: auto; min-width: 50px; padding: var(--spacing-2); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); background: var(--input-bg); font-size: 13px; text-align: center;">
+                                                <span style="font-size: 13px; color: var(--text-secondary); flex-shrink: 0;">%</span>
+                                                <input type="color" id="details-object-color-picker-3d" value="#2962FF" class="hidden" style="position: absolute; opacity: 0; pointer-events: none;">
+                                            </div>
                                         </div>
-                                        <button id="details-fix-btn" class="primary-btn" style="width: 100%; margin-top: var(--spacing-2);">
-                                            <span class="material-symbols-outlined">autorenew</span>
-                                            <span class="btn-text">Regenerate</span>
-                                            <div class="btn-loader"></div>
-                                        </button>
+                                        <div style="display: flex; gap: var(--spacing-2); margin-top: var(--spacing-3); width: 100%;">
+                                            <button id="details-remove-background-btn-3d" class="secondary-btn" style="width: auto; flex: 1; min-width: 0; height: 40px;">
+                                                <span class="material-symbols-outlined">layers_clear</span>
+                                                <span class="btn-text">Remove BG</span>
+                                                <div class="btn-loader"></div>
+                                            </button>
+                                            <button id="details-fix-btn" class="secondary-btn" style="width: auto; flex: 1; min-width: 0; height: 40px;">
+                                                <span class="material-symbols-outlined">autorenew</span>
+                                                <span class="btn-text">Regenerate</span>
+                                                <div class="btn-loader"></div>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1046,25 +1075,8 @@
                             </div>
                         </div>
                         <div class="details-tab-content hidden" data-tab-content="history">
-                            <div class="history-comparison">
-                                <div class="history-comparison-item">
-                                    <div class="history-comparison-label">
-                                        <span class="material-symbols-outlined">image</span>
-                                        Original
-                                    </div>
-                                    <div class="details-preview">
-                                        <img id="history-original-image" src="" alt="Original image">
-                                    </div>
-                                </div>
-                                <div class="history-comparison-item">
-                                    <div class="history-comparison-label">
-                                        <span class="material-symbols-outlined">auto_fix_high</span>
-                                        Fixed
-                                    </div>
-                                    <div class="details-preview">
-                                        <img id="history-fixed-image" src="" alt="Fixed image">
-                                    </div>
-                                </div>
+                            <div id="details-history-list-3d" style="display: flex; flex-direction: column; gap: 12px; padding: var(--spacing-2); overflow-y: auto;">
+                                <!-- History items will be dynamically loaded here -->
                             </div>
                         </div>
                     </div>
