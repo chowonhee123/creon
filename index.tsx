@@ -1053,8 +1053,8 @@ window.addEventListener('DOMContentLoaded', () => {
         
         // If file exists, use it
         if (refImg.file) {
-          return {
-            inlineData: {
+        return {
+          inlineData: {
               data: await blobToBase64(refImg.file),
               mimeType: refImg.file.type,
             }
@@ -1105,9 +1105,9 @@ window.addEventListener('DOMContentLoaded', () => {
         const imageData = inlineData;
         const dataUrl = `data:${imageData.mimeType};base64,${imageData.data}`;
         if (resultImgElement) {
-          resultImgElement.src = dataUrl;
-          resultImgElement.classList.remove('hidden');
-          setTimeout(() => resultImgElement.classList.add('visible'), 50); // For transition
+        resultImgElement.src = dataUrl;
+        resultImgElement.classList.remove('hidden');
+        setTimeout(() => resultImgElement.classList.add('visible'), 50); // For transition
         }
         return { data: imageData.data, mimeType: imageData.mimeType };
       } else {
@@ -1182,82 +1182,82 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-        const fill = (document.querySelector('#p2d-fill-toggle') as HTMLInputElement).checked;
-        const weight = parseInt((document.querySelector('#p2d-weight-slider') as HTMLInputElement).value);
+    const fill = (document.querySelector('#p2d-fill-toggle') as HTMLInputElement).checked;
+    const weight = parseInt((document.querySelector('#p2d-weight-slider') as HTMLInputElement).value);
 
-        const selectedReferences = new Set<({ file: File; dataUrl: string } | null)>();
+    const selectedReferences = new Set<({ file: File; dataUrl: string } | null)>();
 
-        // Rule for Fill
-        if (fill) {
-          if (referenceImagesForEdit2d[0]) {
-            selectedReferences.add(referenceImagesForEdit2d[0]);
-          }
-        } else { // fill is off
-          if (referenceImagesForEdit2d[1]) {
-            selectedReferences.add(referenceImagesForEdit2d[1]);
-          }
-        }
+    // Rule for Fill
+    if (fill) {
+      if (referenceImagesForEdit2d[0]) {
+        selectedReferences.add(referenceImagesForEdit2d[0]);
+      }
+    } else { // fill is off
+      if (referenceImagesForEdit2d[1]) {
+        selectedReferences.add(referenceImagesForEdit2d[1]);
+      }
+    }
 
-        // Rule for Weight
-        if (weight <= 300) {
-          if (referenceImagesForEdit2d[2]) {
-            selectedReferences.add(referenceImagesForEdit2d[2]);
-          }
-        } else if (weight >= 500) {
-          if (referenceImagesForEdit2d[3]) {
-            selectedReferences.add(referenceImagesForEdit2d[3]);
-          }
-        } else if (weight === 400) {
-          if (referenceImagesForEdit2d[1]) {
-            selectedReferences.add(referenceImagesForEdit2d[1]);
-          }
-        }
+    // Rule for Weight
+    if (weight <= 300) {
+      if (referenceImagesForEdit2d[2]) {
+        selectedReferences.add(referenceImagesForEdit2d[2]);
+      }
+    } else if (weight >= 500) {
+      if (referenceImagesForEdit2d[3]) {
+        selectedReferences.add(referenceImagesForEdit2d[3]);
+      }
+    } else if (weight === 400) {
+      if (referenceImagesForEdit2d[1]) {
+        selectedReferences.add(referenceImagesForEdit2d[1]);
+      }
+    }
 
-        const finalReferenceImages = Array.from(selectedReferences);
+    const finalReferenceImages = Array.from(selectedReferences);
 
-        const imageData = await generateImage(
-          imagePromptDisplay2d.value,
-          resultImage2d,
-          resultPlaceholder2d,
-          resultError2d,
-          resultIdlePlaceholder2d,
-          imageGenerateBtn2d,
-          finalReferenceImages
-        );
+    const imageData = await generateImage(
+      imagePromptDisplay2d.value,
+      resultImage2d,
+      resultPlaceholder2d,
+      resultError2d,
+      resultIdlePlaceholder2d,
+      imageGenerateBtn2d,
+      finalReferenceImages
+    );
 
-        if (imageData) {
-            const newImage: GeneratedImageData = {
-                id: `img_2d_${Date.now()}`,
-                data: imageData.data,
-                mimeType: imageData.mimeType,
-                subject: imagePromptSubjectInput2d.value,
-                styleConstraints: imagePromptDisplay2d.value,
+    if (imageData) {
+        const newImage: GeneratedImageData = {
+            id: `img_2d_${Date.now()}`,
+            data: imageData.data,
+            mimeType: imageData.mimeType,
+            subject: imagePromptSubjectInput2d.value,
+            styleConstraints: imagePromptDisplay2d.value,
                 timestamp: Date.now(),
                 modificationType: 'Original'
-            };
-            
-            currentGeneratedImage2d = newImage;
-            imageHistory2d.splice(historyIndex2d + 1);
-            imageHistory2d.push(newImage);
-            historyIndex2d = imageHistory2d.length - 1;
+        };
+        
+        currentGeneratedImage2d = newImage;
+        imageHistory2d.splice(historyIndex2d + 1);
+        imageHistory2d.push(newImage);
+        historyIndex2d = imageHistory2d.length - 1;
             
             // Reset right panel history and seed with "Original" entry for this new base asset
             resetRightHistoryForBaseAsset(newImage);
 
-            const dataUrl = `data:${newImage.mimeType};base64,${newImage.data}`;
-            const newLibraryItem = { id: newImage.id, dataUrl, mimeType: newImage.mimeType };
+        const dataUrl = `data:${newImage.mimeType};base64,${newImage.data}`;
+        const newLibraryItem = { id: newImage.id, dataUrl, mimeType: newImage.mimeType };
 
-            imageLibrary.unshift(newLibraryItem);
-            if (imageLibrary.length > 20) {
-                imageLibrary.pop();
-            }
+        imageLibrary.unshift(newLibraryItem);
+        if (imageLibrary.length > 20) {
+            imageLibrary.pop();
+        }
 
-            saveImageLibrary();
-            renderImageLibrary();
-            update2dViewFromState();
-            detailsPanel2d?.classList.remove('hidden');
-            detailsPanel2d?.classList.add('is-open');
-            renderHistory2d();
+        saveImageLibrary();
+        renderImageLibrary();
+        update2dViewFromState();
+        detailsPanel2d?.classList.remove('hidden');
+        detailsPanel2d?.classList.add('is-open');
+        renderHistory2d();
             // Update details panel history if History tab is visible
             const historyTabContent = $('#p2d-details-history-list')?.closest('.details-tab-content');
             if (historyTabContent && !historyTabContent.classList.contains('hidden')) {
@@ -1617,7 +1617,7 @@ window.addEventListener('DOMContentLoaded', () => {
         li.innerHTML = `
         <div class="history-item-main">
             <div style="position: relative;">
-                <img src="data:${item.mimeType};base64,${item.data}" class="history-thumbnail" alt="History item thumbnail">
+            <img src="data:${item.mimeType};base64,${item.data}" class="history-thumbnail" alt="History item thumbnail">
             </div>
             <div class="history-item-info">
             <span class="history-item-label">${item.subject}</span>
@@ -3217,7 +3217,7 @@ Return the 5 suggestions as a JSON array.`;
         motionCategoryList.appendChild(item);
     });
   };
-
+  
   const generateAndDisplayMotionCategories = async () => {
     if (!currentGeneratedImage || !motionCategoryList) return;
 
