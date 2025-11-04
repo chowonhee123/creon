@@ -221,7 +221,7 @@ body:not(:has(#page-usages:not(.hidden))) .app-header {
   padding-top: 60px; /* GNB height compensation */
 }
 
-/* Home page background gradient for smooth GNB blend */
+/* Home page background gradient for smooth GNB blend - Keep original */
 #page-usages {
   /* Smooth multi-stop gradient from white to F2F4F6 and scrolls with content */
   background: linear-gradient(
@@ -232,6 +232,15 @@ body:not(:has(#page-usages:not(.hidden))) .app-header {
     #F4F6F8 52%,
     #F2F4F6 100%
   ) !important;
+  min-height: 100vh;
+}
+
+/* Studio pages background - Material Design 3 compliant */
+#page-icons,
+#page-id-2d,
+#page-id-3d,
+#page-image {
+  background-color: #F0F2F5 !important;
   min-height: 100vh;
 }
 
@@ -493,7 +502,7 @@ input[type='range']::-moz-range-thumb {
   display: flex;
   align-items: center;
   background: var(--surface-color);
-  border: none;
+  border: 1px solid var(--border-color);
   border-radius: var(--border-radius-full);
   width: 100%;
   max-width: 580px;
@@ -502,7 +511,51 @@ input[type='range']::-moz-range-thumb {
   box-shadow: 0 4px 12px -2px var(--shadow-color);
 }
 .icon-grid-panel .search-box:focus-within {
-  box-shadow: 0 0 0 2px var(--accent-color);
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.1), 0 4px 12px -2px var(--shadow-color);
+}
+.icon-grid-panel .search-box.has-studio-selected {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.1), 0 4px 12px -2px var(--shadow-color);
+}
+
+/* Studio Selector Styles - Material Design 3 */
+.studio-selector {
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--border-color);
+  padding: var(--spacing-2) var(--spacing-3);
+  padding-right: var(--spacing-4);
+  margin-right: var(--spacing-2);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  outline: none;
+  min-width: 80px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M7 10l5 5 5-5H7z' fill='%23666'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right center;
+  background-size: 16px;
+  padding-right: var(--spacing-6);
+  transition: all 0.2s;
+}
+
+.studio-selector:hover {
+  background-color: rgba(0, 112, 243, 0.05);
+  border-radius: var(--border-radius-md);
+}
+
+.studio-selector:focus {
+  background-color: rgba(0, 112, 243, 0.1);
+  border-radius: var(--border-radius-md);
+}
+
+.studio-selector option {
+  background: var(--surface-color);
+  color: var(--text-primary);
+  padding: var(--spacing-2);
 }
 
 #search-input {
@@ -3816,10 +3869,41 @@ a.secondary-btn[disabled] {
   background: rgba(0, 0, 0, 0.8);
 }
 
+.generate-box .studio-selector {
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--border-color);
+  padding: 0 var(--spacing-3);
+  padding-right: var(--spacing-5);
+  margin: 0 var(--spacing-2);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  outline: none;
+  min-width: 80px;
+  height: 60px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M7 10l5 5 5-5H7z' fill='%23666'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right center;
+  background-size: 16px;
+  transition: all 0.2s;
+}
+
+.generate-box .studio-selector:hover {
+  background-color: rgba(0, 112, 243, 0.05);
+}
+
+.generate-box .studio-selector:focus {
+  background-color: rgba(0, 112, 243, 0.1);
+}
+
 .generate-box input {
-  width: 100%;
+  flex: 1;
   height: 60px;
   padding: 0 var(--spacing-5);
+  padding-left: var(--spacing-3);
   border: none;
   border-radius: 80px;
   font-size: 16px;
@@ -3830,6 +3914,14 @@ a.secondary-btn[disabled] {
 
 .generate-box input:focus {
   outline: none;
+}
+
+.generate-box:focus-within {
+  box-shadow: 5px 13px 30px 0px rgba(0, 0, 0, 0.07), 0 0 0 2px rgba(0, 112, 243, 0.2);
+}
+
+.generate-box.has-studio-selected {
+  box-shadow: 5px 13px 30px 0px rgba(0, 0, 0, 0.07), 0 0 0 2px rgba(0, 112, 243, 0.2);
 }
 
 .generate-btn {
@@ -3876,7 +3968,7 @@ a.secondary-btn[disabled] {
 
 .dynamic-placeholder {
   position: absolute;
-  left: var(--spacing-5);
+  left: 120px; /* Position after selector (80px min-width + 40px padding/margin) */
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-secondary);

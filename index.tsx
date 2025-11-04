@@ -1592,6 +1592,20 @@ window.addEventListener('DOMContentLoaded', () => {
     p2dOriginalImageData = `data:${baseAsset.mimeType};base64,${baseAsset.data}`;
   };
   
+  // 3D Studio: Reset right panel history and seed with "Original" entry for a new base asset
+  const resetRightHistoryForBaseAsset3d = (baseAsset: GeneratedImageData) => {
+    // Clear existing right history
+    detailsPanelHistory3d = [];
+    // Seed with one "Original" entry
+    const originalEntry: GeneratedImageData = {
+      ...baseAsset,
+      modificationType: 'Original'
+    };
+    detailsPanelHistory3d.push(originalEntry);
+    detailsPanelHistoryIndex3d = 0;
+    console.log('[3D Studio] Reset history with Original entry:', originalEntry.id);
+  };
+  
   const updateDetailsPanelHistory2d = () => {
     const detailsHistoryList = $('#p2d-details-history-list');
     const historyTabContent = detailsHistoryList?.closest('.details-tab-content[data-tab-content="history"]');
@@ -1833,21 +1847,37 @@ window.addEventListener('DOMContentLoaded', () => {
   // 3D Studio: Update details panel history (similar to 2D Studio)
   const updateDetailsPanelHistory3d = () => {
     const detailsHistoryList = $('#3d-details-history-list');
-    const historyTabContent = detailsHistoryList?.closest('.details-tab-content[data-tab-content="history"]');
+    if (!detailsHistoryList) {
+      console.warn('[3D Studio] History list element not found');
+      return;
+    }
     
-    // Only update if History tab is visible
-    if (!detailsHistoryList || !historyTabContent) return;
-    if (historyTabContent.classList.contains('hidden')) return;
+    const historyTabContent = detailsHistoryList.closest('.details-tab-content[data-tab-content="history"]');
+    if (!historyTabContent) {
+      console.warn('[3D Studio] History tab content not found');
+      return;
+    }
+    
+    console.log('[3D Studio] Updating history, count:', detailsPanelHistory3d.length);
+    console.log('[3D Studio] History items:', detailsPanelHistory3d);
+    console.log('[3D Studio] History list element:', detailsHistoryList);
+    console.log('[3D Studio] History tab content:', historyTabContent);
+    
+    // Always update regardless of tab visibility - will be shown when tab is clicked
+    // Remove the hidden check to allow updating even when tab is not visible
     
     if (detailsPanelHistory3d.length === 0) {
+        console.log('[3D Studio] No history items, showing empty message');
         detailsHistoryList.innerHTML = '<p style="padding: var(--spacing-4); text-align: center; color: var(--text-secondary);">No history available</p>';
         return;
     }
     
+    console.log('[3D Studio] Rendering', detailsPanelHistory3d.length, 'history items');
     detailsHistoryList.innerHTML = '';
     
     // Show in chronological order (oldest first, newest last)
     detailsPanelHistory3d.forEach((item, index) => {
+        console.log(`[3D Studio] Rendering history item ${index}:`, item.id, item.modificationType);
         const isActive = index === detailsPanelHistoryIndex3d;
         
         // Determine modification type
@@ -2042,7 +2072,10 @@ window.addEventListener('DOMContentLoaded', () => {
         });
         
         detailsHistoryList.appendChild(thumbnailBtn);
+        console.log(`[3D Studio] Appended thumbnail ${index} to DOM`);
     });
+    
+    console.log('[3D Studio] History rendering complete. Total children:', detailsHistoryList.children.length);
   };
   
   const renderHistory2d = () => {
@@ -2376,6 +2409,9 @@ window.addEventListener('DOMContentLoaded', () => {
             imageHistory.splice(historyIndex + 1);
             imageHistory.push(newImage);
             historyIndex = imageHistory.length - 1;
+            
+            // Reset right panel history and seed with "Original" entry for this new base asset
+            resetRightHistoryForBaseAsset3d(newImage);
 
             const dataUrl = `data:${newImage.mimeType};base64,${newImage.data}`;
             const newLibraryItem = { id: newImage.id, dataUrl, mimeType: newImage.mimeType };
@@ -2391,6 +2427,9 @@ window.addEventListener('DOMContentLoaded', () => {
             detailsPanel?.classList.remove('hidden');
             detailsPanel?.classList.add('is-open');
             renderHistory();
+            
+            // Always update details panel history (will be shown when History tab is clicked)
+            updateDetailsPanelHistory3d();
         }
     } finally {
         imageGenerationLoaderModal?.classList.add('hidden');
@@ -2491,6 +2530,8 @@ window.addEventListener('DOMContentLoaded', () => {
   const handleGenerateImageMain = async () => {
     console.log('handleGenerateImageMain called');
     const generateInput = document.getElementById('generate-input') as HTMLInputElement;
+    const studioSelector = document.getElementById('studio-selector') as HTMLSelectElement;
+    
     if (!generateInput?.value.trim()) {
       console.log('No input provided');
       showToast({ type: 'error', title: 'Input Required', body: 'Please enter a prompt for your image.' });
@@ -2499,7 +2540,8 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     const userPrompt = generateInput.value.trim();
-    console.log('User prompt:', userPrompt);
+    const selectedStudio = studioSelector?.value || '3d';
+    console.log('User prompt:', userPrompt, 'Selected studio:', selectedStudio);
     
     // Show loading modal
     if (mainGenerationLoaderModal) {
@@ -2515,15 +2557,28 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      // Use the same prompt generation logic as 3D Studio
-      const template = JSON.parse(DEFAULT_3D_STYLE_PROMPT_TEMPLATE);
-      // Set the subject from user input
-      template.subject = userPrompt || 'a friendly robot';
-      // Use default values for other options (shadow, colors, etc.)
-      const imagePromptText = createImagePromptFromTemplate(template, '');
+      let imagePromptText: string;
+      
+      if (selectedStudio === 'icon') {
+        // Use 2D Studio prompt generation logic
+        const template = JSON.parse(DEFAULT_2D_STYLE_PROMPT_TEMPLATE);
+        template.subject = userPrompt || 'a friendly robot';
+        // Use default 2D settings (fill: false, weight: 400, etc.)
+        const fill = false;
+        const weight = 400;
+        template.controls.style.fill.enabled = fill;
+        template.controls.style.weight = weight;
+        imagePromptText = JSON.stringify(template, null, 2);
+      } else {
+        // Use 3D Studio prompt generation logic
+        const template = JSON.parse(DEFAULT_3D_STYLE_PROMPT_TEMPLATE);
+        template.subject = userPrompt || 'a friendly robot';
+        imagePromptText = createImagePromptFromTemplate(template, '');
+      }
+      
       console.log('Generated prompt:', imagePromptText);
 
-      // Generate image using the same logic as 3D Studio
+      // Generate image
       console.log('Calling generateImage...');
       const imageData = await generateImage(
         imagePromptText,
@@ -2539,7 +2594,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
       if (imageData && imageData.data && imageData.mimeType) {
         const newImage: GeneratedImageData = {
-          id: `img_main_${Date.now()}`,
+          id: selectedStudio === 'icon' ? `img_2d_${Date.now()}` : `img_main_${Date.now()}`,
           data: imageData.data,
           mimeType: imageData.mimeType,
           subject: userPrompt,
@@ -2547,17 +2602,15 @@ window.addEventListener('DOMContentLoaded', () => {
           timestamp: Date.now(),
           videoDataUrl: undefined,
           motionPrompt: null,
+          modificationType: 'Original'
         };
         
         console.log('Created new image object:', newImage);
         
-        await setInitialMotionFramesMain(newImage);
+        if (selectedStudio === '3d') {
+          await setInitialMotionFramesMain(newImage);
+        }
         
-        currentGeneratedImageMain = newImage;
-        imageHistoryMain.splice(historyIndexMain + 1);
-        imageHistoryMain.push(newImage);
-        historyIndexMain = imageHistoryMain.length - 1;
-
         // Add to image library
         const dataUrl = `data:${newImage.mimeType};base64,${newImage.data}`;
         const newLibraryItem = { id: newImage.id, dataUrl, mimeType: newImage.mimeType };
@@ -2575,15 +2628,22 @@ window.addEventListener('DOMContentLoaded', () => {
         showToast({ 
           type: 'success', 
           title: 'Image Generated!', 
-          body: 'Your 3D image has been created successfully.' 
+          body: selectedStudio === 'icon' 
+            ? 'Your icon has been created successfully.' 
+            : 'Your 3D image has been created successfully.' 
         });
         
         // Trigger confetti
         triggerConfetti();
         
-        // Navigate to 3D Studio to show the result
-        console.log('Navigating to 3D Studio...');
-        navigateTo3DStudioWithResult(newImage);
+        // Navigate to the appropriate studio
+        if (selectedStudio === 'icon') {
+          console.log('Navigating to 2D Studio...');
+          navigateTo2DStudioWithResult(newImage);
+        } else {
+          console.log('Navigating to 3D Studio...');
+          navigateTo3DStudioWithResult(newImage);
+        }
       } else {
         console.error('Image generation returned invalid data:', imageData);
         throw new Error('Image generation failed: Invalid response data');
@@ -2623,6 +2683,45 @@ window.addEventListener('DOMContentLoaded', () => {
       imageData.motionPrompt = null;
     } catch (error) {
       console.error('Error setting initial motion frames:', error);
+    }
+  };
+
+  const navigateTo2DStudioWithResult = (imageData: GeneratedImageData) => {
+    // Navigate to 2D Studio
+    const targetPage = document.getElementById('page-id-2d');
+    if (targetPage) {
+      // Hide all pages
+      document.querySelectorAll('.page-container').forEach(pageEl => {
+        pageEl.classList.add('hidden');
+      });
+      
+      // Show 2D Studio page
+      targetPage.classList.remove('hidden');
+      
+      // Update nav items
+      document.querySelectorAll('.nav-item').forEach(navItem => {
+        navItem.classList.remove('active');
+      });
+      
+      const targetNavItem = document.querySelector('[data-page="page-id-2d"]');
+      if (targetNavItem) {
+        targetNavItem.classList.add('active');
+      }
+
+      // Set the generated image as current in 2D Studio
+      currentGeneratedImage2d = imageData;
+      imageHistory2d.splice(historyIndex2d + 1);
+      imageHistory2d.push(imageData);
+      historyIndex2d = imageHistory2d.length - 1;
+
+      // Reset right panel history and seed with "Original" entry for this new base asset
+      resetRightHistoryForBaseAsset(imageData);
+
+      // Update 2D Studio UI with the generated image
+      // Use setTimeout to ensure DOM is ready after page transition
+      setTimeout(() => {
+        update2DStudioUIWithImage(imageData);
+      }, 100);
     }
   };
 
@@ -2666,6 +2765,33 @@ window.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => {
         update3DStudioUIWithImage(imageData);
       }, 100);
+    }
+  };
+
+  const update2DStudioUIWithImage = (imageData: GeneratedImageData) => {
+    console.log('update2DStudioUIWithImage called with:', imageData);
+    
+    // Update prompt input
+    if (imagePromptSubjectInput2d && imageData.subject) {
+      imagePromptSubjectInput2d.value = imageData.subject;
+      // Update prompt display based on subject
+      update2dPromptDisplay();
+    }
+    
+    // Update 2D Studio view
+    update2dViewFromState();
+    
+    // Open details panel
+    detailsPanel2d?.classList.remove('hidden');
+    detailsPanel2d?.classList.add('is-open');
+    
+    // Render history
+    renderHistory2d();
+    
+    // Update details panel history if History tab is visible
+    const historyTabContent = $('#p2d-details-history-list')?.closest('.details-tab-content');
+    if (historyTabContent && !historyTabContent.classList.contains('hidden')) {
+      updateDetailsPanelHistory2d();
     }
   };
 
@@ -2787,6 +2913,17 @@ window.addEventListener('DOMContentLoaded', () => {
       detailsPanel.classList.remove('hidden');
       detailsPanel.classList.add('is-open');
       console.log('Details panel shown');
+      
+      // Initialize history if empty and we have a current image
+      if (currentGeneratedImage && detailsPanelHistory3d.length === 0) {
+        console.log('[3D Studio] Initializing empty history with current image');
+        resetRightHistoryForBaseAsset3d(currentGeneratedImage);
+      }
+      
+      // Always update history when panel opens
+      setTimeout(() => {
+        updateDetailsPanelHistory3d();
+      }, 100);
     }
 
     // Update motion UI
@@ -5099,6 +5236,26 @@ Return the 5 suggestions as a JSON array.`;
 
   motionPlayBtn?.addEventListener('click', handlePlayMotion);
   searchInput?.addEventListener('input', () => populateIconGrid(searchInput.value));
+  
+  // Studio Selector - Add color focus when selected (Main input on home page)
+  const studioSelector = $('#studio-selector') as HTMLSelectElement;
+  const generateBox = $('.generate-box');
+  studioSelector?.addEventListener('change', () => {
+    const selectedValue = studioSelector.value;
+    console.log('[Home] Studio selected:', selectedValue);
+    
+    // Update generate box visual state
+    if (generateBox) {
+      generateBox.classList.add('has-studio-selected');
+    }
+  });
+  
+  // Apply focus style on initial load if selector has value (default is 3d)
+  if (studioSelector && generateBox) {
+    if (studioSelector.value) {
+      generateBox.classList.add('has-studio-selected');
+    }
+  }
   convertTo3DBtn?.addEventListener('click', handleConvertTo3D);
   regenerate3DBtn?.addEventListener('click', () => {
       if(currentGeneratedIcon3d) {
@@ -5300,6 +5457,29 @@ Return the 5 suggestions as a JSON array.`;
                 setTimeout(() => {
                     updateDetailsPanelHistory2d();
                 }, 50);
+            }
+        });
+    });
+    
+    // 3D Studio Details Panel: Update history when History tab is opened
+    const detailsPanelTabs = $('#image-details-panel')?.querySelectorAll('.tab-item');
+    detailsPanelTabs?.forEach(tab => {
+        tab.addEventListener('click', () => {
+            if (tab.getAttribute('data-tab') === 'history') {
+                console.log('[3D Studio] History tab clicked');
+                console.log('[3D Studio] Current image:', currentGeneratedImage);
+                console.log('[3D Studio] History count before init:', detailsPanelHistory3d.length);
+                
+                // If history is empty but we have a current image, initialize it
+                if (detailsPanelHistory3d.length === 0 && currentGeneratedImage) {
+                    console.log('[3D Studio] History is empty, initializing with current image');
+                    resetRightHistoryForBaseAsset3d(currentGeneratedImage);
+                }
+                
+                // Delay to ensure tab content is visible before updating
+                setTimeout(() => {
+                    updateDetailsPanelHistory3d();
+                }, 100);
             }
         });
     });
