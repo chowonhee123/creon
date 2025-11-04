@@ -1711,66 +1711,139 @@ window.addEventListener('DOMContentLoaded', () => {
         
         historyItem.appendChild(thumbnailContainer);
         
-        // Create hover comparison overlay
-        let comparisonOverlay: HTMLElement | null = null;
-        historyItem.addEventListener('mouseenter', () => {
-            if (!originalItem || item.id === originalItem.id) return;
-            
-            // Create comparison overlay
-            comparisonOverlay = document.createElement('div');
-            comparisonOverlay.style.cssText = `
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 20px;
-                padding: 20px;
-                background: white;
-                border-radius: var(--border-radius-lg);
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-                z-index: 1000;
-                max-width: 600px;
-                width: 90vw;
+        // Create Compare button (only for non-Original items)
+        let compareButton: HTMLElement | null = null;
+        if (originalItem && item.id !== originalItem.id) {
+            compareButton = document.createElement('button');
+            compareButton.className = 'history-compare-btn';
+            compareButton.innerHTML = '<span class="material-symbols-outlined">compare</span>';
+            compareButton.setAttribute('aria-label', 'Compare with Original');
+            compareButton.style.cssText = `
+                position: absolute;
+                bottom: 8px;
+                right: 8px;
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                background-color: rgba(0, 0, 0, 0.7);
+                color: white;
+                border: none;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                opacity: 0;
+                transition: opacity 0.2s ease;
+                z-index: 3;
+                pointer-events: auto;
             `;
+            compareButton.querySelector('.material-symbols-outlined')!.style.cssText = 'font-size: 18px;';
+            thumbnailContainer.appendChild(compareButton);
             
-            // Original image
-            const originalContainer = document.createElement('div');
-            originalContainer.style.cssText = 'text-align: center;';
-            const originalLabel = document.createElement('div');
-            originalLabel.style.cssText = 'font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;';
-            originalLabel.textContent = 'Original';
-            const originalImg = document.createElement('img');
-            originalImg.src = `data:${originalItem.mimeType};base64,${originalItem.data}`;
-            originalImg.style.cssText = 'width: 100%; height: auto; border-radius: var(--border-radius-md);';
-            originalContainer.appendChild(originalLabel);
-            originalContainer.appendChild(originalImg);
+            // Show compare button on hover
+            historyItem.addEventListener('mouseenter', () => {
+                if (compareButton) {
+                    compareButton.style.opacity = '1';
+                }
+            });
             
-            // Current image
-            const currentContainer = document.createElement('div');
-            currentContainer.style.cssText = 'text-align: center;';
-            const currentLabel = document.createElement('div');
-            currentLabel.style.cssText = 'font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;';
-            currentLabel.textContent = tagText;
-            const currentImg = document.createElement('img');
-            currentImg.src = `data:${item.mimeType};base64,${item.data}`;
-            currentImg.style.cssText = 'width: 100%; height: auto; border-radius: var(--border-radius-md);';
-            currentContainer.appendChild(currentLabel);
-            currentContainer.appendChild(currentImg);
+            historyItem.addEventListener('mouseleave', () => {
+                if (compareButton) {
+                    compareButton.style.opacity = '0';
+                }
+            });
             
-            comparisonOverlay.appendChild(originalContainer);
-            comparisonOverlay.appendChild(currentContainer);
-            
-            document.body.appendChild(comparisonOverlay);
-        });
-        
-        historyItem.addEventListener('mouseleave', () => {
-            if (comparisonOverlay) {
-                comparisonOverlay.remove();
-                comparisonOverlay = null;
-            }
-        });
+            // Compare button click handler
+            compareButton.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent history item click
+                
+                // Create comparison modal
+                const comparisonModal = document.createElement('div');
+                comparisonModal.className = 'comparison-modal-overlay';
+                comparisonModal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background-color: rgba(0, 0, 0, 0.7);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 2000;
+                    padding: 20px;
+                `;
+                
+                const modalContent = document.createElement('div');
+                modalContent.style.cssText = `
+                    position: relative;
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 20px;
+                    padding: 24px;
+                    background: white;
+                    border-radius: var(--border-radius-lg);
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+                    max-width: 800px;
+                    width: 100%;
+                    max-height: 90vh;
+                    overflow-y: auto;
+                `;
+                
+                // Close button
+                const closeBtn = document.createElement('button');
+                closeBtn.className = 'icon-button';
+                closeBtn.innerHTML = '<span class="material-symbols-outlined">close</span>';
+                closeBtn.setAttribute('aria-label', 'Close comparison');
+                closeBtn.style.cssText = `
+                    position: absolute;
+                    top: 12px;
+                    right: 12px;
+                    z-index: 10;
+                `;
+                closeBtn.addEventListener('click', () => {
+                    comparisonModal.remove();
+                });
+                modalContent.appendChild(closeBtn);
+                
+                // Original image
+                const originalContainer = document.createElement('div');
+                originalContainer.style.cssText = 'text-align: center;';
+                const originalLabel = document.createElement('div');
+                originalLabel.style.cssText = 'font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px;';
+                originalLabel.textContent = 'Original';
+                const originalImg = document.createElement('img');
+                originalImg.src = `data:${originalItem.mimeType};base64,${originalItem.data}`;
+                originalImg.style.cssText = 'width: 100%; height: auto; border-radius: var(--border-radius-md);';
+                originalContainer.appendChild(originalLabel);
+                originalContainer.appendChild(originalImg);
+                
+                // Current image
+                const currentContainer = document.createElement('div');
+                currentContainer.style.cssText = 'text-align: center;';
+                const currentLabel = document.createElement('div');
+                currentLabel.style.cssText = 'font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px;';
+                currentLabel.textContent = tagText;
+                const currentImg = document.createElement('img');
+                currentImg.src = `data:${item.mimeType};base64,${item.data}`;
+                currentImg.style.cssText = 'width: 100%; height: auto; border-radius: var(--border-radius-md);';
+                currentContainer.appendChild(currentLabel);
+                currentContainer.appendChild(currentImg);
+                
+                modalContent.appendChild(originalContainer);
+                modalContent.appendChild(currentContainer);
+                comparisonModal.appendChild(modalContent);
+                
+                // Close on overlay click
+                comparisonModal.addEventListener('click', (e) => {
+                    if (e.target === comparisonModal) {
+                        comparisonModal.remove();
+                    }
+                });
+                
+                document.body.appendChild(comparisonModal);
+            });
+        }
         
         // Click handler to load preview
         historyItem.addEventListener('click', () => {
@@ -1921,66 +1994,139 @@ window.addEventListener('DOMContentLoaded', () => {
         
         historyItem.appendChild(thumbnailContainer);
         
-        // Create hover comparison overlay
-        let comparisonOverlay: HTMLElement | null = null;
-        historyItem.addEventListener('mouseenter', () => {
-            if (!originalItem || item.id === originalItem.id) return;
-            
-            // Create comparison overlay
-            comparisonOverlay = document.createElement('div');
-            comparisonOverlay.style.cssText = `
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 20px;
-                padding: 20px;
-                background: white;
-                border-radius: var(--border-radius-lg);
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-                z-index: 1000;
-                max-width: 600px;
-                width: 90vw;
+        // Create Compare button (only for non-Original items)
+        let compareButton: HTMLElement | null = null;
+        if (originalItem && item.id !== originalItem.id) {
+            compareButton = document.createElement('button');
+            compareButton.className = 'history-compare-btn';
+            compareButton.innerHTML = '<span class="material-symbols-outlined">compare</span>';
+            compareButton.setAttribute('aria-label', 'Compare with Original');
+            compareButton.style.cssText = `
+                position: absolute;
+                bottom: 8px;
+                right: 8px;
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                background-color: rgba(0, 0, 0, 0.7);
+                color: white;
+                border: none;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                opacity: 0;
+                transition: opacity 0.2s ease;
+                z-index: 3;
+                pointer-events: auto;
             `;
+            compareButton.querySelector('.material-symbols-outlined')!.style.cssText = 'font-size: 18px;';
+            thumbnailContainer.appendChild(compareButton);
             
-            // Original image
-            const originalContainer = document.createElement('div');
-            originalContainer.style.cssText = 'text-align: center;';
-            const originalLabel = document.createElement('div');
-            originalLabel.style.cssText = 'font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;';
-            originalLabel.textContent = 'Original';
-            const originalImg = document.createElement('img');
-            originalImg.src = `data:${originalItem.mimeType};base64,${originalItem.data}`;
-            originalImg.style.cssText = 'width: 100%; height: auto; border-radius: var(--border-radius-md);';
-            originalContainer.appendChild(originalLabel);
-            originalContainer.appendChild(originalImg);
+            // Show compare button on hover
+            historyItem.addEventListener('mouseenter', () => {
+                if (compareButton) {
+                    compareButton.style.opacity = '1';
+                }
+            });
             
-            // Current image
-            const currentContainer = document.createElement('div');
-            currentContainer.style.cssText = 'text-align: center;';
-            const currentLabel = document.createElement('div');
-            currentLabel.style.cssText = 'font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;';
-            currentLabel.textContent = tagText;
-            const currentImg = document.createElement('img');
-            currentImg.src = `data:${item.mimeType};base64,${item.data}`;
-            currentImg.style.cssText = 'width: 100%; height: auto; border-radius: var(--border-radius-md);';
-            currentContainer.appendChild(currentLabel);
-            currentContainer.appendChild(currentImg);
+            historyItem.addEventListener('mouseleave', () => {
+                if (compareButton) {
+                    compareButton.style.opacity = '0';
+                }
+            });
             
-            comparisonOverlay.appendChild(originalContainer);
-            comparisonOverlay.appendChild(currentContainer);
-            
-            document.body.appendChild(comparisonOverlay);
-        });
-        
-        historyItem.addEventListener('mouseleave', () => {
-            if (comparisonOverlay) {
-                comparisonOverlay.remove();
-                comparisonOverlay = null;
-            }
-        });
+            // Compare button click handler
+            compareButton.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent history item click
+                
+                // Create comparison modal
+                const comparisonModal = document.createElement('div');
+                comparisonModal.className = 'comparison-modal-overlay';
+                comparisonModal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background-color: rgba(0, 0, 0, 0.7);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 2000;
+                    padding: 20px;
+                `;
+                
+                const modalContent = document.createElement('div');
+                modalContent.style.cssText = `
+                    position: relative;
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 20px;
+                    padding: 24px;
+                    background: white;
+                    border-radius: var(--border-radius-lg);
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+                    max-width: 800px;
+                    width: 100%;
+                    max-height: 90vh;
+                    overflow-y: auto;
+                `;
+                
+                // Close button
+                const closeBtn = document.createElement('button');
+                closeBtn.className = 'icon-button';
+                closeBtn.innerHTML = '<span class="material-symbols-outlined">close</span>';
+                closeBtn.setAttribute('aria-label', 'Close comparison');
+                closeBtn.style.cssText = `
+                    position: absolute;
+                    top: 12px;
+                    right: 12px;
+                    z-index: 10;
+                `;
+                closeBtn.addEventListener('click', () => {
+                    comparisonModal.remove();
+                });
+                modalContent.appendChild(closeBtn);
+                
+                // Original image
+                const originalContainer = document.createElement('div');
+                originalContainer.style.cssText = 'text-align: center;';
+                const originalLabel = document.createElement('div');
+                originalLabel.style.cssText = 'font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px;';
+                originalLabel.textContent = 'Original';
+                const originalImg = document.createElement('img');
+                originalImg.src = `data:${originalItem.mimeType};base64,${originalItem.data}`;
+                originalImg.style.cssText = 'width: 100%; height: auto; border-radius: var(--border-radius-md);';
+                originalContainer.appendChild(originalLabel);
+                originalContainer.appendChild(originalImg);
+                
+                // Current image
+                const currentContainer = document.createElement('div');
+                currentContainer.style.cssText = 'text-align: center;';
+                const currentLabel = document.createElement('div');
+                currentLabel.style.cssText = 'font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px;';
+                currentLabel.textContent = tagText;
+                const currentImg = document.createElement('img');
+                currentImg.src = `data:${item.mimeType};base64,${item.data}`;
+                currentImg.style.cssText = 'width: 100%; height: auto; border-radius: var(--border-radius-md);';
+                currentContainer.appendChild(currentLabel);
+                currentContainer.appendChild(currentImg);
+                
+                modalContent.appendChild(originalContainer);
+                modalContent.appendChild(currentContainer);
+                comparisonModal.appendChild(modalContent);
+                
+                // Close on overlay click
+                comparisonModal.addEventListener('click', (e) => {
+                    if (e.target === comparisonModal) {
+                        comparisonModal.remove();
+                    }
+                });
+                
+                document.body.appendChild(comparisonModal);
+            });
+        }
         
         // Click handler to load preview
         historyItem.addEventListener('click', () => {
