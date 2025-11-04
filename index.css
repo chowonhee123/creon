@@ -1349,9 +1349,6 @@ a.secondary-btn[disabled] {
 .image-drop-zone.dragover {
   border-color: var(--accent-color);
 }
-.image-drop-zone:hover {
-  border-color: var(--text-secondary);
-}
 .drop-zone-prompt {
   color: var(--text-secondary);
   pointer-events: none;
@@ -1404,6 +1401,8 @@ a.secondary-btn[disabled] {
   display: flex;
   gap: var(--spacing-2);
   padding: var(--spacing-1) 0;
+  padding-left: 0;
+  padding-right: 0;
   overflow-x: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--border-color) var(--bg-color);
@@ -1421,9 +1420,6 @@ a.secondary-btn[disabled] {
   cursor: pointer;
   border: 2px solid transparent;
   transition: border-color 0.2s;
-}
-.library-item:hover {
-  border-color: var(--text-secondary);
 }
 .library-item.selected {
   border-color: var(--accent-color);
@@ -1478,6 +1474,8 @@ a.secondary-btn[disabled] {
 .reference-image-container {
     display: flex;
     gap: var(--spacing-2);
+    padding-left: 0;
+    padding-right: 0;
 }
 .reference-drop-zone {
     flex: 1;
@@ -2133,6 +2131,16 @@ a.secondary-btn[disabled] {
     background: transparent;
     border-radius: var(--border-radius-lg);
     margin-bottom: var(--spacing-4);
+}
+
+.details-fix-section .options-group {
+    gap: 20px;
+}
+
+.details-fix-section .filter-group > label {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
 }
 
 .history-comparison {
@@ -3767,22 +3775,19 @@ a.secondary-btn[disabled] {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-4);
+  padding: 0;
   cursor: pointer;
   user-select: none;
   transition: background-color 0.2s;
-  height: 44px;
+  height: 20px;
 }
 
-.accordion-header:hover {
-  background-color: var(--input-bg);
-}
 
 .accordion-header h3 {
   margin: 0;
   font-size: 16px;
   font-weight: 700;
-  line-height: 44px;
+  line-height: 20px;
 }
 
 .accordion-icon {
@@ -3803,7 +3808,8 @@ a.secondary-btn[disabled] {
 
 .accordion-content[data-active="true"] {
   max-height: 2000px;
-  padding: 0 var(--spacing-4) var(--spacing-4);
+  padding: 0;
+  margin-top: 20px;
 }
 
 .accordion-content > .filter-group {

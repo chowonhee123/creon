@@ -1617,50 +1617,56 @@ window.addEventListener('DOMContentLoaded', () => {
     
     detailsHistoryList.innerHTML = '';
     
+    // Find original item for comparison
+    const originalItem = detailsPanelHistory2d.find(item => item.modificationType === 'Original');
+    
     // Show in reverse chronological order (newest first, oldest last)
-    // Only show Fix modifications, not original generations
     const reversedHistory = [...detailsPanelHistory2d].reverse();
     reversedHistory.forEach((item, originalIndex) => {
-        const index = detailsPanelHistory2d.length - 1 - originalIndex; // Map back to original index for selection
+        const index = detailsPanelHistory2d.length - 1 - originalIndex;
         const isActive = index === detailsPanelHistoryIndex2d;
         
-        // Determine modification type
+        // Determine modification type and tag text
         let modificationType = item.modificationType || 'Original';
+        let tagText = 'Original';
+        if (modificationType === 'Regenerated') {
+            tagText = 'Color Changed';
+        } else if (modificationType === 'BG Removed') {
+            tagText = 'Remove BG';
+        } else if (modificationType === 'SVG') {
+            tagText = 'SVG';
+        }
         
-        // Determine if background is transparent for this history item
+        // Determine if background is transparent
         const isTransparent = modificationType === 'BG Removed' || modificationType === 'SVG';
         
-        // Create history item container (horizontal layout: thumbnail left, info right)
+        // Create history item container (thumbnail only)
         const historyItem = document.createElement('button');
         historyItem.type = 'button';
-        historyItem.className = 'details-history-item';
+        historyItem.className = 'details-history-item-thumbnail';
         historyItem.dataset.index = String(index);
-        historyItem.setAttribute('aria-label', `Load history item ${index + 1}`);
+        historyItem.setAttribute('aria-label', `Load history item ${index + 1}: ${tagText}`);
         historyItem.style.cssText = `
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-3);
+            position: relative;
             width: 100%;
-            padding: var(--spacing-3);
-            border: ${isActive ? '2px solid var(--md-primary)' : '1px solid var(--md-outline-variant)'};
-            border-radius: var(--shape-corner-medium);
-            background-color: ${isActive ? 'var(--md-primary-container)' : 'var(--md-surface)'};
+            aspect-ratio: 1;
+            border: ${isActive ? '2px solid var(--accent-color)' : '1px solid var(--border-color)'};
+            border-radius: var(--border-radius-md);
+            overflow: hidden;
             cursor: pointer;
             transition: all 0.2s ease;
             outline: none;
-            text-align: left;
+            background: transparent;
+            padding: 0;
         `;
         
-        // Create thumbnail container (left side)
+        // Create thumbnail container
         const thumbnailContainer = document.createElement('div');
         thumbnailContainer.style.cssText = `
             position: relative;
-            width: 64px;
-            height: 64px;
-            flex-shrink: 0;
-            border-radius: var(--shape-corner-small);
+            width: 100%;
+            height: 100%;
             overflow: hidden;
-            background-color: var(--md-surface-variant);
         `;
         
         // Apply checkerboard background if transparent
@@ -1679,83 +1685,90 @@ window.addEventListener('DOMContentLoaded', () => {
         img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; pointer-events: none;';
         img.alt = `History item ${index + 1}`;
         img.onerror = () => {
-            // Show placeholder if image fails to load
             img.style.display = 'none';
-            thumbnailContainer.innerHTML = '<span class="material-symbols-outlined" style="font-size: 24px; color: var(--md-on-surface-variant);">image</span>';
+            thumbnailContainer.innerHTML = '<span class="material-symbols-outlined" style="font-size: 24px; color: var(--text-secondary); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">image</span>';
         };
         
         thumbnailContainer.appendChild(img);
         
-        // Create info container (right side)
-        const infoContainer = document.createElement('div');
-        infoContainer.style.cssText = `
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: var(--spacing-1);
-            min-width: 0;
-        `;
-        
-        // Create label row
-        const labelRow = document.createElement('div');
-        labelRow.style.cssText = `
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-2);
-        `;
-        
-        // Create modification type badge
-        const badge = document.createElement('span');
-        badge.textContent = modificationType;
-        badge.style.cssText = `
-            display: inline-flex;
-            align-items: center;
-            padding: 2px 8px;
-            background-color: ${isActive ? 'var(--md-primary)' : 'var(--md-surface-variant)'};
-            color: ${isActive ? 'var(--md-on-primary)' : 'var(--md-on-surface-variant)'};
-            border-radius: var(--shape-corner-small);
+        // Create tag overlay (top-left corner)
+        const tagOverlay = document.createElement('div');
+        tagOverlay.style.cssText = `
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            padding: 4px 8px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            border-radius: var(--border-radius-sm);
             font-size: 11px;
-            font-weight: 500;
-            line-height: 1.4;
+            font-weight: 600;
+            z-index: 2;
+            pointer-events: none;
         `;
+        tagOverlay.textContent = tagText;
+        thumbnailContainer.appendChild(tagOverlay);
         
-        labelRow.appendChild(badge);
-        
-        // Create time info (if available)
-        const timeInfo = document.createElement('span');
-        timeInfo.style.cssText = `
-            font-size: 12px;
-            color: var(--md-on-surface-variant);
-            margin-left: auto;
-        `;
-        // Format time if available (you can add timestamp to GeneratedImageData if needed)
-        timeInfo.textContent = 'Just now';
-        labelRow.appendChild(timeInfo);
-        
-        infoContainer.appendChild(labelRow);
-        
-        // Assemble history item
         historyItem.appendChild(thumbnailContainer);
-        historyItem.appendChild(infoContainer);
         
-        // Add hover effect
+        // Create hover comparison overlay
+        let comparisonOverlay: HTMLElement | null = null;
         historyItem.addEventListener('mouseenter', () => {
-            if (!isActive) {
-                historyItem.style.backgroundColor = 'var(--md-surface-variant)';
-            }
+            if (!originalItem || item.id === originalItem.id) return;
+            
+            // Create comparison overlay
+            comparisonOverlay = document.createElement('div');
+            comparisonOverlay.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+                padding: 20px;
+                background: white;
+                border-radius: var(--border-radius-lg);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+                z-index: 1000;
+                max-width: 600px;
+                width: 90vw;
+            `;
+            
+            // Original image
+            const originalContainer = document.createElement('div');
+            originalContainer.style.cssText = 'text-align: center;';
+            const originalLabel = document.createElement('div');
+            originalLabel.style.cssText = 'font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;';
+            originalLabel.textContent = 'Original';
+            const originalImg = document.createElement('img');
+            originalImg.src = `data:${originalItem.mimeType};base64,${originalItem.data}`;
+            originalImg.style.cssText = 'width: 100%; height: auto; border-radius: var(--border-radius-md);';
+            originalContainer.appendChild(originalLabel);
+            originalContainer.appendChild(originalImg);
+            
+            // Current image
+            const currentContainer = document.createElement('div');
+            currentContainer.style.cssText = 'text-align: center;';
+            const currentLabel = document.createElement('div');
+            currentLabel.style.cssText = 'font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;';
+            currentLabel.textContent = tagText;
+            const currentImg = document.createElement('img');
+            currentImg.src = `data:${item.mimeType};base64,${item.data}`;
+            currentImg.style.cssText = 'width: 100%; height: auto; border-radius: var(--border-radius-md);';
+            currentContainer.appendChild(currentLabel);
+            currentContainer.appendChild(currentImg);
+            
+            comparisonOverlay.appendChild(originalContainer);
+            comparisonOverlay.appendChild(currentContainer);
+            
+            document.body.appendChild(comparisonOverlay);
         });
         
         historyItem.addEventListener('mouseleave', () => {
-            if (!isActive) {
-                historyItem.style.backgroundColor = 'var(--md-surface)';
-            }
-        });
-        
-        // Add keyboard support
-        historyItem.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                historyItem.click();
+            if (comparisonOverlay) {
+                comparisonOverlay.remove();
+                comparisonOverlay = null;
             }
         });
         
@@ -1781,7 +1794,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 detailsDownloadBtn2d.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}.png`;
             }
             
-            // Apply checkerboard if needed (for transparent backgrounds)
+            // Apply checkerboard if needed
             const isTransparent = currentGeneratedImage2d.modificationType === 'BG Removed' || currentGeneratedImage2d.modificationType === 'SVG';
             const detailsPreview = $('#p2d-details-preview-image') as HTMLImageElement;
             if (detailsPreview) {
@@ -1796,11 +1809,8 @@ window.addEventListener('DOMContentLoaded', () => {
                 }
             }
             
-            // Update Details > Detail tab preview and download link
             update2dViewFromState();
             updateDetailsPanelHistory2d();
-            
-            // Note: Do NOT sync with left sidebar history - they are separate tracks
         });
         
         detailsHistoryList.appendChild(historyItem);
@@ -1821,64 +1831,61 @@ window.addEventListener('DOMContentLoaded', () => {
       return;
     }
     
-    console.log('[3D Studio] Updating history, count:', detailsPanelHistory3d.length);
-    console.log('[3D Studio] History items:', detailsPanelHistory3d);
-    console.log('[3D Studio] History list element:', detailsHistoryList);
-    console.log('[3D Studio] History tab content:', historyTabContent);
-    
-    // Always update regardless of tab visibility - will be shown when tab is clicked
-    // Remove the hidden check to allow updating even when tab is not visible
-    
     if (detailsPanelHistory3d.length === 0) {
-        console.log('[3D Studio] No history items, showing empty message');
         detailsHistoryList.innerHTML = '<p style="padding: var(--spacing-4); text-align: center; color: var(--text-secondary);">No history available</p>';
         return;
     }
     
-    console.log('[3D Studio] Rendering', detailsPanelHistory3d.length, 'history items');
     detailsHistoryList.innerHTML = '';
+    
+    // Find original item for comparison
+    const originalItem = detailsPanelHistory3d.find(item => item.modificationType === 'Original');
     
     // Show in reverse chronological order (newest first, oldest last)
     const reversedHistory = [...detailsPanelHistory3d].reverse();
     reversedHistory.forEach((item, originalIndex) => {
-        const index = detailsPanelHistory3d.length - 1 - originalIndex; // Map back to original index for selection
-        console.log(`[3D Studio] Rendering history item ${index}:`, item.id, item.modificationType);
+        const index = detailsPanelHistory3d.length - 1 - originalIndex;
         const isActive = index === detailsPanelHistoryIndex3d;
         
-        // Determine modification type
+        // Determine modification type and tag text
         let modificationType = item.modificationType || 'Original';
+        let tagText = 'Original';
+        if (modificationType === 'Regenerated') {
+            tagText = 'Color Changed';
+        } else if (modificationType === 'BG Removed') {
+            tagText = 'Remove BG';
+        } else if (modificationType === 'SVG') {
+            tagText = 'SVG';
+        }
         
-        // Create history item container (horizontal layout: thumbnail left, info right)
+        // Create history item container (thumbnail only)
         const historyItem = document.createElement('button');
         historyItem.type = 'button';
-        historyItem.className = 'details-history-item';
+        historyItem.className = 'details-history-item-thumbnail';
         historyItem.dataset.index = String(index);
-        historyItem.setAttribute('aria-label', `Load history item ${index + 1}`);
+        historyItem.setAttribute('aria-label', `Load history item ${index + 1}: ${tagText}`);
         historyItem.style.cssText = `
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-3);
+            position: relative;
             width: 100%;
-            padding: var(--spacing-3);
-            border: ${isActive ? '2px solid var(--md-primary)' : '1px solid var(--md-outline-variant)'};
-            border-radius: var(--shape-corner-medium);
-            background-color: ${isActive ? 'var(--md-primary-container)' : 'var(--md-surface)'};
+            aspect-ratio: 1;
+            border: ${isActive ? '2px solid var(--accent-color)' : '1px solid var(--border-color)'};
+            border-radius: var(--border-radius-md);
+            overflow: hidden;
             cursor: pointer;
             transition: all 0.2s ease;
             outline: none;
-            text-align: left;
+            background: transparent;
+            padding: 0;
         `;
         
-        // Create thumbnail container (left side)
+        // Create thumbnail container
         const thumbnailContainer = document.createElement('div');
         thumbnailContainer.style.cssText = `
             position: relative;
-            width: 64px;
-            height: 64px;
-            flex-shrink: 0;
-            border-radius: var(--shape-corner-small);
+            width: 100%;
+            height: 100%;
             overflow: hidden;
-            background-color: var(--md-surface-variant);
+            background-color: #ffffff;
         `;
         
         // Create thumbnail image
@@ -1888,83 +1895,90 @@ window.addEventListener('DOMContentLoaded', () => {
         img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; pointer-events: none;';
         img.alt = `History item ${index + 1}`;
         img.onerror = () => {
-            // Show placeholder if image fails to load
             img.style.display = 'none';
-            thumbnailContainer.innerHTML = '<span class="material-symbols-outlined" style="font-size: 24px; color: var(--md-on-surface-variant);">image</span>';
+            thumbnailContainer.innerHTML = '<span class="material-symbols-outlined" style="font-size: 24px; color: var(--text-secondary); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">image</span>';
         };
         
         thumbnailContainer.appendChild(img);
         
-        // Create info container (right side)
-        const infoContainer = document.createElement('div');
-        infoContainer.style.cssText = `
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: var(--spacing-1);
-            min-width: 0;
-        `;
-        
-        // Create label row
-        const labelRow = document.createElement('div');
-        labelRow.style.cssText = `
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-2);
-        `;
-        
-        // Create modification type badge
-        const badge = document.createElement('span');
-        badge.textContent = modificationType;
-        badge.style.cssText = `
-            display: inline-flex;
-            align-items: center;
-            padding: 2px 8px;
-            background-color: ${isActive ? 'var(--md-primary)' : 'var(--md-surface-variant)'};
-            color: ${isActive ? 'var(--md-on-primary)' : 'var(--md-on-surface-variant)'};
-            border-radius: var(--shape-corner-small);
+        // Create tag overlay (top-left corner)
+        const tagOverlay = document.createElement('div');
+        tagOverlay.style.cssText = `
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            padding: 4px 8px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            border-radius: var(--border-radius-sm);
             font-size: 11px;
-            font-weight: 500;
-            line-height: 1.4;
+            font-weight: 600;
+            z-index: 2;
+            pointer-events: none;
         `;
+        tagOverlay.textContent = tagText;
+        thumbnailContainer.appendChild(tagOverlay);
         
-        labelRow.appendChild(badge);
-        
-        // Create time info (if available)
-        const timeInfo = document.createElement('span');
-        timeInfo.style.cssText = `
-            font-size: 12px;
-            color: var(--md-on-surface-variant);
-            margin-left: auto;
-        `;
-        // Format time if available (you can add timestamp to GeneratedImageData if needed)
-        timeInfo.textContent = 'Just now';
-        labelRow.appendChild(timeInfo);
-        
-        infoContainer.appendChild(labelRow);
-        
-        // Assemble history item
         historyItem.appendChild(thumbnailContainer);
-        historyItem.appendChild(infoContainer);
         
-        // Add hover effect
+        // Create hover comparison overlay
+        let comparisonOverlay: HTMLElement | null = null;
         historyItem.addEventListener('mouseenter', () => {
-            if (!isActive) {
-                historyItem.style.backgroundColor = 'var(--md-surface-variant)';
-            }
+            if (!originalItem || item.id === originalItem.id) return;
+            
+            // Create comparison overlay
+            comparisonOverlay = document.createElement('div');
+            comparisonOverlay.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+                padding: 20px;
+                background: white;
+                border-radius: var(--border-radius-lg);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+                z-index: 1000;
+                max-width: 600px;
+                width: 90vw;
+            `;
+            
+            // Original image
+            const originalContainer = document.createElement('div');
+            originalContainer.style.cssText = 'text-align: center;';
+            const originalLabel = document.createElement('div');
+            originalLabel.style.cssText = 'font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;';
+            originalLabel.textContent = 'Original';
+            const originalImg = document.createElement('img');
+            originalImg.src = `data:${originalItem.mimeType};base64,${originalItem.data}`;
+            originalImg.style.cssText = 'width: 100%; height: auto; border-radius: var(--border-radius-md);';
+            originalContainer.appendChild(originalLabel);
+            originalContainer.appendChild(originalImg);
+            
+            // Current image
+            const currentContainer = document.createElement('div');
+            currentContainer.style.cssText = 'text-align: center;';
+            const currentLabel = document.createElement('div');
+            currentLabel.style.cssText = 'font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;';
+            currentLabel.textContent = tagText;
+            const currentImg = document.createElement('img');
+            currentImg.src = `data:${item.mimeType};base64,${item.data}`;
+            currentImg.style.cssText = 'width: 100%; height: auto; border-radius: var(--border-radius-md);';
+            currentContainer.appendChild(currentLabel);
+            currentContainer.appendChild(currentImg);
+            
+            comparisonOverlay.appendChild(originalContainer);
+            comparisonOverlay.appendChild(currentContainer);
+            
+            document.body.appendChild(comparisonOverlay);
         });
         
         historyItem.addEventListener('mouseleave', () => {
-            if (!isActive) {
-                historyItem.style.backgroundColor = 'var(--md-surface)';
-            }
-        });
-        
-        // Add keyboard support
-        historyItem.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                historyItem.click();
+            if (comparisonOverlay) {
+                comparisonOverlay.remove();
+                comparisonOverlay = null;
             }
         });
         
@@ -1995,15 +2009,11 @@ window.addEventListener('DOMContentLoaded', () => {
                 detailsDownloadBtn.download = `${currentGeneratedImage.subject.replace(/\s+/g, '_')}.png`;
             }
             
-            // Update Details > Detail tab preview and download link
             updateDetailsPanelHistory3d();
         });
         
         detailsHistoryList.appendChild(historyItem);
-        console.log(`[3D Studio] Appended thumbnail ${index} to DOM`);
     });
-    
-    console.log('[3D Studio] History rendering complete. Total children:', detailsHistoryList.children.length);
   };
   
   const renderHistory2d = () => {
@@ -5491,40 +5501,14 @@ Return the 5 suggestions as a JSON array.`;
     const iconColorPicker = $('#p2d-object-color-picker') as HTMLInputElement;
     const p2dRegenerateBtn = $('#p2d-regenerate-btn');
 
-    // 2D Studio: Stroke Color picker - position below input
+    // 2D Studio: Stroke Color picker
     if (iconColorPicker) {
-        iconColorPicker.addEventListener('click', (e: Event) => {
-            e.stopPropagation();
-            
-            // Position the color picker directly below the input
-            const inputRect = iconColorPicker.getBoundingClientRect();
-            const viewportHeight = window.innerHeight;
-            const pickerHeight = 200; // Approximate height of color picker popup
-            
-            // Check if there's enough space below, otherwise flip above
-            const spaceBelow = viewportHeight - inputRect.bottom;
-            const spaceAbove = inputRect.top;
-            
-            iconColorPicker.style.position = 'fixed';
-            iconColorPicker.style.left = `${inputRect.left}px`;
-            
-            if (spaceBelow >= pickerHeight || spaceBelow > spaceAbove) {
-                // Position below input
-                iconColorPicker.style.top = `${inputRect.bottom + 4}px`;
-            } else {
-                // Position above input
-                iconColorPicker.style.top = `${inputRect.top - pickerHeight - 4}px`;
-            }
-            
-            iconColorPicker.style.width = '0';
-            iconColorPicker.style.height = '0';
-            iconColorPicker.style.opacity = '0';
-            iconColorPicker.style.pointerEvents = 'none';
-        });
-
         iconColorPicker.addEventListener('input', () => {
             if (p2dRegenerateBtn) {
                 p2dRegenerateBtn.removeAttribute('disabled');
+                // Change to primary-btn (blue) when enabled
+                p2dRegenerateBtn.classList.remove('secondary-btn');
+                p2dRegenerateBtn.classList.add('primary-btn');
             }
         });
     }
@@ -6116,71 +6100,117 @@ Return the 5 suggestions as a JSON array.`;
         handleUpscaleImage();
     });
 
-    // 3D Studio: Background Color picker - position below input
+    // 3D Studio: Background Color picker
     if (detailsBackgroundColorPicker) {
-        detailsBackgroundColorPicker.addEventListener('click', (e: Event) => {
-            e.stopPropagation();
-            
-            // Position the color picker directly below the input
-            const inputRect = detailsBackgroundColorPicker.getBoundingClientRect();
-            const viewportHeight = window.innerHeight;
-            const pickerHeight = 200; // Approximate height of color picker popup
-            
-            // Check if there's enough space below, otherwise flip above
-            const spaceBelow = viewportHeight - inputRect.bottom;
-            const spaceAbove = inputRect.top;
-            
-            detailsBackgroundColorPicker.style.position = 'fixed';
-            detailsBackgroundColorPicker.style.left = `${inputRect.left}px`;
-            
-            if (spaceBelow >= pickerHeight || spaceBelow > spaceAbove) {
-                // Position below input
-                detailsBackgroundColorPicker.style.top = `${inputRect.bottom + 4}px`;
-            } else {
-                // Position above input
-                detailsBackgroundColorPicker.style.top = `${inputRect.top - pickerHeight - 4}px`;
+        // Enable Regenerate button when color changes
+        detailsBackgroundColorPicker.addEventListener('input', () => {
+            if (detailsFixBtn) {
+                detailsFixBtn.removeAttribute('disabled');
             }
-            
-            detailsBackgroundColorPicker.style.width = '0';
-            detailsBackgroundColorPicker.style.height = '0';
-            detailsBackgroundColorPicker.style.opacity = '0';
-            detailsBackgroundColorPicker.style.pointerEvents = 'none';
         });
     }
 
-    // 3D Studio: Object Color picker - position below input
+    // 3D Studio: Object Color picker
     if (detailsObjectColorPicker) {
-        detailsObjectColorPicker.addEventListener('click', (e: Event) => {
-            e.stopPropagation();
-            
-            // Position the color picker directly below the input
-            const inputRect = detailsObjectColorPicker.getBoundingClientRect();
-            const viewportHeight = window.innerHeight;
-            const pickerHeight = 200; // Approximate height of color picker popup
-            
-            // Check if there's enough space below, otherwise flip above
-            const spaceBelow = viewportHeight - inputRect.bottom;
-            const spaceAbove = inputRect.top;
-            
-            detailsObjectColorPicker.style.position = 'fixed';
-            detailsObjectColorPicker.style.left = `${inputRect.left}px`;
-            
-            if (spaceBelow >= pickerHeight || spaceBelow > spaceAbove) {
-                // Position below input
-                detailsObjectColorPicker.style.top = `${inputRect.bottom + 4}px`;
-            } else {
-                // Position above input
-                detailsObjectColorPicker.style.top = `${inputRect.top - pickerHeight - 4}px`;
+        // Enable Regenerate button when color changes
+        detailsObjectColorPicker.addEventListener('input', () => {
+            if (detailsFixBtn) {
+                detailsFixBtn.removeAttribute('disabled');
             }
-            
-            detailsObjectColorPicker.style.width = '0';
-            detailsObjectColorPicker.style.height = '0';
-            detailsObjectColorPicker.style.opacity = '0';
-            detailsObjectColorPicker.style.pointerEvents = 'none';
         });
     }
 
+    // 3D Studio: Remove Background
+    const detailsRemoveBgBtn = $('#details-remove-bg-btn');
+    detailsRemoveBgBtn?.addEventListener('click', async () => {
+        if (!currentGeneratedImage) {
+            showToast({ type: 'error', title: 'No Image', body: 'Please generate an image first.' });
+            return;
+        }
 
+        // Show loading modal
+        if (imageGenerationLoaderModal) {
+            const loaderMessage = imageGenerationLoaderModal.querySelector('p') as HTMLElement;
+            if (loaderMessage) {
+                loaderMessage.textContent = 'Removing background...';
+            }
+            imageGenerationLoaderModal.classList.remove('hidden');
+        }
+
+        try {
+            detailsRemoveBgBtn.setAttribute('disabled', 'true');
+            detailsRemoveBgBtn.classList.add('loading');
+            
+            const dataUrl = `data:${currentGeneratedImage.mimeType};base64,${currentGeneratedImage.data}`;
+            
+            // Convert data URL to blob
+            const response = await fetch(dataUrl);
+            const blob = await response.blob();
+            
+            // Dynamically import background removal (loads WebAssembly only when needed)
+            const { removeBackground } = await import('@imgly/background-removal');
+            
+            // Remove background
+            const blobWithoutBg = await removeBackground(blob);
+            
+            // Convert to base64
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const result = e.target?.result as string;
+                const base64Data = result.split(',')[1];
+                
+                // Update current image
+                currentGeneratedImage.data = base64Data;
+                currentGeneratedImage.mimeType = 'image/png';
+                
+                // Update preview
+                const newDataUrl = `data:image/png;base64,${base64Data}`;
+                if (detailsPreviewImage) detailsPreviewImage.src = newDataUrl;
+                
+                // Update main result image
+                const resultImage = document.querySelector('#page-id-3d .result-image') as HTMLImageElement;
+                if (resultImage) {
+                    resultImage.src = newDataUrl;
+                    resultImage.classList.remove('hidden');
+                    resultImage.classList.add('visible');
+                }
+                
+                // Update download button
+                if (detailsDownloadBtn) {
+                    detailsDownloadBtn.href = newDataUrl;
+                    detailsDownloadBtn.download = `${currentGeneratedImage.subject.replace(/\s+/g, '_')}-bg-removed.png`;
+                }
+                
+                // Add to details panel history (edit history for current base asset)
+                if (currentGeneratedImage) {
+                    const bgRemovedImage: GeneratedImageData = {
+                        ...currentGeneratedImage,
+                        data: base64Data,
+                        mimeType: 'image/png',
+                        modificationType: 'BG Removed',
+                        id: `${currentGeneratedImage.id}_bg_removed_${Date.now()}`,
+                    };
+                    detailsPanelHistory3d.push(bgRemovedImage);
+                    detailsPanelHistoryIndex3d = detailsPanelHistory3d.length - 1;
+                    updateDetailsPanelHistory3d();
+                }
+                
+                showToast({ type: 'success', title: 'Background removed ✅', body: 'Background has been successfully removed.' });
+            };
+            reader.readAsDataURL(blobWithoutBg);
+            
+        } catch (error) {
+            console.error('Background removal failed:', error);
+            showToast({ type: 'error', title: 'Removal Failed', body: 'Failed to remove background. Please try again.' });
+        } finally {
+            detailsRemoveBgBtn?.removeAttribute('disabled');
+            detailsRemoveBgBtn?.classList.remove('loading');
+            // Hide loading modal
+            if (imageGenerationLoaderModal) {
+                imageGenerationLoaderModal.classList.add('hidden');
+            }
+        }
+    });
 
     detailsFixBtn?.addEventListener('click', async () => {
         if (!currentGeneratedImage) return;

@@ -685,7 +685,7 @@
                                     </div>
                                     
                                     <!-- Regenerate Button (full width, above) -->
-                                    <button id="p2d-regenerate-btn" class="secondary-btn" style="width: 100%; margin-top: var(--spacing-2);" disabled>
+                                    <button id="p2d-regenerate-btn" class="secondary-btn" style="width: 100%; margin-top: var(--spacing-2); height: 40px;" disabled>
                                         <span class="material-symbols-outlined">auto_awesome</span>
                                         <span class="btn-text">Regernerate</span>
                                         <div class="btn-loader"></div>
@@ -726,7 +726,7 @@
                         
                         <!-- History Tab Content -->
                         <div class="details-tab-content hidden" data-tab-content="history">
-                            <div id="p2d-details-history-list" style="display: flex; flex-direction: column; gap: 12px; padding: var(--spacing-2); overflow-y: auto;">
+                            <div id="p2d-details-history-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; padding: var(--spacing-2); overflow-y: auto;">
                                 <!-- History items will be rendered here -->
                             </div>
                         </div>
@@ -922,10 +922,10 @@
                             </div>
                             <div class="details-fix-section">
                                 <h3>Fix the image</h3>
-                                <div id="3d-fix-content">
+                                <div id="3d-fix-content" class="options-group">
                                     <!-- Background Color Input -->
                                     <div class="filter-group">
-                                        <label style="font-size: 13px; margin-bottom: var(--spacing-1);">Background Color</label>
+                                        <label>Background Color</label>
                                         <div class="input-with-suffix">
                                             <input type="color" id="details-background-color-picker-3d" value="#FFFFFF" class="color-swatch-input" />
                                         </div>
@@ -933,18 +933,18 @@
                                     
                                     <!-- Object Color Input -->
                                     <div class="filter-group">
-                                        <label style="font-size: 13px; margin-bottom: var(--spacing-1);">Object Color</label>
+                                        <label>Object Color</label>
                                         <div class="input-with-suffix">
                                             <input type="color" id="details-object-color-picker-3d" value="#2962FF" class="color-swatch-input" />
                                         </div>
                                     </div>
                                     
                                     <!-- Action Buttons -->
-                                    <button id="details-remove-bg-btn" class="secondary-btn" style="width: 100%; margin-top: var(--spacing-2);">
+                                    <button id="details-remove-bg-btn" class="secondary-btn" style="width: 100%;">
                                         <span class="btn-text">Remove BG</span>
                                         <div class="btn-loader"></div>
                                     </button>
-                                    <button id="details-fix-btn" class="primary-btn" style="width: 100%; margin-top: var(--spacing-2);">
+                                    <button id="details-fix-btn" class="primary-btn" style="width: 100%;" disabled>
                                         <span class="material-symbols-outlined">autorenew</span>
                                         <span class="btn-text">Regernerate</span>
                                         <div class="btn-loader"></div>
@@ -1052,7 +1052,7 @@
                             </div>
                         </div>
                         <div class="details-tab-content hidden" data-tab-content="history">
-                            <div id="3d-details-history-list" style="display: flex; flex-direction: column; gap: 12px; padding: var(--spacing-2); overflow-y: auto;">
+                            <div id="3d-details-history-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; padding: var(--spacing-2); overflow-y: auto;">
                                 <!-- History items will be rendered here -->
                             </div>
                         </div>
