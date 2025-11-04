@@ -674,10 +674,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const detailsFixBtn = $('#details-fix-btn');
   const detailsBackgroundColorPicker = $('#details-background-color-picker-3d') as HTMLInputElement;
   const detailsObjectColorPicker = $('#details-object-color-picker-3d') as HTMLInputElement;
-  const detailsBackgroundColorHex = $('#details-background-color-hex') as HTMLInputElement;
-  const detailsObjectColorHex = $('#details-object-color-hex') as HTMLInputElement;
-  const detailsBackgroundColorSwatch = $('#details-background-color-swatch');
-  const detailsObjectColorSwatch = $('#details-object-color-swatch');
   const shadowToggleIcons = $('#shadow-toggle-icons') as HTMLInputElement;
   const shadowToggle3d = $('#shadow-toggle-3d') as HTMLInputElement;
   const toggleDetailsPanelBtn = $('#toggle-details-panel-btn');
@@ -1621,9 +1617,11 @@ window.addEventListener('DOMContentLoaded', () => {
     
     detailsHistoryList.innerHTML = '';
     
-    // Show in chronological order (oldest first, newest last)
+    // Show in reverse chronological order (newest first, oldest last)
     // Only show Fix modifications, not original generations
-    detailsPanelHistory2d.forEach((item, index) => {
+    const reversedHistory = [...detailsPanelHistory2d].reverse();
+    reversedHistory.forEach((item, originalIndex) => {
+        const index = detailsPanelHistory2d.length - 1 - originalIndex; // Map back to original index for selection
         const isActive = index === detailsPanelHistoryIndex2d;
         
         // Determine modification type
@@ -1632,105 +1630,46 @@ window.addEventListener('DOMContentLoaded', () => {
         // Determine if background is transparent for this history item
         const isTransparent = modificationType === 'BG Removed' || modificationType === 'SVG';
         
-        // Create thumbnail button
-        const thumbnailBtn = document.createElement('button');
-        thumbnailBtn.type = 'button';
-        thumbnailBtn.className = 'details-history-thumbnail-btn';
-        thumbnailBtn.dataset.index = String(index);
-        thumbnailBtn.setAttribute('aria-label', `Load history item ${index + 1}`);
-        thumbnailBtn.style.cssText = `
-            position: relative;
+        // Create history item container (horizontal layout: thumbnail left, info right)
+        const historyItem = document.createElement('button');
+        historyItem.type = 'button';
+        historyItem.className = 'details-history-item';
+        historyItem.dataset.index = String(index);
+        historyItem.setAttribute('aria-label', `Load history item ${index + 1}`);
+        historyItem.style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-3);
             width: 100%;
-            height: 270px;
-            padding: 0;
-            border: ${isActive ? '3px solid var(--primary-color, #0070F3)' : '1px solid var(--border-color)'};
-            border-radius: var(--border-radius-md);
+            padding: var(--spacing-3);
+            border: ${isActive ? '2px solid var(--md-primary)' : '1px solid var(--md-outline-variant)'};
+            border-radius: var(--shape-corner-medium);
+            background-color: ${isActive ? 'var(--md-primary-container)' : 'var(--md-surface)'};
             cursor: pointer;
-            overflow: hidden;
             transition: all 0.2s ease;
             outline: none;
+            text-align: left;
+        `;
+        
+        // Create thumbnail container (left side)
+        const thumbnailContainer = document.createElement('div');
+        thumbnailContainer.style.cssText = `
+            position: relative;
+            width: 64px;
+            height: 64px;
+            flex-shrink: 0;
+            border-radius: var(--shape-corner-small);
+            overflow: hidden;
+            background-color: var(--md-surface-variant);
         `;
         
         // Apply checkerboard background if transparent
         if (isTransparent) {
-            thumbnailBtn.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
-            thumbnailBtn.style.backgroundPosition = '0 0, 8px 8px';
-            thumbnailBtn.style.backgroundSize = '16px 16px';
+            thumbnailContainer.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
+            thumbnailContainer.style.backgroundPosition = '0 0, 8px 8px';
+            thumbnailContainer.style.backgroundSize = '16px 16px';
         } else {
-            thumbnailBtn.style.backgroundColor = '#ffffff';
-        }
-        
-        // Add hover effect
-        thumbnailBtn.addEventListener('mouseenter', () => {
-            if (!isActive) {
-                thumbnailBtn.style.transform = 'scale(1.02)';
-                thumbnailBtn.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
-            }
-            // Show compare button on hover
-            const compareBtn = thumbnailBtn.querySelector('.details-history-compare-btn') as HTMLElement;
-            if (compareBtn && modificationType !== 'Original') {
-                compareBtn.style.opacity = '1';
-                compareBtn.style.pointerEvents = 'auto';
-            }
-        });
-        
-        thumbnailBtn.addEventListener('mouseleave', () => {
-            if (!isActive) {
-                thumbnailBtn.style.transform = '';
-                thumbnailBtn.style.boxShadow = '';
-            }
-            // Hide compare button on leave
-            const compareBtn = thumbnailBtn.querySelector('.details-history-compare-btn') as HTMLElement;
-            if (compareBtn) {
-                compareBtn.style.opacity = '0';
-                compareBtn.style.pointerEvents = 'none';
-            }
-        });
-        
-        // Create modification type badge
-        const badge = document.createElement('div');
-        badge.textContent = modificationType;
-        badge.style.cssText = `
-            position: absolute;
-            top: 8px;
-            left: 8px;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 4px 8px;
-            border-radius: var(--border-radius-sm);
-            font-size: 11px;
-            font-weight: 500;
-            z-index: 1;
-        `;
-        
-        // Create compare button (only for non-Original items)
-        let compareBtn = null;
-        if (modificationType !== 'Original') {
-            compareBtn = document.createElement('button');
-            compareBtn.className = 'details-history-compare-btn';
-            compareBtn.setAttribute('aria-label', 'Compare with original');
-            compareBtn.style.cssText = `
-                position: absolute;
-                top: 4px;
-                right: 4px;
-                width: 28px;
-                height: 28px;
-                padding: 0;
-                border: none;
-                background: rgba(255,255,255,0.9);
-                backdrop-filter: blur(4px);
-                border-radius: var(--border-radius-sm);
-                cursor: pointer;
-                opacity: 0;
-                transition: opacity 0.2s;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                pointer-events: none;
-                z-index: 2;
-            `;
-            compareBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 16px; color: var(--text-primary);">compare</span>';
+            thumbnailContainer.style.backgroundColor = '#ffffff';
         }
         
         // Create thumbnail image
@@ -1739,65 +1678,89 @@ window.addEventListener('DOMContentLoaded', () => {
         img.loading = 'lazy';
         img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; pointer-events: none;';
         img.alt = `History item ${index + 1}`;
+        img.onerror = () => {
+            // Show placeholder if image fails to load
+            img.style.display = 'none';
+            thumbnailContainer.innerHTML = '<span class="material-symbols-outlined" style="font-size: 24px; color: var(--md-on-surface-variant);">image</span>';
+        };
         
-        thumbnailBtn.appendChild(badge);
-        if (compareBtn) {
-            thumbnailBtn.appendChild(compareBtn);
-        }
-        thumbnailBtn.appendChild(img);
+        thumbnailContainer.appendChild(img);
         
-        // Add keyboard support
-        thumbnailBtn.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                thumbnailBtn.click();
+        // Create info container (right side)
+        const infoContainer = document.createElement('div');
+        infoContainer.style.cssText = `
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-1);
+            min-width: 0;
+        `;
+        
+        // Create label row
+        const labelRow = document.createElement('div');
+        labelRow.style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-2);
+        `;
+        
+        // Create modification type badge
+        const badge = document.createElement('span');
+        badge.textContent = modificationType;
+        badge.style.cssText = `
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            background-color: ${isActive ? 'var(--md-primary)' : 'var(--md-surface-variant)'};
+            color: ${isActive ? 'var(--md-on-primary)' : 'var(--md-on-surface-variant)'};
+            border-radius: var(--shape-corner-small);
+            font-size: 11px;
+            font-weight: 500;
+            line-height: 1.4;
+        `;
+        
+        labelRow.appendChild(badge);
+        
+        // Create time info (if available)
+        const timeInfo = document.createElement('span');
+        timeInfo.style.cssText = `
+            font-size: 12px;
+            color: var(--md-on-surface-variant);
+            margin-left: auto;
+        `;
+        // Format time if available (you can add timestamp to GeneratedImageData if needed)
+        timeInfo.textContent = 'Just now';
+        labelRow.appendChild(timeInfo);
+        
+        infoContainer.appendChild(labelRow);
+        
+        // Assemble history item
+        historyItem.appendChild(thumbnailContainer);
+        historyItem.appendChild(infoContainer);
+        
+        // Add hover effect
+        historyItem.addEventListener('mouseenter', () => {
+            if (!isActive) {
+                historyItem.style.backgroundColor = 'var(--md-surface-variant)';
             }
         });
         
-        // Compare button event handler (only for non-Original items)
-        if (compareBtn && modificationType !== 'Original') {
-            compareBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                
-                // Find the Original entry to compare with
-                const originalEntry = detailsPanelHistory2d.find(item => item.modificationType === 'Original');
-                if (!originalEntry) {
-                    showToast({ type: 'error', title: 'Error', body: 'Original image not found.' });
-                    return;
-                }
-                
-                const currentDataUrl = `data:${item.mimeType};base64,${item.data}`;
-                const originalDataUrl = `data:${originalEntry.mimeType};base64,${originalEntry.data}`;
-                
-                const compareOriginal = $('#p2d-compare-original') as HTMLImageElement;
-                const compareCurrent = $('#p2d-compare-current') as HTMLImageElement;
-                const compareSlider = $('#p2d-compare-slider') as HTMLInputElement;
-                const compareDivider = $('#p2d-compare-divider');
-                
-                if (compareOriginal) compareOriginal.src = originalDataUrl;
-                if (compareCurrent) compareCurrent.src = currentDataUrl;
-                
-                const handleSliderChange = () => {
-                    const value = compareSlider.valueAsNumber;
-                    if (compareDivider) {
-                        compareDivider.style.left = `${value}%`;
-                    }
-                    // Clip current image to show only right side from divider
-                    if (compareCurrent) {
-                        const clipPercentage = 100 - value;
-                        compareCurrent.style.clipPath = `inset(0 ${clipPercentage}% 0 0)`;
-                    }
-                };
-                compareSlider?.removeEventListener('input', handleSliderChange);
-                compareSlider?.addEventListener('input', handleSliderChange);
-                handleSliderChange();
-                
-                if (p2dCompareModal) p2dCompareModal.classList.remove('hidden');
-            });
-        }
+        historyItem.addEventListener('mouseleave', () => {
+            if (!isActive) {
+                historyItem.style.backgroundColor = 'var(--md-surface)';
+            }
+        });
+        
+        // Add keyboard support
+        historyItem.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                historyItem.click();
+            }
+        });
         
         // Click handler to load preview
-        thumbnailBtn.addEventListener('click', () => {
+        historyItem.addEventListener('click', () => {
             detailsPanelHistoryIndex2d = index;
             currentGeneratedImage2d = detailsPanelHistory2d[index];
             
@@ -1840,7 +1803,7 @@ window.addEventListener('DOMContentLoaded', () => {
             // Note: Do NOT sync with left sidebar history - they are separate tracks
         });
         
-        detailsHistoryList.appendChild(thumbnailBtn);
+        detailsHistoryList.appendChild(historyItem);
     });
   };
 
@@ -1875,106 +1838,48 @@ window.addEventListener('DOMContentLoaded', () => {
     console.log('[3D Studio] Rendering', detailsPanelHistory3d.length, 'history items');
     detailsHistoryList.innerHTML = '';
     
-    // Show in chronological order (oldest first, newest last)
-    detailsPanelHistory3d.forEach((item, index) => {
+    // Show in reverse chronological order (newest first, oldest last)
+    const reversedHistory = [...detailsPanelHistory3d].reverse();
+    reversedHistory.forEach((item, originalIndex) => {
+        const index = detailsPanelHistory3d.length - 1 - originalIndex; // Map back to original index for selection
         console.log(`[3D Studio] Rendering history item ${index}:`, item.id, item.modificationType);
         const isActive = index === detailsPanelHistoryIndex3d;
         
         // Determine modification type
         let modificationType = item.modificationType || 'Original';
         
-        // Create thumbnail button
-        const thumbnailBtn = document.createElement('button');
-        thumbnailBtn.type = 'button';
-        thumbnailBtn.className = 'details-history-thumbnail-btn';
-        thumbnailBtn.dataset.index = String(index);
-        thumbnailBtn.setAttribute('aria-label', `Load history item ${index + 1}`);
-        thumbnailBtn.style.cssText = `
-            position: relative;
+        // Create history item container (horizontal layout: thumbnail left, info right)
+        const historyItem = document.createElement('button');
+        historyItem.type = 'button';
+        historyItem.className = 'details-history-item';
+        historyItem.dataset.index = String(index);
+        historyItem.setAttribute('aria-label', `Load history item ${index + 1}`);
+        historyItem.style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-3);
             width: 100%;
-            height: 270px;
-            padding: 0;
-            border: ${isActive ? '3px solid var(--primary-color, #0070F3)' : '1px solid var(--border-color)'};
-            border-radius: var(--border-radius-md);
+            padding: var(--spacing-3);
+            border: ${isActive ? '2px solid var(--md-primary)' : '1px solid var(--md-outline-variant)'};
+            border-radius: var(--shape-corner-medium);
+            background-color: ${isActive ? 'var(--md-primary-container)' : 'var(--md-surface)'};
             cursor: pointer;
-            overflow: hidden;
             transition: all 0.2s ease;
             outline: none;
-            background-color: #ffffff;
+            text-align: left;
         `;
         
-        // Add hover effect
-        thumbnailBtn.addEventListener('mouseenter', () => {
-            if (!isActive) {
-                thumbnailBtn.style.transform = 'scale(1.02)';
-                thumbnailBtn.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
-            }
-            // Show compare button on hover
-            const compareBtn = thumbnailBtn.querySelector('.details-history-compare-btn') as HTMLElement;
-            if (compareBtn && modificationType !== 'Original') {
-                compareBtn.style.opacity = '1';
-                compareBtn.style.pointerEvents = 'auto';
-            }
-        });
-        
-        thumbnailBtn.addEventListener('mouseleave', () => {
-            if (!isActive) {
-                thumbnailBtn.style.transform = '';
-                thumbnailBtn.style.boxShadow = '';
-            }
-            // Hide compare button on leave
-            const compareBtn = thumbnailBtn.querySelector('.details-history-compare-btn') as HTMLElement;
-            if (compareBtn) {
-                compareBtn.style.opacity = '0';
-                compareBtn.style.pointerEvents = 'none';
-            }
-        });
-        
-        // Create modification type badge
-        const badge = document.createElement('div');
-        badge.textContent = modificationType;
-        badge.style.cssText = `
-            position: absolute;
-            top: 8px;
-            left: 8px;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 4px 8px;
-            border-radius: var(--border-radius-sm);
-            font-size: 11px;
-            font-weight: 500;
-            z-index: 1;
+        // Create thumbnail container (left side)
+        const thumbnailContainer = document.createElement('div');
+        thumbnailContainer.style.cssText = `
+            position: relative;
+            width: 64px;
+            height: 64px;
+            flex-shrink: 0;
+            border-radius: var(--shape-corner-small);
+            overflow: hidden;
+            background-color: var(--md-surface-variant);
         `;
-        
-        // Create compare button (only for non-Original items)
-        let compareBtn = null;
-        if (modificationType !== 'Original') {
-            compareBtn = document.createElement('button');
-            compareBtn.className = 'details-history-compare-btn';
-            compareBtn.setAttribute('aria-label', 'Compare with original');
-            compareBtn.style.cssText = `
-                position: absolute;
-                top: 4px;
-                right: 4px;
-                width: 28px;
-                height: 28px;
-                padding: 0;
-                border: none;
-                background: rgba(255,255,255,0.9);
-                backdrop-filter: blur(4px);
-                border-radius: var(--border-radius-sm);
-                cursor: pointer;
-                opacity: 0;
-                transition: opacity 0.2s;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                pointer-events: none;
-                z-index: 2;
-            `;
-            compareBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 16px; color: var(--text-primary);">compare</span>';
-        }
         
         // Create thumbnail image
         const img = document.createElement('img');
@@ -1982,66 +1887,89 @@ window.addEventListener('DOMContentLoaded', () => {
         img.loading = 'lazy';
         img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; pointer-events: none;';
         img.alt = `History item ${index + 1}`;
+        img.onerror = () => {
+            // Show placeholder if image fails to load
+            img.style.display = 'none';
+            thumbnailContainer.innerHTML = '<span class="material-symbols-outlined" style="font-size: 24px; color: var(--md-on-surface-variant);">image</span>';
+        };
         
-        thumbnailBtn.appendChild(badge);
-        if (compareBtn) {
-            thumbnailBtn.appendChild(compareBtn);
-        }
-        thumbnailBtn.appendChild(img);
+        thumbnailContainer.appendChild(img);
         
-        // Add keyboard support
-        thumbnailBtn.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                thumbnailBtn.click();
+        // Create info container (right side)
+        const infoContainer = document.createElement('div');
+        infoContainer.style.cssText = `
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-1);
+            min-width: 0;
+        `;
+        
+        // Create label row
+        const labelRow = document.createElement('div');
+        labelRow.style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-2);
+        `;
+        
+        // Create modification type badge
+        const badge = document.createElement('span');
+        badge.textContent = modificationType;
+        badge.style.cssText = `
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            background-color: ${isActive ? 'var(--md-primary)' : 'var(--md-surface-variant)'};
+            color: ${isActive ? 'var(--md-on-primary)' : 'var(--md-on-surface-variant)'};
+            border-radius: var(--shape-corner-small);
+            font-size: 11px;
+            font-weight: 500;
+            line-height: 1.4;
+        `;
+        
+        labelRow.appendChild(badge);
+        
+        // Create time info (if available)
+        const timeInfo = document.createElement('span');
+        timeInfo.style.cssText = `
+            font-size: 12px;
+            color: var(--md-on-surface-variant);
+            margin-left: auto;
+        `;
+        // Format time if available (you can add timestamp to GeneratedImageData if needed)
+        timeInfo.textContent = 'Just now';
+        labelRow.appendChild(timeInfo);
+        
+        infoContainer.appendChild(labelRow);
+        
+        // Assemble history item
+        historyItem.appendChild(thumbnailContainer);
+        historyItem.appendChild(infoContainer);
+        
+        // Add hover effect
+        historyItem.addEventListener('mouseenter', () => {
+            if (!isActive) {
+                historyItem.style.backgroundColor = 'var(--md-surface-variant)';
             }
         });
         
-        // Compare button event handler (only for non-Original items)
-        if (compareBtn && modificationType !== 'Original') {
-            compareBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                
-                // Find the Original entry to compare with
-                const originalEntry = detailsPanelHistory3d.find(item => item.modificationType === 'Original');
-                if (!originalEntry) {
-                    showToast({ type: 'error', title: 'Error', body: 'Original image not found.' });
-                    return;
-                }
-                
-                const currentDataUrl = `data:${item.mimeType};base64,${item.data}`;
-                const originalDataUrl = `data:${originalEntry.mimeType};base64,${originalEntry.data}`;
-                
-                const compareOriginal = $('#compare-original-3d') as HTMLImageElement;
-                const compareCurrent = $('#compare-current-3d') as HTMLImageElement;
-                const compareSlider = $('#compare-slider-3d') as HTMLInputElement;
-                const compareDivider = $('#compare-divider-3d');
-                const compareModal3d = $('#compare-modal-3d');
-                
-                if (compareOriginal) compareOriginal.src = originalDataUrl;
-                if (compareCurrent) compareCurrent.src = currentDataUrl;
-                
-                const handleSliderChange = () => {
-                    const value = compareSlider.valueAsNumber;
-                    if (compareDivider) {
-                        compareDivider.style.left = `${value}%`;
-                    }
-                    // Clip current image to show only right side from divider
-                    if (compareCurrent) {
-                        const clipPercentage = 100 - value;
-                        compareCurrent.style.clipPath = `inset(0 ${clipPercentage}% 0 0)`;
-                    }
-                };
-                compareSlider?.removeEventListener('input', handleSliderChange);
-                compareSlider?.addEventListener('input', handleSliderChange);
-                handleSliderChange();
-                
-                if (compareModal3d) compareModal3d.classList.remove('hidden');
-            });
-        }
+        historyItem.addEventListener('mouseleave', () => {
+            if (!isActive) {
+                historyItem.style.backgroundColor = 'var(--md-surface)';
+            }
+        });
+        
+        // Add keyboard support
+        historyItem.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                historyItem.click();
+            }
+        });
         
         // Click handler to load preview
-        thumbnailBtn.addEventListener('click', () => {
+        historyItem.addEventListener('click', () => {
             detailsPanelHistoryIndex3d = index;
             currentGeneratedImage = detailsPanelHistory3d[index];
             
@@ -2071,7 +1999,7 @@ window.addEventListener('DOMContentLoaded', () => {
             updateDetailsPanelHistory3d();
         });
         
-        detailsHistoryList.appendChild(thumbnailBtn);
+        detailsHistoryList.appendChild(historyItem);
         console.log(`[3D Studio] Appended thumbnail ${index} to DOM`);
     });
     
@@ -5561,84 +5489,43 @@ Return the 5 suggestions as a JSON array.`;
 
     // 2D Studio: Fix Icon handlers
     const iconColorPicker = $('#p2d-object-color-picker') as HTMLInputElement;
-    const strokeHexInput = $('#p2d-stroke-hex') as HTMLInputElement;
-    const strokeColorSwatch = $('#p2d-stroke-color-swatch');
     const p2dRegenerateBtn = $('#p2d-regenerate-btn');
 
-    // Simple HEX normalize/validation
-    let lastValidHex = '#000000';
-    const normalizeHex = (value: string) => {
-        const raw = (value || '').trim().replace(/^#/,'').toUpperCase();
-        if (/^[0-9A-F]{3}$/.test(raw)) return `#${raw}`;
-        if (/^[0-9A-F]{6}$/.test(raw)) return `#${raw}`;
-        return null;
-    };
-
-    // HEX input syncs with hidden color picker
-    iconColorPicker?.addEventListener('input', () => {
-        const hex = (iconColorPicker.value || '#000000').toUpperCase();
-        lastValidHex = hex;
-        if (strokeHexInput) strokeHexInput.value = hex;
-    });
-
-    // HEX input UX: Enter apply, Esc revert; invalid disables Regenerate
-    const setRegenerateDisabled = (disabled: boolean) => {
-        if (!p2dRegenerateBtn) return;
-        if (disabled) p2dRegenerateBtn.setAttribute('disabled', 'true');
-        else p2dRegenerateBtn.removeAttribute('disabled');
-    };
-    strokeHexInput?.addEventListener('input', () => {
-        const normalized = normalizeHex(strokeHexInput.value);
-        const valid = !!normalized;
-        strokeHexInput.style.borderColor = valid ? 'var(--border-color)' : 'var(--danger-color)';
-        setRegenerateDisabled(!valid);
-        if (valid) {
-            lastValidHex = normalized as string;
-            if (iconColorPicker) iconColorPicker.value = lastValidHex;
-        }
-    });
-    strokeHexInput?.addEventListener('keydown', (e: KeyboardEvent) => {
-        if (e.key === 'Enter') {
-            const normalized = normalizeHex(strokeHexInput.value) || lastValidHex;
-            strokeHexInput.value = normalized;
-            lastValidHex = normalized;
-            if (iconColorPicker) iconColorPicker.value = normalized;
-        } else if (e.key === 'Escape') {
-            strokeHexInput.value = lastValidHex;
-        }
-    });
-
-    // 2D Studio: Stroke Color picker - directly trigger native color picker
-    if (strokeColorSwatch && strokeHexInput && iconColorPicker) {
-        const triggerStrokePicker = (e: Event) => {
-            e.preventDefault();
+    // 2D Studio: Stroke Color picker - position below input
+    if (iconColorPicker) {
+        iconColorPicker.addEventListener('click', (e: Event) => {
             e.stopPropagation();
             
-            // Position the color picker next to the input field
-            const inputContainer = strokeHexInput.closest('div[style*="position: relative"]') as HTMLElement;
-            if (inputContainer) {
-                const rect = inputContainer.getBoundingClientRect();
-                iconColorPicker.style.position = 'fixed';
-                iconColorPicker.style.left = `${rect.right + 8}px`;
-                iconColorPicker.style.top = `${rect.top}px`;
-                iconColorPicker.style.width = '0';
-                iconColorPicker.style.height = '0';
-                iconColorPicker.style.opacity = '0';
-                iconColorPicker.style.pointerEvents = 'none';
+            // Position the color picker directly below the input
+            const inputRect = iconColorPicker.getBoundingClientRect();
+            const viewportHeight = window.innerHeight;
+            const pickerHeight = 200; // Approximate height of color picker popup
+            
+            // Check if there's enough space below, otherwise flip above
+            const spaceBelow = viewportHeight - inputRect.bottom;
+            const spaceAbove = inputRect.top;
+            
+            iconColorPicker.style.position = 'fixed';
+            iconColorPicker.style.left = `${inputRect.left}px`;
+            
+            if (spaceBelow >= pickerHeight || spaceBelow > spaceAbove) {
+                // Position below input
+                iconColorPicker.style.top = `${inputRect.bottom + 4}px`;
+            } else {
+                // Position above input
+                iconColorPicker.style.top = `${inputRect.top - pickerHeight - 4}px`;
             }
             
-            iconColorPicker.click();
-        };
-
-        strokeColorSwatch.addEventListener('click', triggerStrokePicker, true);
-        strokeHexInput.addEventListener('click', triggerStrokePicker, true);
+            iconColorPicker.style.width = '0';
+            iconColorPicker.style.height = '0';
+            iconColorPicker.style.opacity = '0';
+            iconColorPicker.style.pointerEvents = 'none';
+        });
 
         iconColorPicker.addEventListener('input', () => {
-            const hex = iconColorPicker.value.toUpperCase();
-            lastValidHex = hex;
-            if (strokeHexInput) strokeHexInput.value = hex.replace('#', '');
-            updateColorSwatch(strokeColorSwatch, hex);
-            setRegenerateDisabled(false);
+            if (p2dRegenerateBtn) {
+                p2dRegenerateBtn.removeAttribute('disabled');
+            }
         });
     }
     
@@ -6229,74 +6116,67 @@ Return the 5 suggestions as a JSON array.`;
         handleUpscaleImage();
     });
 
-    // Helper function to update color swatch
-    const updateColorSwatch = (swatch: HTMLElement | null, hex: string) => {
-        if (swatch) {
-            swatch.style.backgroundColor = hex;
-        }
-    };
-
-    // 3D Studio: Background Color picker - directly trigger native color picker
-    if (detailsBackgroundColorPicker && detailsBackgroundColorHex && detailsBackgroundColorSwatch) {
-        const triggerBgPicker = (e: Event) => {
-            e.preventDefault();
+    // 3D Studio: Background Color picker - position below input
+    if (detailsBackgroundColorPicker) {
+        detailsBackgroundColorPicker.addEventListener('click', (e: Event) => {
             e.stopPropagation();
             
-            // Position the color picker next to the input field
-            const inputContainer = detailsBackgroundColorHex.closest('div[style*="position: relative"]') as HTMLElement;
-            if (inputContainer) {
-                const rect = inputContainer.getBoundingClientRect();
-                detailsBackgroundColorPicker.style.position = 'fixed';
-                detailsBackgroundColorPicker.style.left = `${rect.right + 8}px`;
-                detailsBackgroundColorPicker.style.top = `${rect.top}px`;
-                detailsBackgroundColorPicker.style.width = '0';
-                detailsBackgroundColorPicker.style.height = '0';
-                detailsBackgroundColorPicker.style.opacity = '0';
-                detailsBackgroundColorPicker.style.pointerEvents = 'none';
+            // Position the color picker directly below the input
+            const inputRect = detailsBackgroundColorPicker.getBoundingClientRect();
+            const viewportHeight = window.innerHeight;
+            const pickerHeight = 200; // Approximate height of color picker popup
+            
+            // Check if there's enough space below, otherwise flip above
+            const spaceBelow = viewportHeight - inputRect.bottom;
+            const spaceAbove = inputRect.top;
+            
+            detailsBackgroundColorPicker.style.position = 'fixed';
+            detailsBackgroundColorPicker.style.left = `${inputRect.left}px`;
+            
+            if (spaceBelow >= pickerHeight || spaceBelow > spaceAbove) {
+                // Position below input
+                detailsBackgroundColorPicker.style.top = `${inputRect.bottom + 4}px`;
+            } else {
+                // Position above input
+                detailsBackgroundColorPicker.style.top = `${inputRect.top - pickerHeight - 4}px`;
             }
             
-            detailsBackgroundColorPicker.click();
-        };
-
-        detailsBackgroundColorSwatch.addEventListener('click', triggerBgPicker, true);
-        detailsBackgroundColorHex.addEventListener('click', triggerBgPicker, true);
-
-        detailsBackgroundColorPicker.addEventListener('input', () => {
-            const hex = detailsBackgroundColorPicker.value.toUpperCase();
-            if (detailsBackgroundColorHex) detailsBackgroundColorHex.value = hex.replace('#', '');
-            updateColorSwatch(detailsBackgroundColorSwatch, hex);
+            detailsBackgroundColorPicker.style.width = '0';
+            detailsBackgroundColorPicker.style.height = '0';
+            detailsBackgroundColorPicker.style.opacity = '0';
+            detailsBackgroundColorPicker.style.pointerEvents = 'none';
         });
     }
 
-    // 3D Studio: Object Color picker - directly trigger native color picker
-    if (detailsObjectColorPicker && detailsObjectColorHex && detailsObjectColorSwatch) {
-        const triggerObjPicker = (e: Event) => {
-            e.preventDefault();
+    // 3D Studio: Object Color picker - position below input
+    if (detailsObjectColorPicker) {
+        detailsObjectColorPicker.addEventListener('click', (e: Event) => {
             e.stopPropagation();
             
-            // Position the color picker next to the input field
-            const inputContainer = detailsObjectColorHex.closest('div[style*="position: relative"]') as HTMLElement;
-            if (inputContainer) {
-                const rect = inputContainer.getBoundingClientRect();
-                detailsObjectColorPicker.style.position = 'fixed';
-                detailsObjectColorPicker.style.left = `${rect.right + 8}px`;
-                detailsObjectColorPicker.style.top = `${rect.top}px`;
-                detailsObjectColorPicker.style.width = '0';
-                detailsObjectColorPicker.style.height = '0';
-                detailsObjectColorPicker.style.opacity = '0';
-                detailsObjectColorPicker.style.pointerEvents = 'none';
+            // Position the color picker directly below the input
+            const inputRect = detailsObjectColorPicker.getBoundingClientRect();
+            const viewportHeight = window.innerHeight;
+            const pickerHeight = 200; // Approximate height of color picker popup
+            
+            // Check if there's enough space below, otherwise flip above
+            const spaceBelow = viewportHeight - inputRect.bottom;
+            const spaceAbove = inputRect.top;
+            
+            detailsObjectColorPicker.style.position = 'fixed';
+            detailsObjectColorPicker.style.left = `${inputRect.left}px`;
+            
+            if (spaceBelow >= pickerHeight || spaceBelow > spaceAbove) {
+                // Position below input
+                detailsObjectColorPicker.style.top = `${inputRect.bottom + 4}px`;
+            } else {
+                // Position above input
+                detailsObjectColorPicker.style.top = `${inputRect.top - pickerHeight - 4}px`;
             }
             
-            detailsObjectColorPicker.click();
-        };
-
-        detailsObjectColorSwatch.addEventListener('click', triggerObjPicker, true);
-        detailsObjectColorHex.addEventListener('click', triggerObjPicker, true);
-
-        detailsObjectColorPicker.addEventListener('input', () => {
-            const hex = detailsObjectColorPicker.value.toUpperCase();
-            if (detailsObjectColorHex) detailsObjectColorHex.value = hex.replace('#', '');
-            updateColorSwatch(detailsObjectColorSwatch, hex);
+            detailsObjectColorPicker.style.width = '0';
+            detailsObjectColorPicker.style.height = '0';
+            detailsObjectColorPicker.style.opacity = '0';
+            detailsObjectColorPicker.style.pointerEvents = 'none';
         });
     }
 
@@ -6733,17 +6613,6 @@ Return the 5 suggestions as a JSON array.`;
   };
   
   // Setup 2D Studio accordions
-  const p2dOptionsAccordion = document.querySelector('.accordion-header[data-accordion="p2d-options"]');
-  const p2dOptionsContent = document.getElementById('p2d-options-content');
-  
-  if (p2dOptionsAccordion && p2dOptionsContent) {
-    p2dOptionsAccordion.addEventListener('click', () => {
-      const isActive = p2dOptionsAccordion.getAttribute('data-active') === 'true';
-      p2dOptionsAccordion.setAttribute('data-active', isActive ? 'false' : 'true');
-      p2dOptionsContent.setAttribute('data-active', isActive ? 'false' : 'true');
-    });
-  }
-  
   const p2dReferenceAccordion = document.querySelector('.accordion-header[data-accordion="p2d-reference"]');
   const p2dReferenceContent = document.getElementById('p2d-reference-content');
   
@@ -6778,17 +6647,6 @@ Return the 5 suggestions as a JSON array.`;
   }
   
   // Setup 3D Studio accordions
-  const p3dOptionsAccordion = document.querySelector('.accordion-header[data-accordion="3d-options"]');
-  const p3dOptionsContent = document.getElementById('3d-options-content');
-  
-  if (p3dOptionsAccordion && p3dOptionsContent) {
-    p3dOptionsAccordion.addEventListener('click', () => {
-      const isActive = p3dOptionsAccordion.getAttribute('data-active') === 'true';
-      p3dOptionsAccordion.setAttribute('data-active', isActive ? 'false' : 'true');
-      p3dOptionsContent.setAttribute('data-active', isActive ? 'false' : 'true');
-    });
-  }
-  
   const p3dRefAccordion = document.querySelector('.accordion-header[data-accordion="3d-reference"]');
   const p3dRefContent = document.getElementById('3d-reference-content');
   if (p3dRefAccordion && p3dRefContent) {

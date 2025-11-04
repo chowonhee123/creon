@@ -296,7 +296,9 @@
                         <div class="control-row">
                           <label for="color-picker">Color</label>
                         </div>
-                        <input type="color" id="color-picker" value="#0F172A" />
+                        <div class="input-with-suffix">
+                          <input type="color" id="color-picker" value="#0F172A" class="color-swatch-input" />
+                        </div>
                       </div>
 
                       <div id="tags-container" class="tags-container"></div>
@@ -533,35 +535,31 @@
                         </div>
                         <textarea id="p2d-image-prompt-display" readonly></textarea>
                         
-                        <!-- Options Accordion -->
-                        <div class="accordion">
-                            <div class="accordion-header" data-accordion="p2d-options">
-                                <h3>Options</h3>
-                                <span class="material-symbols-outlined accordion-icon">expand_more</span>
+                        <!-- Options (always open) -->
+                        <div class="options-group" style="margin-top: var(--spacing-4);">
+                            <div class="filter-group">
+                                <div class="control-row">
+                                    <label for="p2d-fill-toggle">Fill</label>
+                                    <label class="toggle-switch">
+                                    <input type="checkbox" id="p2d-fill-toggle">
+                                    <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
                             </div>
-                            <div class="accordion-content" id="p2d-options-content">
-                                <div class="filter-group">
-                                    <div class="control-row">
-                                        <label for="p2d-fill-toggle">Fill</label>
-                                        <label class="toggle-switch">
-                                        <input type="checkbox" id="p2d-fill-toggle">
-                                        <span class="toggle-slider"></span>
-                                        </label>
-                                    </div>
+                            <div class="filter-group">
+                                <div class="control-row">
+                                    <label for="p2d-weight-slider">Weight (Stroke)</label>
+                                    <span class="slider-value" id="p2d-weight-value">Value: 400</span>
                                 </div>
-                                <div class="filter-group">
-                                    <div class="control-row">
-                                        <label for="p2d-weight-slider">Weight (Stroke)</label>
-                                        <span class="slider-value" id="p2d-weight-value">Value: 400</span>
-                                    </div>
-                                    <input type="range" id="p2d-weight-slider" min="100" max="900" value="400" step="100">
-                                </div>
-                                <div class="filter-group">
-                                  <div class="control-row">
-                                    <label for="p2d-color-picker">Color</label>
-                                  </div>
-                                  <input type="color" id="p2d-color-picker" value="#212121" />
-                                </div>
+                                <input type="range" id="p2d-weight-slider" min="100" max="900" value="400" step="100">
+                            </div>
+                            <div class="filter-group">
+                              <div class="control-row">
+                                <label for="p2d-color-picker">Color</label>
+                              </div>
+                              <div class="input-with-suffix">
+                                <input type="color" id="p2d-color-picker" value="#212121" class="color-swatch-input" />
+                              </div>
                             </div>
                         </div>
                     </div>
@@ -681,10 +679,8 @@
                                     <!-- Stroke Color Input -->
                                     <div class="filter-group">
                                         <label style="font-size: 13px; margin-bottom: var(--spacing-1);">Stroke</label>
-                                        <div style="display: flex; align-items: center; gap: var(--spacing-2); padding: var(--spacing-2); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); background: var(--input-bg); position: relative;">
-                                            <div id="p2d-stroke-color-swatch" style="width: 32px; height: 32px; border-radius: var(--border-radius-md); border: 1px solid var(--border-color); cursor: pointer; flex-shrink: 0; background-color: #000000;"></div>
-                                            <input type="text" id="p2d-stroke-hex" aria-label="Stroke HEX color" placeholder="#000000" value="000000" style="flex: 1; border: none; background: transparent; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; text-transform: uppercase; font-size: 13px; color: var(--text-primary); cursor: pointer;">
-                                            <input type="color" id="p2d-object-color-picker" value="#000000" class="hidden">
+                                        <div class="input-with-suffix">
+                                            <input type="color" id="p2d-object-color-picker" value="#000000" class="color-swatch-input" />
                                         </div>
                                     </div>
                                     
@@ -787,28 +783,26 @@
                             <h3>Prompt Detail</h3>
                         </div>
                         <textarea id="image-prompt-display" readonly></textarea>
-                        <!-- Options Accordion -->
-                        <div class="accordion">
-                            <div class="accordion-header" data-accordion="3d-options">
-                                <h3>Options</h3>
-                                <span class="material-symbols-outlined accordion-icon">expand_more</span>
+                        <!-- Options (always open) -->
+                        <div class="options-group" style="margin-top: var(--spacing-4);">
+                            <div class="shadow-toggle-control">
+                                <label for="shadow-toggle-3d">Add Shadow</label>
+                                <label class="toggle-switch">
+                                  <input type="checkbox" id="shadow-toggle-3d">
+                                  <span class="toggle-slider"></span>
+                                </label>
                             </div>
-                            <div class="accordion-content" id="3d-options-content">
-                                <div class="shadow-toggle-control">
-                                    <label for="shadow-toggle-3d">Add Ground Shadow</label>
-                                    <label class="toggle-switch">
-                                      <input type="checkbox" id="shadow-toggle-3d">
-                                      <span class="toggle-slider"></span>
-                                    </label>
-                                </div>
-                                <div class="filter-group">
-                                  <label for="background-color-picker-3d">Background Color</label>
-                                  <input type="color" id="background-color-picker-3d" value="#FFFFFF" />
-                                </div>
-                                <div class="filter-group">
-                                  <label for="object-color-picker-3d">Object Color</label>
-                                  <input type="color" id="object-color-picker-3d" value="#2962FF" />
-                                </div>
+                            <div class="filter-group">
+                              <label for="background-color-picker-3d">Background Color</label>
+                              <div class="input-with-suffix">
+                                <input type="color" id="background-color-picker-3d" value="#FFFFFF" class="color-swatch-input" />
+                              </div>
+                            </div>
+                            <div class="filter-group">
+                              <label for="object-color-picker-3d">Object Color</label>
+                              <div class="input-with-suffix">
+                                <input type="color" id="object-color-picker-3d" value="#2962FF" class="color-swatch-input" />
+                              </div>
                             </div>
                         </div>
                     </div>
@@ -932,20 +926,16 @@
                                     <!-- Background Color Input -->
                                     <div class="filter-group">
                                         <label style="font-size: 13px; margin-bottom: var(--spacing-1);">Background Color</label>
-                                        <div style="display: flex; align-items: center; gap: var(--spacing-2); padding: var(--spacing-2); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); background: var(--input-bg); position: relative;">
-                                            <div id="details-background-color-swatch" style="width: 32px; height: 32px; border-radius: var(--border-radius-md); border: 1px solid var(--border-color); cursor: pointer; flex-shrink: 0; background-color: #FFFFFF;"></div>
-                                            <input type="text" id="details-background-color-hex" placeholder="#FFFFFF" value="FFFFFF" style="flex: 1; border: none; background: transparent; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; text-transform: uppercase; font-size: 13px; color: var(--text-primary); cursor: pointer;">
-                                            <input type="color" id="details-background-color-picker-3d" value="#FFFFFF" class="hidden">
+                                        <div class="input-with-suffix">
+                                            <input type="color" id="details-background-color-picker-3d" value="#FFFFFF" class="color-swatch-input" />
                                         </div>
                                     </div>
                                     
                                     <!-- Object Color Input -->
                                     <div class="filter-group">
                                         <label style="font-size: 13px; margin-bottom: var(--spacing-1);">Object Color</label>
-                                        <div style="display: flex; align-items: center; gap: var(--spacing-2); padding: var(--spacing-2); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); background: var(--input-bg); position: relative;">
-                                            <div id="details-object-color-swatch" style="width: 32px; height: 32px; border-radius: var(--border-radius-md); border: 1px solid var(--border-color); cursor: pointer; flex-shrink: 0; background-color: #2962FF;"></div>
-                                            <input type="text" id="details-object-color-hex" placeholder="#2962FF" value="2962FF" style="flex: 1; border: none; background: transparent; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; text-transform: uppercase; font-size: 13px; color: var(--text-primary); cursor: pointer;">
-                                            <input type="color" id="details-object-color-picker-3d" value="#2962FF" class="hidden">
+                                        <div class="input-with-suffix">
+                                            <input type="color" id="details-object-color-picker-3d" value="#2962FF" class="color-swatch-input" />
                                         </div>
                                     </div>
                                     
