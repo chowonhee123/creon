@@ -2349,6 +2349,11 @@ a.secondary-btn[disabled] {
     flex-shrink: 0;
     border-top: 1px solid var(--border-color);
     background-color: var(--surface-color);
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-2);
 }
 
 /* Prompt Chip Styles */
