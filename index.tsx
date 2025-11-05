@@ -2044,45 +2044,68 @@ window.addEventListener('DOMContentLoaded', () => {
                     width: 100%;
                     flex: 1;
                     overflow: hidden;
-                    background-color: #ffffff;
                 `;
                 
-                // Checkerboard background if current image is transparent
+                // Check if current image is transparent (BG Removed or SVG)
                 const isCurrentTransparent = modificationType === 'BG Removed' || modificationType === 'SVG';
-                if (isCurrentTransparent) {
-                    comparisonContainer.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
-                    comparisonContainer.style.backgroundPosition = '0 0, 8px 8px';
-                    comparisonContainer.style.backgroundSize = '16px 16px';
-                }
                 
-                // Original image (background)
-                const originalImg = document.createElement('img');
-                originalImg.src = `data:${originalItem.mimeType};base64,${originalItem.data}`;
-                originalImg.style.cssText = `
+                // Original image container (left side, white background)
+                const originalContainer = document.createElement('div');
+                originalContainer.style.cssText = `
                     position: absolute;
                     top: 0;
                     left: 0;
                     width: 100%;
                     height: 100%;
-                    object-fit: contain;
+                    background-color: #ffffff;
                     z-index: 1;
                 `;
-                comparisonContainer.appendChild(originalImg);
+                
+                // Original image
+                const originalImg = document.createElement('img');
+                originalImg.src = `data:${originalItem.mimeType};base64,${originalItem.data}`;
+                originalImg.style.cssText = `
+                    width: 100%;
+                    height: 100%;
+                    object-fit: contain;
+                    display: block;
+                `;
+                originalContainer.appendChild(originalImg);
+                comparisonContainer.appendChild(originalContainer);
+                
+                // Current image container (right side, checkerboard if transparent)
+                const currentContainer = document.createElement('div');
+                currentContainer.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    z-index: 2;
+                    clip-path: inset(0 50% 0 0);
+                `;
+                
+                // Apply checkerboard background if current image is transparent
+                if (isCurrentTransparent) {
+                    currentContainer.style.backgroundColor = '';
+                    currentContainer.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
+                    currentContainer.style.backgroundPosition = '0 0, 8px 8px';
+                    currentContainer.style.backgroundSize = '16px 16px';
+                } else {
+                    currentContainer.style.backgroundColor = '#ffffff';
+                }
                 
                 // Current image (foreground, clipped by slider)
                 const currentImg = document.createElement('img');
                 currentImg.src = `data:${item.mimeType};base64,${item.data}`;
                 currentImg.style.cssText = `
-                    position: absolute;
-                    top: 0;
-                    left: 0;
                     width: 100%;
                     height: 100%;
                     object-fit: contain;
-                    z-index: 2;
-                    clip-path: inset(0 50% 0 0);
+                    display: block;
                 `;
-                comparisonContainer.appendChild(currentImg);
+                currentContainer.appendChild(currentImg);
+                comparisonContainer.appendChild(currentContainer);
                 
                 // Slider handle
                 const sliderHandle = document.createElement('div');
@@ -2127,7 +2150,8 @@ window.addEventListener('DOMContentLoaded', () => {
                     const percentage = x * 100;
                     
                     sliderHandle.style.left = `${percentage}%`;
-                    currentImg.style.clipPath = `inset(0 ${100 - percentage}% 0 0)`;
+                    // Update clip-path on current container (not currentImg)
+                    currentContainer.style.clipPath = `inset(0 ${100 - percentage}% 0 0)`;
                 };
                 
                 sliderHandle.addEventListener('mousedown', (e) => {
