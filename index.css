@@ -2300,8 +2300,7 @@ a.secondary-btn[disabled] {
     padding-bottom: var(--spacing-4);
 }
 
-/* Hide details-actions in motion and history tabs */
-.details-tab-content[data-tab-content="motion"] .details-actions,
+/* Hide details-actions in history tab only */
 .details-tab-content[data-tab-content="history"] .details-actions {
     display: none;
 }
