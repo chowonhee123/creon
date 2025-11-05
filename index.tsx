@@ -1672,6 +1672,12 @@ window.addEventListener('DOMContentLoaded', () => {
   
   // 3D Studio: Reset right panel history and seed with "Original" entry for a new base asset
   const resetRightHistoryForBaseAsset3d = (baseAsset: GeneratedImageData) => {
+    console.log('[3D Studio] resetRightHistoryForBaseAsset3d called with:', {
+      id: baseAsset.id,
+      hasData: !!baseAsset.data,
+      dataLength: baseAsset.data?.length || 0,
+      mimeType: baseAsset.mimeType
+    });
     // Clear existing right history
     detailsPanelHistory3d = [];
     // Seed with one "Original" entry
@@ -1681,7 +1687,18 @@ window.addEventListener('DOMContentLoaded', () => {
     };
     detailsPanelHistory3d.push(originalEntry);
     detailsPanelHistoryIndex3d = 0;
-    console.log('[3D Studio] Reset history with Original entry:', originalEntry.id);
+    console.log('[3D Studio] Reset history with Original entry:', {
+      id: originalEntry.id,
+      hasData: !!originalEntry.data,
+      dataLength: originalEntry.data?.length || 0,
+      mimeType: originalEntry.mimeType,
+      modificationType: originalEntry.modificationType
+    });
+    
+    // Force update history UI immediately
+    setTimeout(() => {
+      updateDetailsPanelHistory3d();
+    }, 0);
   };
   
   const updateDetailsPanelHistory2d = () => {
@@ -2111,6 +2128,16 @@ window.addEventListener('DOMContentLoaded', () => {
     
     detailsHistoryList.innerHTML = '';
     
+    console.log('[3D Studio] Rendering history items:', detailsPanelHistory3d.map(item => ({
+        id: item.id,
+        modificationType: item.modificationType,
+        hasData: !!item.data,
+        dataLength: item.data?.length || 0,
+        dataPreview: item.data ? item.data.substring(0, 50) + '...' : 'no data',
+        hasMimeType: !!item.mimeType,
+        mimeType: item.mimeType
+    })));
+    
     // Find original item for comparison
     const originalItem = detailsPanelHistory3d.find(item => item.modificationType === 'Original');
     
@@ -2120,10 +2147,18 @@ window.addEventListener('DOMContentLoaded', () => {
         const index = detailsPanelHistory3d.length - 1 - originalIndex;
         const isActive = index === detailsPanelHistoryIndex3d;
         
+        console.log(`[3D Studio] Rendering history item ${index}:`, {
+            id: item.id,
+            modificationType: item.modificationType,
+            hasData: !!item.data,
+            dataLength: item.data?.length || 0,
+            mimeType: item.mimeType
+        });
+        
         // Determine modification type and tag text
         let modificationType = item.modificationType || 'Original';
         let tagText = 'Original';
-        if (modificationType === 'Regenerated') {
+        if (modificationType === 'Regenerated' || modificationType === 'Fix') {
             tagText = 'Color Changed';
         } else if (modificationType === 'BG Removed') {
             tagText = 'Remove BG';
@@ -2163,16 +2198,33 @@ window.addEventListener('DOMContentLoaded', () => {
         
         // Create thumbnail image
         const img = document.createElement('img');
-        img.src = `data:${item.mimeType};base64,${item.data}`;
-        img.loading = 'lazy';
-        img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; pointer-events: none;';
-        img.alt = `History item ${index + 1}`;
-        img.onerror = () => {
-            img.style.display = 'none';
+        if (item.data && item.mimeType) {
+            const dataUrl = `data:${item.mimeType};base64,${item.data}`;
+            console.log(`[3D Studio] Setting image src for item ${index}, data length:`, item.data.length, 'mimeType:', item.mimeType);
+            img.src = dataUrl;
+            img.loading = 'lazy';
+            img.style.cssText = 'width: 100%; height: 100%; object-fit: contain; pointer-events: none;';
+            img.alt = `History item ${index + 1}`;
+            img.onerror = (e) => {
+                console.error(`[3D Studio] ❌ Failed to load thumbnail for item ${index}:`, e);
+                console.error(`[3D Studio] Image src preview:`, dataUrl.substring(0, 100) + '...');
+                img.style.display = 'none';
+                thumbnailContainer.innerHTML = '<span class="material-symbols-outlined" style="font-size: 24px; color: var(--text-secondary); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">image</span>';
+            };
+            img.onload = () => {
+                console.log(`[3D Studio] ✅ Thumbnail loaded successfully for item ${index}:`, item.id);
+            };
+            thumbnailContainer.appendChild(img);
+            console.log(`[3D Studio] Image element appended to thumbnail container for item ${index}`);
+        } else {
+            console.warn(`[3D Studio] ⚠️ Missing data for history item ${index}:`, {
+                hasData: !!item.data,
+                hasMimeType: !!item.mimeType,
+                itemId: item.id,
+                modificationType: item.modificationType
+            });
             thumbnailContainer.innerHTML = '<span class="material-symbols-outlined" style="font-size: 24px; color: var(--text-secondary); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">image</span>';
-        };
-        
-        thumbnailContainer.appendChild(img);
+        }
         
         // Create tag overlay (top-left corner)
         const tagOverlay = document.createElement('div');
