@@ -1986,9 +1986,22 @@ window.addEventListener('DOMContentLoaded', () => {
         
         detailsHistoryList.appendChild(historyItem);
         console.log(`[2D Studio] Added history item ${index} to DOM:`, item.id);
+        console.log(`[2D Studio] DOM children count:`, detailsHistoryList.children.length);
+        
+        // Verify the element is actually in the DOM
+        const addedElement = detailsHistoryList.querySelector(`[data-index="${index}"]`);
+        if (!addedElement) {
+            console.error(`[2D Studio] Failed to find added element with index ${index} in DOM`);
+        } else {
+            console.log(`[2D Studio] Verified element ${index} exists in DOM`);
+        }
     });
     
     console.log(`[2D Studio] Rendered ${detailsPanelHistory2d.length} history items`);
+    console.log(`[2D Studio] Final DOM children count:`, detailsHistoryList.children.length);
+    console.log(`[2D Studio] History list element:`, detailsHistoryList);
+    console.log(`[2D Studio] History list parent:`, detailsHistoryList.parentElement);
+    console.log(`[2D Studio] History tab content:`, detailsHistoryList.closest('.details-tab-content'));
   };
 
   // 3D Studio: Update details panel history (similar to 2D Studio)

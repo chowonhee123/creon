@@ -4344,9 +4344,9 @@ a.secondary-btn[disabled] {
 /* Details Panel History List Styles */
 #p2d-details-history-list,
 #3d-details-history-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2);
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)) !important;
+  gap: 12px !important;
   padding: var(--spacing-2);
   overflow-y: auto;
   max-height: calc(100vh - 300px);
