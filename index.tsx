@@ -7160,6 +7160,23 @@ Return the 5 suggestions as a JSON array.`;
     // Reuse existing Upscale action
     detailsUpscaleBtn?.dispatchEvent(new Event('click'));
   });
+  
+  // Motion More Menu handlers
+  const closeMotionMoreMenu = () => motionMoreMenu?.classList.add('hidden');
+  motionMoreMenuBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    motionMoreMenu?.classList.toggle('hidden');
+  });
+  document.addEventListener('click', () => closeMotionMoreMenu());
+  motionMoreMenu?.addEventListener('click', (e) => e.stopPropagation());
+  motionMoreRegeneratePrompt?.addEventListener('click', () => {
+    closeMotionMoreMenu();
+    regenerateMotionPromptBtn?.dispatchEvent(new Event('click'));
+  });
+  motionMoreRegenerateVideo?.addEventListener('click', () => {
+    closeMotionMoreMenu();
+    regenerateVideoBtn?.dispatchEvent(new Event('click'));
+  });
   detailsMoreCopy?.addEventListener('click', async () => {
     close3dMoreMenu();
     const basePrompt = (imagePromptDisplay as HTMLTextAreaElement)?.value || '';
