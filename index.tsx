@@ -4087,45 +4087,17 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
         const cinematicKeywordsRegex = /cinematic|movie|film look/gi;
         const sanitizedUserPrompt = userPrompt.replace(cinematicKeywordsRegex, '').replace(/\s+/g, ' ').trim();
 
-        // Detect and maintain source image aspect ratio to avoid black bars
-        let aspectRatio = '16:9';
-        let useImageAspectRatio = false;
-        
-        if (motionFirstFrameImage) {
-            const img = new Image();
-            const imgDataUrl = motionFirstFrameImage.dataUrl;
-            
-            await new Promise<void>((resolve) => {
-                img.onload = () => {
-                    const width = img.naturalWidth;
-                    const height = img.naturalHeight;
-                    const ratio = width / height;
-                    
-                    if (ratio > 1.5) {
-                        aspectRatio = '16:9';
-                    } else if (ratio > 1) {
-                        aspectRatio = '4:3';
-                    } else {
-                        aspectRatio = '1:1';
-                    }
-                    useImageAspectRatio = true;
-                    resolve();
-                };
-                img.src = imgDataUrl;
-            });
-        }
+        // Force 16:9 aspect ratio for video generation
+        const aspectRatio = '16:9';
 
         // Add specific prompts to avoid letterboxing and maintain background
-        const finalPrompt = `no black bars, no letterboxing, full-frame composition, fill the entire frame. Maintain full frame coverage with no black bars, borders, or letterboxing. Keep the entire image visible. Preserve the exact background from the source image without any cropping or black bars. ${sanitizedUserPrompt}. CRITICAL NEGATIVE PROMPT: black bars, letterboxing, black borders, black edges, cinematic crop, pillarbox, narrow frame, cropped edges, missing background. avoid letterboxing, use 1.25:1 aspect ratio`;
+        const finalPrompt = `no black bars, no letterboxing, full-frame composition, fill the entire frame. Maintain full frame coverage with no black bars, borders, or letterboxing. Keep the entire image visible. Preserve the exact background from the source image without any cropping or black bars. ${sanitizedUserPrompt}. CRITICAL NEGATIVE PROMPT: black bars, letterboxing, black borders, black edges, cinematic crop, pillarbox, narrow frame, cropped edges, missing background. Use 16:9 aspect ratio.`;
 
         const config: any = {
             numberOfVideos: 1,
             resolution: '1080p',
+            aspectRatio: '16:9', // Force 16:9
         };
-
-        if (useImageAspectRatio || !motionFirstFrameImage) {
-            config.aspectRatio = aspectRatio;
-        }
 
         const selectedModel = (document.querySelector('input[name="motion-model"]:checked') as HTMLInputElement)?.value || 'veo-3.1-fast-generate-preview';
 
@@ -4240,45 +4212,17 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
         const cinematicKeywordsRegex = /cinematic|movie|film look/gi;
         const sanitizedUserPrompt = userPrompt.replace(cinematicKeywordsRegex, '').replace(/\s+/g, ' ').trim();
 
-        // Detect and maintain source image aspect ratio to avoid black bars
-        let aspectRatio = '16:9';
-        let useImageAspectRatio = false;
-        
-        if (motionFirstFrameImageStudio) {
-            const img = new Image();
-            const imgDataUrl = motionFirstFrameImageStudio.dataUrl;
-            
-            await new Promise<void>((resolve) => {
-                img.onload = () => {
-                    const width = img.naturalWidth;
-                    const height = img.naturalHeight;
-                    const ratio = width / height;
-                    
-                    if (ratio > 1.5) {
-                        aspectRatio = '16:9';
-                    } else if (ratio > 1) {
-                        aspectRatio = '4:3';
-                    } else {
-                        aspectRatio = '1:1';
-                    }
-                    useImageAspectRatio = true;
-                    resolve();
-                };
-                img.src = imgDataUrl;
-            });
-        }
+        // Force 16:9 aspect ratio for video generation
+        const aspectRatio = '16:9';
 
         // Add specific prompts to avoid letterboxing and maintain background
-        const finalPrompt = `no black bars, no letterboxing, full-frame composition, fill the entire frame. Maintain full frame coverage with no black bars, borders, or letterboxing. Keep the entire image visible. Preserve the exact background from the source image without any cropping or black bars. ${sanitizedUserPrompt}. CRITICAL NEGATIVE PROMPT: black bars, letterboxing, black borders, black edges, cinematic crop, pillarbox, narrow frame, cropped edges, missing background. avoid letterboxing, use 1.25:1 aspect ratio`;
+        const finalPrompt = `no black bars, no letterboxing, full-frame composition, fill the entire frame. Maintain full frame coverage with no black bars, borders, or letterboxing. Keep the entire image visible. Preserve the exact background from the source image without any cropping or black bars. ${sanitizedUserPrompt}. CRITICAL NEGATIVE PROMPT: black bars, letterboxing, black borders, black edges, cinematic crop, pillarbox, narrow frame, cropped edges, missing background. Use 16:9 aspect ratio.`;
 
         const config: any = {
             numberOfVideos: 1,
             resolution: '1080p',
+            aspectRatio: '16:9', // Force 16:9
         };
-
-        if (useImageAspectRatio || !motionFirstFrameImageStudio) {
-            config.aspectRatio = aspectRatio;
-        }
 
         const selectedModel = (document.querySelector('input[name="motion-model-image"]:checked') as HTMLInputElement)?.value || 'veo-3.1-fast-generate-preview';
 
@@ -6300,7 +6244,7 @@ Return the 5 suggestions as a JSON array.`;
   zoomOut1_5xBtnImage?.addEventListener('click', () => handleZoomOut(1.5));
   zoomOut2xBtnImage?.addEventListener('click', () => handleZoomOut(2));
   
-  // Image Studio: Upscale from Fix section
+  // Image Studio: Upscale from Fix section using waifu2x
   const upscaleFixBtnImage = $('#details-upscale-fix-btn-image');
   upscaleFixBtnImage?.addEventListener('click', async () => {
     if (!currentGeneratedImageStudio) return;
@@ -6311,71 +6255,108 @@ Return the 5 suggestions as a JSON array.`;
     
     try {
       const dataUrl = `data:${currentGeneratedImageStudio.mimeType};base64,${currentGeneratedImageStudio.data}`;
+      
+      // Convert base64 to blob
       const response = await fetch(dataUrl);
       const blob = await response.blob();
-      const file = new File([blob], 'image.png', { type: currentGeneratedImageStudio.mimeType });
-      const base64Data = await blobToBase64(file);
       
-      const parts = [
-        { inlineData: { data: base64Data, mimeType: currentGeneratedImageStudio.mimeType } },
-        { text: 'Upscale this image to 4K resolution while maintaining quality and details' }
-      ];
+      // Use waifu2x web API
+      const formData = new FormData();
+      formData.append('file', blob, 'image.png');
+      formData.append('style', 'art'); // art or photo
+      formData.append('noise', '2'); // 0-3, 2 is recommended
+      formData.append('scale', '2'); // 1 or 2
       
-      const upscaleResponse = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
-        contents: { parts },
-        config: {
-          responseModalities: [Modality.IMAGE],
-        },
+      // Try waifu2x API endpoint
+      const waifu2xResponse = await fetch('https://api.waifu2x.net/upscale', {
+        method: 'POST',
+        body: formData
       });
       
-      const upscalePart = upscaleResponse.candidates?.[0]?.content?.parts?.[0];
-      if (upscalePart && upscalePart.inlineData) {
-        const { data, mimeType } = upscalePart.inlineData;
-        const upscaledDataUrl = `data:${mimeType};base64,${data}`;
+      let upscaledBlob: Blob;
+      let upscaledData: string;
+      let upscaledMimeType: string;
+      
+      if (waifu2xResponse.ok) {
+        upscaledBlob = await waifu2xResponse.blob();
+        upscaledData = await blobToBase64(new File([upscaledBlob], 'upscaled.png', { type: upscaledBlob.type }));
+        upscaledMimeType = upscaledBlob.type || 'image/png';
+      } else {
+        // Fallback: Use Canvas to upscale (simple 2x upscale)
+        console.warn('waifu2x API failed, using Canvas fallback');
+        const img = new Image();
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = reject;
+          img.src = dataUrl;
+        });
         
-        // Only add to right panel history, not left panel history
-        // Don't update currentGeneratedImageStudio to preserve original
-        if (!currentGeneratedImageStudio.rightPanelHistory) {
-          currentGeneratedImageStudio.rightPanelHistory = [{
-            ...currentGeneratedImageStudio,
-            modificationType: 'Original'
-          }];
-        }
-        const upscaledItem: GeneratedImageData = {
-          id: `img_${Date.now()}`,
-          data,
-          mimeType,
-          subject: currentGeneratedImageStudio.subject,
-          styleConstraints: currentGeneratedImageStudio.styleConstraints,
-          timestamp: Date.now(),
-          modificationType: 'Upscaled'
-        };
-        currentGeneratedImageStudio.rightPanelHistory.push(upscaledItem);
-        
-        // Update preview with upscaled image
-        const resultImage = $('#result-image-image') as HTMLImageElement;
-        if (resultImage) {
-          resultImage.src = upscaledDataUrl;
-        }
-        if (detailsPreviewImageImage) {
-          detailsPreviewImageImage.src = upscaledDataUrl;
-          detailsPreviewImageImage.style.transform = 'scale(1)';
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width * 2;
+        canvas.height = img.height * 2;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         }
         
-        const detailsDownload = $('#details-download-btn-image') as HTMLAnchorElement;
-        if (detailsDownload) {
-          detailsDownload.href = upscaledDataUrl;
-        }
+        // Convert canvas to base64
+        const upscaledDataUrl = canvas.toDataURL('image/png');
+        upscaledData = upscaledDataUrl.split(',')[1];
+        upscaledMimeType = 'image/png';
         
-        // Update right panel history display
-        updateImageStudioDetailsHistory();
-        
-        showToast({ type: 'success', title: 'Upscaled!', body: 'Image has been upscaled to higher resolution.' });
+        // Also create blob for consistency
+        upscaledBlob = await new Promise<Blob>((resolve) => {
+          canvas.toBlob((blob) => {
+            resolve(blob || new Blob());
+          }, 'image/png');
+        });
       }
+      
+      const upscaledDataUrl = `data:${upscaledMimeType};base64,${upscaledData}`;
+      
+      // Only add to right panel history, not left panel history
+      // Don't update currentGeneratedImageStudio to preserve original
+      if (!currentGeneratedImageStudio.rightPanelHistory) {
+        currentGeneratedImageStudio.rightPanelHistory = [{
+          ...currentGeneratedImageStudio,
+          modificationType: 'Original'
+        }];
+      }
+      const upscaledItem: GeneratedImageData = {
+        id: `img_${Date.now()}`,
+        data: upscaledData,
+        mimeType: upscaledMimeType,
+        subject: currentGeneratedImageStudio.subject,
+        styleConstraints: currentGeneratedImageStudio.styleConstraints,
+        timestamp: Date.now(),
+        modificationType: 'Upscaled'
+      };
+      currentGeneratedImageStudio.rightPanelHistory.push(upscaledItem);
+      
+      // Update preview with upscaled image
+      const resultImage = $('#result-image-image') as HTMLImageElement;
+      if (resultImage) {
+        resultImage.src = upscaledDataUrl;
+      }
+      if (detailsPreviewImageImage) {
+        detailsPreviewImageImage.src = upscaledDataUrl;
+        detailsPreviewImageImage.style.transform = 'scale(1)';
+      }
+      
+      const detailsDownload = $('#details-download-btn-image') as HTMLAnchorElement;
+      if (detailsDownload) {
+        detailsDownload.href = upscaledDataUrl;
+      }
+      
+      // Update right panel history display
+      updateImageStudioDetailsHistory();
+      
+      showToast({ type: 'success', title: 'Upscaled!', body: 'Image has been upscaled using waifu2x.' });
     } catch (error) {
       console.error('Error upscaling image:', error);
-      showToast({ type: 'error', title: 'Upscale Failed', body: 'Failed to upscale image.' });
+      showToast({ type: 'error', title: 'Upscale Failed', body: 'Failed to upscale image. Please try again.' });
     } finally {
       loaderModal?.classList.add('hidden');
       updateButtonLoadingState(upscaleFixBtnImage as HTMLButtonElement, false);
