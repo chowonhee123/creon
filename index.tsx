@@ -6254,34 +6254,39 @@ Return the 5 suggestions as a JSON array.`;
     try {
       const dataUrl = `data:${currentGeneratedImageStudio.mimeType};base64,${currentGeneratedImageStudio.data}`;
       
-      // Convert base64 to blob
-      const response = await fetch(dataUrl);
-      const blob = await response.blob();
-      
-      // Use waifu2x web API
-      const formData = new FormData();
-      formData.append('file', blob, 'image.png');
-      formData.append('style', 'art'); // art or photo
-      formData.append('noise', '2'); // 0-3, 2 is recommended
-      formData.append('scale', '2'); // 1 or 2
-      
-      // Try waifu2x API endpoint
-      const waifu2xResponse = await fetch('https://api.waifu2x.net/upscale', {
-        method: 'POST',
-        body: formData
-      });
-      
       let upscaledBlob: Blob;
       let upscaledData: string;
       let upscaledMimeType: string;
       
-      if (waifu2xResponse.ok) {
-        upscaledBlob = await waifu2xResponse.blob();
-        upscaledData = await blobToBase64(new File([upscaledBlob], 'upscaled.png', { type: upscaledBlob.type }));
-        upscaledMimeType = upscaledBlob.type || 'image/png';
-      } else {
+      // Try waifu2x API first, fallback to Canvas if it fails
+      try {
+        // Convert base64 to blob
+        const response = await fetch(dataUrl);
+        const blob = await response.blob();
+        
+        // Use waifu2x web API
+        const formData = new FormData();
+        formData.append('file', blob, 'image.png');
+        formData.append('style', 'art'); // art or photo
+        formData.append('noise', '2'); // 0-3, 2 is recommended
+        formData.append('scale', '2'); // 1 or 2
+        
+        // Try waifu2x API endpoint
+        const waifu2xResponse = await fetch('https://api.waifu2x.net/upscale', {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (waifu2xResponse.ok) {
+          upscaledBlob = await waifu2xResponse.blob();
+          upscaledData = await blobToBase64(new File([upscaledBlob], 'upscaled.png', { type: upscaledBlob.type }));
+          upscaledMimeType = upscaledBlob.type || 'image/png';
+        } else {
+          throw new Error('waifu2x API returned error status');
+        }
+      } catch (apiError) {
         // Fallback: Use Canvas to upscale (simple 2x upscale)
-        console.warn('waifu2x API failed, using Canvas fallback');
+        console.warn('waifu2x API failed, using Canvas fallback:', apiError);
         const img = new Image();
         await new Promise<void>((resolve, reject) => {
           img.onload = () => resolve();
@@ -6351,7 +6356,7 @@ Return the 5 suggestions as a JSON array.`;
       // Update right panel history display
       updateImageStudioDetailsHistory();
       
-      showToast({ type: 'success', title: 'Upscaled!', body: 'Image has been upscaled using waifu2x.' });
+      showToast({ type: 'success', title: 'Upscaled!', body: 'Image has been upscaled to 2x resolution.' });
     } catch (error) {
       console.error('Error upscaling image:', error);
       showToast({ type: 'error', title: 'Upscale Failed', body: 'Failed to upscale image. Please try again.' });
