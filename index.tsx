@@ -1087,6 +1087,30 @@ window.addEventListener('DOMContentLoaded', () => {
             updateDetailsPanelHistory3d();
           }, 300);
         }
+        
+        // Special handling for 2D Studio history tab
+        if (container.id === 'p2d-image-details-panel' && tabName === 'history') {
+          console.log('[2D Studio] History tab clicked via setupTabs');
+          console.log('[2D Studio] Current image:', currentGeneratedImage2d);
+          console.log('[2D Studio] History count before init:', detailsPanelHistory2d.length);
+          
+          // If history is empty but we have a current image, initialize it
+          if (detailsPanelHistory2d.length === 0 && currentGeneratedImage2d) {
+            console.log('[2D Studio] History is empty, initializing with current image');
+            resetRightHistoryForBaseAsset2d(currentGeneratedImage2d);
+          }
+          
+          // Force update history immediately and with delays
+          setTimeout(() => {
+            updateDetailsPanelHistory2d();
+          }, 0);
+          setTimeout(() => {
+            updateDetailsPanelHistory2d();
+          }, 100);
+          setTimeout(() => {
+            updateDetailsPanelHistory2d();
+          }, 300);
+        }
       });
     });
   };
@@ -1628,12 +1652,30 @@ window.addEventListener('DOMContentLoaded', () => {
   
   const updateDetailsPanelHistory2d = () => {
     const detailsHistoryList = $('#p2d-details-history-list');
-    const historyTabContent = detailsHistoryList?.closest('.details-tab-content[data-tab-content="history"]');
+    if (!detailsHistoryList) {
+      console.warn('[2D Studio] History list element not found');
+      return;
+    }
     
-    // Only update if History tab is visible
-    if (!detailsHistoryList || !historyTabContent) return;
-    if (historyTabContent.classList.contains('hidden')) return;
+    const historyTabContent = detailsHistoryList.closest('.details-tab-content[data-tab-content="history"]');
+    if (!historyTabContent) {
+      console.warn('[2D Studio] History tab content not found');
+      return;
+    }
     
+    console.log('[2D Studio] updateDetailsPanelHistory2d called');
+    console.log('[2D Studio] History count:', detailsPanelHistory2d.length);
+    console.log('[2D Studio] Current image:', currentGeneratedImage2d);
+    console.log('[2D Studio] History tab visible:', !historyTabContent.classList.contains('hidden'));
+    
+    // If history is empty but we have a current image, initialize it
+    if (detailsPanelHistory2d.length === 0 && currentGeneratedImage2d) {
+      console.log('[2D Studio] History is empty, initializing with current image');
+      resetRightHistoryForBaseAsset2d(currentGeneratedImage2d);
+      console.log('[2D Studio] History after init:', detailsPanelHistory2d.length);
+    }
+    
+    // Always render, even if tab is hidden (will be shown when tab is clicked)
     if (detailsPanelHistory2d.length === 0) {
         detailsHistoryList.innerHTML = '<p style="padding: var(--spacing-4); text-align: center; color: var(--text-secondary);">No Fix history available</p>';
         return;
