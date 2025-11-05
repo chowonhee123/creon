@@ -1921,7 +1921,8 @@ window.addEventListener('DOMContentLoaded', () => {
         
         // Create Compare button (only for non-Original items)
         let compareButton: HTMLElement | null = null;
-        if (originalItem && item.id !== originalItem.id) {
+        // Show compare button for any item that is not Original (Regenerated, BG Removed, SVG, etc.)
+        if (originalItem && item.modificationType !== 'Original') {
             compareButton = document.createElement('button');
             compareButton.className = 'history-compare-btn';
             compareButton.innerHTML = '<span class="material-symbols-outlined">compare</span>';
