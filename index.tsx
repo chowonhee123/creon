@@ -1879,6 +1879,9 @@ window.addEventListener('DOMContentLoaded', () => {
         tagOverlay.textContent = tagText;
         thumbnailContainer.appendChild(tagOverlay);
         
+        // Append thumbnail container to history item
+        historyItem.appendChild(thumbnailContainer);
+        
         // Create Compare button (only for non-Original items)
         let compareButton: HTMLElement | null = null;
         if (originalItem && item.id !== originalItem.id) {
@@ -3424,11 +3427,11 @@ window.addEventListener('DOMContentLoaded', () => {
     // Render history
     renderHistory2d();
     
-    // Update details panel history if History tab is visible
-    const historyTabContent = $('#p2d-details-history-list')?.closest('.details-tab-content');
-    if (historyTabContent && !historyTabContent.classList.contains('hidden')) {
+    // Always update details panel history (even if tab is hidden, it will be rendered when tab is clicked)
+    // Use setTimeout to ensure DOM is ready
+    setTimeout(() => {
       updateDetailsPanelHistory2d();
-    }
+    }, 100);
   };
 
   const update3DStudioUIWithImage = (imageData: GeneratedImageData) => {
