@@ -2049,8 +2049,8 @@ a.secondary-btn[disabled] {
     flex-grow: 1;
     min-height: 0;
     padding: 0;
-    gap: var(--spacing-5);
-    overflow-y: auto;
+    gap: 0;
+    overflow: hidden;
     position: relative;
 }
 
@@ -2231,11 +2231,8 @@ a.secondary-btn[disabled] {
     display: flex;
     flex-direction: row;
     gap: var(--spacing-2);
-    margin-top: auto;
-    padding: var(--spacing-4) 0;
+    padding: var(--spacing-4) var(--spacing-5);
     flex-shrink: 0;
-    position: sticky;
-    bottom: 0;
     background: var(--surface-color);
     border-top: 1px solid var(--border-color);
     z-index: 10;
@@ -2243,10 +2240,11 @@ a.secondary-btn[disabled] {
 
 .details-tab-content[data-tab-content="detail"] {
     padding: var(--spacing-5);
-    padding-bottom: 0;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
+    flex-grow: 1;
+    min-height: 0;
 }
 
 .details-tab-content[data-tab-content="motion"] {
