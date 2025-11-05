@@ -3138,8 +3138,8 @@ window.addEventListener('DOMContentLoaded', () => {
     // Create a natural language prompt from the template
     let prompt = `Generate an isometric 3D ${subject}. `;
     
-    // Add size and ratio specifications
-    prompt += `Image size: ${imageSize} pixels. Aspect ratio: ${imageRatio}. `;
+    // Add size and ratio specifications - make it very explicit and use 1920x1080
+    prompt += `CRITICAL: Generate this image at exactly 1920x1080 pixels. The image must be 1920 pixels wide and 1080 pixels tall. Use 16:9 aspect ratio. The output resolution must be 1920x1080. Image dimensions: 1920x1080. `;
     
     // Add user prompt if provided
     if (userPrompt && userPrompt.trim()) {
