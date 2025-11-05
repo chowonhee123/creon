@@ -1081,7 +1081,7 @@ window.addEventListener('DOMContentLoaded', () => {
           // Force update history immediately and with delays
           setTimeout(() => {
             console.log('[3D Studio] Force update history (0ms) - tab should be visible now');
-            const historyTabContent = $('#3d-details-history-list')?.closest('.details-tab-content[data-tab-content="history"]');
+            const historyTabContent = document.getElementById('3d-details-history-list')?.closest('.details-tab-content[data-tab-content="history"]');
             console.log('[3D Studio] Tab visible check:', historyTabContent ? !(historyTabContent as HTMLElement).classList.contains('hidden') : 'tab not found');
             updateDetailsPanelHistory3d();
           }, 0);
@@ -2111,7 +2111,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // 3D Studio: Update details panel history (similar to 2D Studio)
   const updateDetailsPanelHistory3d = () => {
-    const detailsHistoryList = $('#3d-details-history-list');
+    const detailsHistoryList = document.getElementById('3d-details-history-list');
     if (!detailsHistoryList) {
       console.warn('[3D Studio] History list element not found');
       return;
