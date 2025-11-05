@@ -2137,7 +2137,7 @@ a.secondary-btn[disabled] {
     padding: var(--spacing-4);
     background: var(--input-bg);
     border-radius: var(--border-radius-lg);
-    margin-bottom: var(--spacing-4);
+    margin: 0;
 }
 
 .details-fix-section h3 {
