@@ -1924,11 +1924,11 @@ window.addEventListener('DOMContentLoaded', () => {
                 }
             });
             
-            // Compare button click handler
+            // Compare button click handler - Slider comparison
             compareButton.addEventListener('click', (e) => {
                 e.stopPropagation(); // Prevent history item click
                 
-                // Create comparison modal
+                // Create comparison modal with slider
                 const comparisonModal = document.createElement('div');
                 comparisonModal.className = 'comparison-modal-overlay';
                 comparisonModal.style.cssText = `
@@ -1937,7 +1937,7 @@ window.addEventListener('DOMContentLoaded', () => {
                     left: 0;
                     right: 0;
                     bottom: 0;
-                    background-color: rgba(0, 0, 0, 0.7);
+                    background-color: rgba(0, 0, 0, 0.8);
                     display: flex;
                     align-items: center;
                     justify-content: center;
@@ -1948,17 +1948,12 @@ window.addEventListener('DOMContentLoaded', () => {
                 const modalContent = document.createElement('div');
                 modalContent.style.cssText = `
                     position: relative;
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 20px;
-                    padding: 24px;
-                    background: white;
+                    width: 100%;
+                    max-width: 900px;
+                    background: var(--surface-color);
                     border-radius: var(--border-radius-lg);
                     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-                    max-width: 800px;
-                    width: 100%;
-                    max-height: 90vh;
-                    overflow-y: auto;
+                    overflow: hidden;
                 `;
                 
                 // Close button
@@ -1971,43 +1966,153 @@ window.addEventListener('DOMContentLoaded', () => {
                     top: 12px;
                     right: 12px;
                     z-index: 10;
+                    background: rgba(0, 0, 0, 0.5);
+                    color: white;
                 `;
                 closeBtn.addEventListener('click', () => {
                     comparisonModal.remove();
                 });
                 modalContent.appendChild(closeBtn);
                 
-                // Original image
-                const originalContainer = document.createElement('div');
-                originalContainer.style.cssText = 'text-align: center;';
+                // Labels
+                const labelsContainer = document.createElement('div');
+                labelsContainer.style.cssText = `
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 16px 24px;
+                    background: var(--surface-color);
+                    border-bottom: 1px solid var(--border-color);
+                `;
                 const originalLabel = document.createElement('div');
-                originalLabel.style.cssText = 'font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px;';
+                originalLabel.style.cssText = 'font-size: 14px; font-weight: 600; color: var(--text-primary);';
                 originalLabel.textContent = 'Original';
+                const currentLabel = document.createElement('div');
+                currentLabel.style.cssText = 'font-size: 14px; font-weight: 600; color: var(--text-primary);';
+                currentLabel.textContent = tagText;
+                labelsContainer.appendChild(originalLabel);
+                labelsContainer.appendChild(currentLabel);
+                modalContent.appendChild(labelsContainer);
+                
+                // Comparison container with slider
+                const comparisonContainer = document.createElement('div');
+                comparisonContainer.style.cssText = `
+                    position: relative;
+                    width: 100%;
+                    aspect-ratio: 1;
+                    overflow: hidden;
+                    background-color: #ffffff;
+                `;
+                
+                // Checkerboard background if current image is transparent
+                const isCurrentTransparent = modificationType === 'BG Removed' || modificationType === 'SVG';
+                if (isCurrentTransparent) {
+                    comparisonContainer.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
+                    comparisonContainer.style.backgroundPosition = '0 0, 8px 8px';
+                    comparisonContainer.style.backgroundSize = '16px 16px';
+                }
+                
+                // Original image (background)
                 const originalImg = document.createElement('img');
                 originalImg.src = `data:${originalItem.mimeType};base64,${originalItem.data}`;
-                originalImg.style.cssText = 'width: 100%; height: auto; border-radius: var(--border-radius-md);';
-                originalContainer.appendChild(originalLabel);
-                originalContainer.appendChild(originalImg);
+                originalImg.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    object-fit: contain;
+                    z-index: 1;
+                `;
+                comparisonContainer.appendChild(originalImg);
                 
-                // Current image
-                const currentContainer = document.createElement('div');
-                currentContainer.style.cssText = 'text-align: center;';
-                const currentLabel = document.createElement('div');
-                currentLabel.style.cssText = 'font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px;';
-                currentLabel.textContent = tagText;
+                // Current image (foreground, clipped by slider)
                 const currentImg = document.createElement('img');
                 currentImg.src = `data:${item.mimeType};base64,${item.data}`;
-                currentImg.style.cssText = 'width: 100%; height: auto; border-radius: var(--border-radius-md);';
-                currentContainer.appendChild(currentLabel);
-                currentContainer.appendChild(currentImg);
+                currentImg.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    object-fit: contain;
+                    z-index: 2;
+                    clip-path: inset(0 50% 0 0);
+                `;
+                comparisonContainer.appendChild(currentImg);
                 
-                modalContent.appendChild(originalContainer);
-                modalContent.appendChild(currentContainer);
+                // Slider handle
+                const sliderHandle = document.createElement('div');
+                sliderHandle.className = 'comparison-slider-handle';
+                sliderHandle.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 50%;
+                    width: 4px;
+                    height: 100%;
+                    background: white;
+                    cursor: ew-resize;
+                    z-index: 3;
+                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+                `;
+                
+                // Slider handle icon
+                const handleIcon = document.createElement('div');
+                handleIcon.style.cssText = `
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    background: white;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+                `;
+                handleIcon.innerHTML = '<span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-primary);">drag_handle</span>';
+                sliderHandle.appendChild(handleIcon);
+                comparisonContainer.appendChild(sliderHandle);
+                
+                // Slider functionality
+                let isDragging = false;
+                const updateSlider = (clientX: number) => {
+                    const rect = comparisonContainer.getBoundingClientRect();
+                    const x = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                    const percentage = x * 100;
+                    
+                    sliderHandle.style.left = `${percentage}%`;
+                    currentImg.style.clipPath = `inset(0 ${100 - percentage}% 0 0)`;
+                };
+                
+                sliderHandle.addEventListener('mousedown', (e) => {
+                    isDragging = true;
+                    e.preventDefault();
+                });
+                
+                document.addEventListener('mousemove', (e) => {
+                    if (isDragging) {
+                        updateSlider(e.clientX);
+                    }
+                });
+                
+                document.addEventListener('mouseup', () => {
+                    isDragging = false;
+                });
+                
+                comparisonContainer.addEventListener('click', (e) => {
+                    if (!isDragging) {
+                        updateSlider(e.clientX);
+                    }
+                });
+                
+                modalContent.appendChild(comparisonContainer);
                 comparisonModal.appendChild(modalContent);
                 
                 // Close on overlay click
                 comparisonModal.addEventListener('click', (e) => {
-                    if (e.target === comparisonModal) {
+                    if (e.target === comparisonModal && !isDragging) {
                         comparisonModal.remove();
                     }
                 });
@@ -2029,6 +2134,21 @@ window.addEventListener('DOMContentLoaded', () => {
             // Update details panel preview
             if (detailsPreviewImage2d && currentGeneratedImage2d) {
                 detailsPreviewImage2d.src = `data:${currentGeneratedImage2d.mimeType};base64,${currentGeneratedImage2d.data}`;
+                
+                // Apply checkerboard background if transparent
+                const isTransparent = currentGeneratedImage2d.modificationType === 'BG Removed' || currentGeneratedImage2d.modificationType === 'SVG';
+                const detailsPreview = $('#p2d-details-preview-image') as HTMLImageElement;
+                if (detailsPreview) {
+                    if (isTransparent) {
+                        detailsPreview.style.backgroundColor = '';
+                        detailsPreview.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
+                        detailsPreview.style.backgroundPosition = '0 0, 8px 8px';
+                        detailsPreview.style.backgroundSize = '16px 16px';
+                    } else {
+                        detailsPreview.style.backgroundImage = '';
+                        detailsPreview.style.backgroundColor = '#ffffff';
+                    }
+                }
             }
             
             // Update download button
@@ -2208,13 +2328,23 @@ window.addEventListener('DOMContentLoaded', () => {
         
         // Create thumbnail container
         const thumbnailContainer = document.createElement('div');
+        // Determine if background is transparent (BG Removed or SVG)
+        const isTransparent = modificationType === 'BG Removed' || modificationType === 'SVG';
         thumbnailContainer.style.cssText = `
             position: relative;
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #ffffff;
         `;
+        
+        // Apply checkerboard background if transparent
+        if (isTransparent) {
+            thumbnailContainer.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
+            thumbnailContainer.style.backgroundPosition = '0 0, 8px 8px';
+            thumbnailContainer.style.backgroundSize = '16px 16px';
+        } else {
+            thumbnailContainer.style.backgroundColor = '#ffffff';
+        }
         
         // Create thumbnail image
         const img = document.createElement('img');
@@ -2311,11 +2441,11 @@ window.addEventListener('DOMContentLoaded', () => {
                 }
             });
             
-            // Compare button click handler
+            // Compare button click handler - Slider comparison
             compareButton.addEventListener('click', (e) => {
                 e.stopPropagation(); // Prevent history item click
                 
-                // Create comparison modal
+                // Create comparison modal with slider
                 const comparisonModal = document.createElement('div');
                 comparisonModal.className = 'comparison-modal-overlay';
                 comparisonModal.style.cssText = `
@@ -2324,7 +2454,7 @@ window.addEventListener('DOMContentLoaded', () => {
                     left: 0;
                     right: 0;
                     bottom: 0;
-                    background-color: rgba(0, 0, 0, 0.7);
+                    background-color: rgba(0, 0, 0, 0.8);
                     display: flex;
                     align-items: center;
                     justify-content: center;
@@ -2335,17 +2465,12 @@ window.addEventListener('DOMContentLoaded', () => {
                 const modalContent = document.createElement('div');
                 modalContent.style.cssText = `
                     position: relative;
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 20px;
-                    padding: 24px;
-                    background: white;
+                    width: 100%;
+                    max-width: 900px;
+                    background: var(--surface-color);
                     border-radius: var(--border-radius-lg);
                     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-                    max-width: 800px;
-                    width: 100%;
-                    max-height: 90vh;
-                    overflow-y: auto;
+                    overflow: hidden;
                 `;
                 
                 // Close button
@@ -2358,43 +2483,153 @@ window.addEventListener('DOMContentLoaded', () => {
                     top: 12px;
                     right: 12px;
                     z-index: 10;
+                    background: rgba(0, 0, 0, 0.5);
+                    color: white;
                 `;
                 closeBtn.addEventListener('click', () => {
                     comparisonModal.remove();
                 });
                 modalContent.appendChild(closeBtn);
                 
-                // Original image
-                const originalContainer = document.createElement('div');
-                originalContainer.style.cssText = 'text-align: center;';
+                // Labels
+                const labelsContainer = document.createElement('div');
+                labelsContainer.style.cssText = `
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 16px 24px;
+                    background: var(--surface-color);
+                    border-bottom: 1px solid var(--border-color);
+                `;
                 const originalLabel = document.createElement('div');
-                originalLabel.style.cssText = 'font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px;';
+                originalLabel.style.cssText = 'font-size: 14px; font-weight: 600; color: var(--text-primary);';
                 originalLabel.textContent = 'Original';
+                const currentLabel = document.createElement('div');
+                currentLabel.style.cssText = 'font-size: 14px; font-weight: 600; color: var(--text-primary);';
+                currentLabel.textContent = tagText;
+                labelsContainer.appendChild(originalLabel);
+                labelsContainer.appendChild(currentLabel);
+                modalContent.appendChild(labelsContainer);
+                
+                // Comparison container with slider
+                const comparisonContainer = document.createElement('div');
+                comparisonContainer.style.cssText = `
+                    position: relative;
+                    width: 100%;
+                    aspect-ratio: 1;
+                    overflow: hidden;
+                    background-color: #ffffff;
+                `;
+                
+                // Checkerboard background if current image is transparent
+                const isCurrentTransparent = modificationType === 'BG Removed' || modificationType === 'SVG';
+                if (isCurrentTransparent) {
+                    comparisonContainer.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
+                    comparisonContainer.style.backgroundPosition = '0 0, 8px 8px';
+                    comparisonContainer.style.backgroundSize = '16px 16px';
+                }
+                
+                // Original image (background)
                 const originalImg = document.createElement('img');
                 originalImg.src = `data:${originalItem.mimeType};base64,${originalItem.data}`;
-                originalImg.style.cssText = 'width: 100%; height: auto; border-radius: var(--border-radius-md);';
-                originalContainer.appendChild(originalLabel);
-                originalContainer.appendChild(originalImg);
+                originalImg.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    object-fit: contain;
+                    z-index: 1;
+                `;
+                comparisonContainer.appendChild(originalImg);
                 
-                // Current image
-                const currentContainer = document.createElement('div');
-                currentContainer.style.cssText = 'text-align: center;';
-                const currentLabel = document.createElement('div');
-                currentLabel.style.cssText = 'font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px;';
-                currentLabel.textContent = tagText;
+                // Current image (foreground, clipped by slider)
                 const currentImg = document.createElement('img');
                 currentImg.src = `data:${item.mimeType};base64,${item.data}`;
-                currentImg.style.cssText = 'width: 100%; height: auto; border-radius: var(--border-radius-md);';
-                currentContainer.appendChild(currentLabel);
-                currentContainer.appendChild(currentImg);
+                currentImg.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    object-fit: contain;
+                    z-index: 2;
+                    clip-path: inset(0 50% 0 0);
+                `;
+                comparisonContainer.appendChild(currentImg);
                 
-                modalContent.appendChild(originalContainer);
-                modalContent.appendChild(currentContainer);
+                // Slider handle
+                const sliderHandle = document.createElement('div');
+                sliderHandle.className = 'comparison-slider-handle';
+                sliderHandle.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 50%;
+                    width: 4px;
+                    height: 100%;
+                    background: white;
+                    cursor: ew-resize;
+                    z-index: 3;
+                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+                `;
+                
+                // Slider handle icon
+                const handleIcon = document.createElement('div');
+                handleIcon.style.cssText = `
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    background: white;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+                `;
+                handleIcon.innerHTML = '<span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-primary);">drag_handle</span>';
+                sliderHandle.appendChild(handleIcon);
+                comparisonContainer.appendChild(sliderHandle);
+                
+                // Slider functionality
+                let isDragging = false;
+                const updateSlider = (clientX: number) => {
+                    const rect = comparisonContainer.getBoundingClientRect();
+                    const x = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                    const percentage = x * 100;
+                    
+                    sliderHandle.style.left = `${percentage}%`;
+                    currentImg.style.clipPath = `inset(0 ${100 - percentage}% 0 0)`;
+                };
+                
+                sliderHandle.addEventListener('mousedown', (e) => {
+                    isDragging = true;
+                    e.preventDefault();
+                });
+                
+                document.addEventListener('mousemove', (e) => {
+                    if (isDragging) {
+                        updateSlider(e.clientX);
+                    }
+                });
+                
+                document.addEventListener('mouseup', () => {
+                    isDragging = false;
+                });
+                
+                comparisonContainer.addEventListener('click', (e) => {
+                    if (!isDragging) {
+                        updateSlider(e.clientX);
+                    }
+                });
+                
+                modalContent.appendChild(comparisonContainer);
                 comparisonModal.appendChild(modalContent);
                 
                 // Close on overlay click
                 comparisonModal.addEventListener('click', (e) => {
-                    if (e.target === comparisonModal) {
+                    if (e.target === comparisonModal && !isDragging) {
                         comparisonModal.remove();
                     }
                 });
@@ -2420,6 +2655,21 @@ window.addEventListener('DOMContentLoaded', () => {
             const detailsPreviewImage = $('#details-preview-image') as HTMLImageElement;
             if (detailsPreviewImage && currentGeneratedImage) {
                 detailsPreviewImage.src = `data:${currentGeneratedImage.mimeType};base64,${currentGeneratedImage.data}`;
+                
+                // Apply checkerboard background if transparent
+                const isTransparent = currentGeneratedImage.modificationType === 'BG Removed' || currentGeneratedImage.modificationType === 'SVG';
+                const detailsPreview = $('#details-preview-image') as HTMLImageElement;
+                if (detailsPreview) {
+                    if (isTransparent) {
+                        detailsPreview.style.backgroundColor = '';
+                        detailsPreview.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
+                        detailsPreview.style.backgroundPosition = '0 0, 8px 8px';
+                        detailsPreview.style.backgroundSize = '16px 16px';
+                    } else {
+                        detailsPreview.style.backgroundImage = '';
+                        detailsPreview.style.backgroundColor = '#ffffff';
+                    }
+                }
             }
             
             // Update download button
