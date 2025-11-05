@@ -1618,20 +1618,57 @@ window.addEventListener('DOMContentLoaded', () => {
         detailsDownloadBtn2d.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}.png`;
     }
     
-    // Apply checkerboard background to thumbnail only when background is transparent
+    // Apply checkerboard background to preview container when background is transparent
     const isTransparent = currentGeneratedImage2d.modificationType === 'BG Removed' || currentGeneratedImage2d.modificationType === 'SVG';
-    const detailsPreview = $('#p2d-details-preview-image') as HTMLImageElement;
-    if (detailsPreview) {
-        if (isTransparent) {
-            detailsPreview.style.backgroundColor = '';
-            detailsPreview.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
-            detailsPreview.style.backgroundPosition = '0 0, 8px 8px';
-            detailsPreview.style.backgroundSize = '16px 16px';
-            detailsPreview.setAttribute('aria-label', 'Transparent background');
+    const previewContainer = $('#p2d-details-preview-container');
+    const previewCheckbox = $('#p2d-preview-checkerboard-checkbox') as HTMLInputElement;
+    const previewToggle = $('#p2d-preview-checkerboard-toggle');
+    const resultMediaContainer = $('#p2d-result-media-container');
+    const resultCheckbox = $('#p2d-result-checkerboard-checkbox') as HTMLInputElement;
+    const resultToggle = $('#p2d-result-checkerboard-toggle');
+    
+    if (isTransparent) {
+        // Show toggles
+        if (previewToggle) previewToggle.style.display = 'flex';
+        if (resultToggle) resultToggle.style.display = 'flex';
+        
+        // Apply checkerboard based on checkbox state
+        const applyCheckerboard = (container: HTMLElement | null, enabled: boolean) => {
+            if (!container) return;
+            if (enabled) {
+                container.style.backgroundColor = '';
+                container.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
+                container.style.backgroundPosition = '0 0, 8px 8px';
+                container.style.backgroundSize = '16px 16px';
+            } else {
+                container.style.backgroundImage = '';
+                container.style.backgroundColor = '#ffffff';
+            }
+        };
+        
+        // Apply initial state (checkbox checked by default)
+        if (previewCheckbox) {
+            applyCheckerboard(previewContainer, previewCheckbox.checked);
         } else {
-            detailsPreview.style.backgroundImage = '';
-            detailsPreview.style.backgroundColor = '#ffffff';
-            detailsPreview.setAttribute('aria-label', 'Solid background');
+            applyCheckerboard(previewContainer, true);
+        }
+        
+        if (resultCheckbox) {
+            applyCheckerboard(resultMediaContainer, resultCheckbox.checked);
+        } else {
+            applyCheckerboard(resultMediaContainer, true);
+        }
+    } else {
+        // Hide toggles and reset backgrounds
+        if (previewToggle) previewToggle.style.display = 'none';
+        if (resultToggle) resultToggle.style.display = 'none';
+        if (previewContainer) {
+            previewContainer.style.backgroundImage = '';
+            previewContainer.style.backgroundColor = '#ffffff';
+        }
+        if (resultMediaContainer) {
+            resultMediaContainer.style.backgroundImage = '';
+            resultMediaContainer.style.backgroundColor = '#ffffff';
         }
     }
     
@@ -2143,16 +2180,55 @@ window.addEventListener('DOMContentLoaded', () => {
                 
                 // Apply checkerboard background if transparent
                 const isTransparent = currentGeneratedImage2d.modificationType === 'BG Removed' || currentGeneratedImage2d.modificationType === 'SVG';
-                const detailsPreview = $('#p2d-details-preview-image') as HTMLImageElement;
-                if (detailsPreview) {
-                    if (isTransparent) {
-                        detailsPreview.style.backgroundColor = '';
-                        detailsPreview.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
-                        detailsPreview.style.backgroundPosition = '0 0, 8px 8px';
-                        detailsPreview.style.backgroundSize = '16px 16px';
+                const previewContainer = $('#p2d-details-preview-container');
+                const previewCheckbox = $('#p2d-preview-checkerboard-checkbox') as HTMLInputElement;
+                const previewToggle = $('#p2d-preview-checkerboard-toggle');
+                const resultMediaContainer = $('#p2d-result-media-container');
+                const resultCheckbox = $('#p2d-result-checkerboard-checkbox') as HTMLInputElement;
+                const resultToggle = $('#p2d-result-checkerboard-toggle');
+                
+                if (isTransparent) {
+                    // Show toggles
+                    if (previewToggle) previewToggle.style.display = 'flex';
+                    if (resultToggle) resultToggle.style.display = 'flex';
+                    
+                    // Apply checkerboard based on checkbox state
+                    const applyCheckerboard = (container: HTMLElement | null, enabled: boolean) => {
+                        if (!container) return;
+                        if (enabled) {
+                            container.style.backgroundColor = '';
+                            container.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
+                            container.style.backgroundPosition = '0 0, 8px 8px';
+                            container.style.backgroundSize = '16px 16px';
+                        } else {
+                            container.style.backgroundImage = '';
+                            container.style.backgroundColor = '#ffffff';
+                        }
+                    };
+                    
+                    // Apply initial state (checkbox checked by default)
+                    if (previewCheckbox) {
+                        applyCheckerboard(previewContainer, previewCheckbox.checked);
                     } else {
-                        detailsPreview.style.backgroundImage = '';
-                        detailsPreview.style.backgroundColor = '#ffffff';
+                        applyCheckerboard(previewContainer, true);
+                    }
+                    
+                    if (resultCheckbox) {
+                        applyCheckerboard(resultMediaContainer, resultCheckbox.checked);
+                    } else {
+                        applyCheckerboard(resultMediaContainer, true);
+                    }
+                } else {
+                    // Hide toggles and reset backgrounds
+                    if (previewToggle) previewToggle.style.display = 'none';
+                    if (resultToggle) resultToggle.style.display = 'none';
+                    if (previewContainer) {
+                        previewContainer.style.backgroundImage = '';
+                        previewContainer.style.backgroundColor = '#ffffff';
+                    }
+                    if (resultMediaContainer) {
+                        resultMediaContainer.style.backgroundImage = '';
+                        resultMediaContainer.style.backgroundColor = '#ffffff';
                     }
                 }
             }
@@ -2162,21 +2238,6 @@ window.addEventListener('DOMContentLoaded', () => {
                 const downloadUrl = `data:${currentGeneratedImage2d.mimeType};base64,${currentGeneratedImage2d.data}`;
                 detailsDownloadBtn2d.href = downloadUrl;
                 detailsDownloadBtn2d.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}.png`;
-            }
-            
-            // Apply checkerboard if needed
-            const isTransparent = currentGeneratedImage2d.modificationType === 'BG Removed' || currentGeneratedImage2d.modificationType === 'SVG';
-            const detailsPreview = $('#p2d-details-preview-image') as HTMLImageElement;
-            if (detailsPreview) {
-                if (isTransparent) {
-                    detailsPreview.style.backgroundColor = '';
-                    detailsPreview.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
-                    detailsPreview.style.backgroundPosition = '0 0, 8px 8px';
-                    detailsPreview.style.backgroundSize = '16px 16px';
-                } else {
-                    detailsPreview.style.backgroundImage = '';
-                    detailsPreview.style.backgroundColor = '#ffffff';
-                }
             }
             
             update2dViewFromState();
@@ -6465,6 +6526,49 @@ Return the 5 suggestions as a JSON array.`;
                 if (detailsPreviewImage2d) detailsPreviewImage2d.src = newDataUrl;
                 if (resultImage2d) {
                     resultImage2d.src = newDataUrl;
+                }
+                
+                // Apply checkerboard background to preview and result containers
+                const previewContainer = $('#p2d-details-preview-container');
+                const resultMediaContainer = $('#p2d-result-media-container');
+                const previewCheckbox = $('#p2d-preview-checkerboard-checkbox') as HTMLInputElement;
+                const resultCheckbox = $('#p2d-result-checkerboard-checkbox') as HTMLInputElement;
+                const previewToggle = $('#p2d-preview-checkerboard-toggle');
+                const resultToggle = $('#p2d-result-checkerboard-toggle');
+                
+                // Show checkerboard toggles
+                if (previewToggle) previewToggle.style.display = 'flex';
+                if (resultToggle) resultToggle.style.display = 'flex';
+                
+                // Apply checkerboard background by default (when checkbox is checked)
+                const applyCheckerboard = (container: HTMLElement | null, enabled: boolean) => {
+                    if (!container) return;
+                    if (enabled) {
+                        container.style.backgroundColor = '';
+                        container.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
+                        container.style.backgroundPosition = '0 0, 8px 8px';
+                        container.style.backgroundSize = '16px 16px';
+                    } else {
+                        container.style.backgroundImage = '';
+                        container.style.backgroundColor = '#ffffff';
+                    }
+                };
+                
+                // Apply initial checkerboard (checkbox is checked by default)
+                applyCheckerboard(previewContainer, true);
+                applyCheckerboard(resultMediaContainer, true);
+                
+                // Toggle handlers
+                if (previewCheckbox) {
+                    previewCheckbox.addEventListener('change', () => {
+                        applyCheckerboard(previewContainer, previewCheckbox.checked);
+                    });
+                }
+                
+                if (resultCheckbox) {
+                    resultCheckbox.addEventListener('change', () => {
+                        applyCheckerboard(resultMediaContainer, resultCheckbox.checked);
+                    });
                 }
                 
                 // Update download button

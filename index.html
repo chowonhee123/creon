@@ -648,7 +648,7 @@
                                     </button>
                                 </div>
                             </div>
-                            <div class="result-media-container">
+                            <div class="result-media-container" id="p2d-result-media-container">
                                 <div id="p2d-result-idle-placeholder" class="result-placeholder-content" style="display: flex; justify-content: center; align-items: center; height: 100%; background: #ffffff; position: relative; overflow: hidden;">
                                     <div id="p2d-animated-samples-container" style="position: absolute; display: flex; flex-direction: row; gap: 48px; opacity: 0.3; animation: scrollLeft 130s linear infinite; align-items: center;">
                                         <!-- Images will be loaded dynamically from assets_2d_images.json -->
@@ -665,7 +665,11 @@
                                         <button id="p2d-retry-generate-btn" class="secondary-btn">Try Again</button>
                                     </div>
                                 </div>
-                                <img src="" alt="Generated 2D image" class="result-image hidden">
+                                <img src="" alt="Generated 2D image" class="result-image hidden" id="p2d-result-image-main">
+                                <label class="checkerboard-toggle" id="p2d-result-checkerboard-toggle" style="display: none;">
+                                    <input type="checkbox" id="p2d-result-checkerboard-checkbox" checked>
+                                    <span>Show checkerboard</span>
+                                </label>
                             </div>
                         </div>
                     </div>
@@ -685,8 +689,12 @@
                     </div>
                     <div class="details-panel-body">
                         <div class="details-tab-content" data-tab-content="detail">
-                            <div class="details-preview">
+                            <div class="details-preview" id="p2d-details-preview-container">
                                 <img id="p2d-details-preview-image" src="" alt="Details preview">
+                                <label class="checkerboard-toggle" id="p2d-preview-checkerboard-toggle" style="display: none;">
+                                    <input type="checkbox" id="p2d-preview-checkerboard-checkbox" checked>
+                                    <span>Show checkerboard</span>
+                                </label>
                             </div>
                             
                             <!-- Fix the icon section -->
