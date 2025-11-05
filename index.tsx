@@ -6232,7 +6232,7 @@ Return the 5 suggestions as a JSON array.`;
       
       const parts = [
         { inlineData: { data: base64Data, mimeType: currentGeneratedImageStudio.mimeType } },
-        { text: `Expand the frame by ${scale}x while maintaining the original image content. Show more surrounding area around the subject. Keep the same style and quality. The image should be ${scale} times wider in frame coverage.` }
+        { text: `Scale down the original image by ${scale}x (make it ${scale} times smaller) and expand the frame to show more background/context around it. The subject should appear smaller in the frame, revealing more surrounding area. Maintain the same style and quality.` }
       ];
       
       const zoomOutResponse = await ai.models.generateContent({
