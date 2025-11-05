@@ -1618,21 +1618,26 @@ window.addEventListener('DOMContentLoaded', () => {
         detailsDownloadBtn2d.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}.png`;
     }
     
-    // Apply checkerboard background to preview container when background is transparent
+    // Apply checkerboard background to Detail preview only (not center preview)
     const isTransparent = currentGeneratedImage2d.modificationType === 'BG Removed' || currentGeneratedImage2d.modificationType === 'SVG';
     const previewContainer = $('#p2d-details-preview-container');
     const previewCheckbox = $('#p2d-preview-checkerboard-checkbox') as HTMLInputElement;
     const previewToggle = $('#p2d-preview-checkerboard-toggle');
     const resultMediaContainer = $('#p2d-result-media-container');
-    const resultCheckbox = $('#p2d-result-checkerboard-checkbox') as HTMLInputElement;
     const resultToggle = $('#p2d-result-checkerboard-toggle');
     
+    // Center preview always white background
+    if (resultMediaContainer) {
+        resultMediaContainer.style.backgroundImage = '';
+        resultMediaContainer.style.backgroundColor = '#ffffff';
+    }
+    if (resultToggle) resultToggle.style.display = 'none';
+    
     if (isTransparent) {
-        // Show toggles
+        // Show toggle for Detail preview only
         if (previewToggle) previewToggle.style.display = 'flex';
-        if (resultToggle) resultToggle.style.display = 'flex';
         
-        // Apply checkerboard based on checkbox state
+        // Apply checkerboard based on checkbox state (Detail preview only)
         const applyCheckerboard = (container: HTMLElement | null, enabled: boolean) => {
             if (!container) return;
             if (enabled) {
@@ -1652,23 +1657,12 @@ window.addEventListener('DOMContentLoaded', () => {
         } else {
             applyCheckerboard(previewContainer, true);
         }
-        
-        if (resultCheckbox) {
-            applyCheckerboard(resultMediaContainer, resultCheckbox.checked);
-        } else {
-            applyCheckerboard(resultMediaContainer, true);
-        }
     } else {
-        // Hide toggles and reset backgrounds
+        // Hide toggle and reset background
         if (previewToggle) previewToggle.style.display = 'none';
-        if (resultToggle) resultToggle.style.display = 'none';
         if (previewContainer) {
             previewContainer.style.backgroundImage = '';
             previewContainer.style.backgroundColor = '#ffffff';
-        }
-        if (resultMediaContainer) {
-            resultMediaContainer.style.backgroundImage = '';
-            resultMediaContainer.style.backgroundColor = '#ffffff';
         }
     }
     
@@ -2194,48 +2188,18 @@ window.addEventListener('DOMContentLoaded', () => {
             detailsPanelHistoryIndex2d = index;
             currentGeneratedImage2d = detailsPanelHistory2d[index];
             
-            // Update main preview area
+            // Update main preview area - always white background
             if (resultImage2d && currentGeneratedImage2d) {
                 resultImage2d.src = `data:${currentGeneratedImage2d.mimeType};base64,${currentGeneratedImage2d.data}`;
                 
-                // Apply checkerboard to result media container if transparent
-                const isTransparentResult = currentGeneratedImage2d.modificationType === 'BG Removed' || currentGeneratedImage2d.modificationType === 'SVG';
+                // Center preview always white background (no checkerboard)
                 const resultMediaContainer = $('#p2d-result-media-container');
-                const resultCheckbox = $('#p2d-result-checkerboard-checkbox') as HTMLInputElement;
                 const resultToggle = $('#p2d-result-checkerboard-toggle');
-                
-                if (isTransparentResult && resultMediaContainer) {
-                    // Show toggle
-                    if (resultToggle) resultToggle.style.display = 'flex';
-                    
-                    // Apply checkerboard based on checkbox state
-                    const applyCheckerboard = (enabled: boolean) => {
-                        if (!resultMediaContainer) return;
-                        if (enabled) {
-                            resultMediaContainer.style.backgroundColor = '';
-                            resultMediaContainer.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
-                            resultMediaContainer.style.backgroundPosition = '0 0, 8px 8px';
-                            resultMediaContainer.style.backgroundSize = '16px 16px';
-                        } else {
-                            resultMediaContainer.style.backgroundImage = '';
-                            resultMediaContainer.style.backgroundColor = '#ffffff';
-                        }
-                    };
-                    
-                    // Apply initial state (checkbox checked by default)
-                    if (resultCheckbox) {
-                        applyCheckerboard(resultCheckbox.checked);
-                    } else {
-                        applyCheckerboard(true);
-                    }
-                } else {
-                    // Hide toggle and reset background
-                    if (resultToggle) resultToggle.style.display = 'none';
-                    if (resultMediaContainer) {
-                        resultMediaContainer.style.backgroundImage = '';
-                        resultMediaContainer.style.backgroundColor = '#ffffff';
-                    }
+                if (resultMediaContainer) {
+                    resultMediaContainer.style.backgroundImage = '';
+                    resultMediaContainer.style.backgroundColor = '#ffffff';
                 }
+                if (resultToggle) resultToggle.style.display = 'none';
             }
             
             // Update details panel preview
@@ -2777,12 +2741,19 @@ window.addEventListener('DOMContentLoaded', () => {
             detailsPanelHistoryIndex3d = index;
             currentGeneratedImage = detailsPanelHistory3d[index];
             
-            // Update main preview area
+            // Update main preview area - always white background
             const resultImage = document.querySelector('#page-id-3d .result-image') as HTMLImageElement;
             if (resultImage && currentGeneratedImage) {
                 resultImage.src = `data:${currentGeneratedImage.mimeType};base64,${currentGeneratedImage.data}`;
                 resultImage.classList.remove('hidden');
                 resultImage.classList.add('visible');
+                
+                // Center preview always white background (no checkerboard)
+                const resultMediaContainer3d = $('#result-media-container-3d');
+                if (resultMediaContainer3d) {
+                    resultMediaContainer3d.style.backgroundImage = '';
+                    resultMediaContainer3d.style.backgroundColor = '#ffffff';
+                }
             }
             
             // Update details panel preview
@@ -2790,18 +2761,42 @@ window.addEventListener('DOMContentLoaded', () => {
             if (detailsPreviewImage && currentGeneratedImage) {
                 detailsPreviewImage.src = `data:${currentGeneratedImage.mimeType};base64,${currentGeneratedImage.data}`;
                 
-                // Apply checkerboard background if transparent
+                // Apply checkerboard background if transparent (Detail preview only)
                 const isTransparent = currentGeneratedImage.modificationType === 'BG Removed' || currentGeneratedImage.modificationType === 'SVG';
-                const detailsPreview = $('#details-preview-image') as HTMLImageElement;
-                if (detailsPreview) {
-                    if (isTransparent) {
-                        detailsPreview.style.backgroundColor = '';
-                        detailsPreview.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
-                        detailsPreview.style.backgroundPosition = '0 0, 8px 8px';
-                        detailsPreview.style.backgroundSize = '16px 16px';
+                const previewContainer3d = $('#details-preview-container-3d');
+                const previewCheckbox3d = $('#details-preview-checkerboard-checkbox-3d') as HTMLInputElement;
+                const previewToggle3d = $('#details-preview-checkerboard-toggle-3d');
+                
+                if (isTransparent) {
+                    // Show toggle for Detail preview only
+                    if (previewToggle3d) previewToggle3d.style.display = 'flex';
+                    
+                    // Apply checkerboard based on checkbox state (Detail preview only)
+                    const applyCheckerboard = (container: HTMLElement | null, enabled: boolean) => {
+                        if (!container) return;
+                        if (enabled) {
+                            container.style.backgroundColor = '';
+                            container.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
+                            container.style.backgroundPosition = '0 0, 8px 8px';
+                            container.style.backgroundSize = '16px 16px';
+                        } else {
+                            container.style.backgroundImage = '';
+                            container.style.backgroundColor = '#ffffff';
+                        }
+                    };
+                    
+                    // Apply initial state (checkbox checked by default)
+                    if (previewCheckbox3d) {
+                        applyCheckerboard(previewContainer3d, previewCheckbox3d.checked);
                     } else {
-                        detailsPreview.style.backgroundImage = '';
-                        detailsPreview.style.backgroundColor = '#ffffff';
+                        applyCheckerboard(previewContainer3d, true);
+                    }
+                } else {
+                    // Hide toggle and reset background
+                    if (previewToggle3d) previewToggle3d.style.display = 'none';
+                    if (previewContainer3d) {
+                        previewContainer3d.style.backgroundImage = '';
+                        previewContainer3d.style.backgroundColor = '#ffffff';
                     }
                 }
             }
@@ -4696,10 +4691,56 @@ Return the 5 suggestions as a JSON array.`;
     resultError.classList.add('hidden');
     mainResultContentHeader.classList.remove('hidden');
     
+    // Center preview always white background (no checkerboard)
+    const resultMediaContainer3d = $('#result-media-container-3d');
+    if (resultMediaContainer3d) {
+        resultMediaContainer3d.style.backgroundImage = '';
+        resultMediaContainer3d.style.backgroundColor = '#ffffff';
+    }
+    
     if(detailsPreviewImage && detailsDownloadBtn) {
         detailsPreviewImage.src = dataUrl;
         detailsDownloadBtn.href = dataUrl;
         detailsDownloadBtn.download = `${currentGeneratedImage.subject.replace(/\s+/g, '_')}.png`;
+    }
+    
+    // Apply checkerboard background to Detail preview only (not center preview)
+    const isTransparent = currentGeneratedImage.modificationType === 'BG Removed' || currentGeneratedImage.modificationType === 'SVG';
+    const previewContainer3d = $('#details-preview-container-3d');
+    const previewCheckbox3d = $('#details-preview-checkerboard-checkbox-3d') as HTMLInputElement;
+    const previewToggle3d = $('#details-preview-checkerboard-toggle-3d');
+    
+    if (isTransparent) {
+        // Show toggle for Detail preview only
+        if (previewToggle3d) previewToggle3d.style.display = 'flex';
+        
+        // Apply checkerboard based on checkbox state (Detail preview only)
+        const applyCheckerboard = (container: HTMLElement | null, enabled: boolean) => {
+            if (!container) return;
+            if (enabled) {
+                container.style.backgroundColor = '';
+                container.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
+                container.style.backgroundPosition = '0 0, 8px 8px';
+                container.style.backgroundSize = '16px 16px';
+            } else {
+                container.style.backgroundImage = '';
+                container.style.backgroundColor = '#ffffff';
+            }
+        };
+        
+        // Apply initial state (checkbox checked by default)
+        if (previewCheckbox3d) {
+            applyCheckerboard(previewContainer3d, previewCheckbox3d.checked);
+        } else {
+            applyCheckerboard(previewContainer3d, true);
+        }
+    } else {
+        // Hide toggle and reset background
+        if (previewToggle3d) previewToggle3d.style.display = 'none';
+        if (previewContainer3d) {
+            previewContainer3d.style.backgroundImage = '';
+            previewContainer3d.style.backgroundColor = '#ffffff';
+        }
     }
     
     if (motionThumbnailImage && motionThumbnailLabel) {
@@ -6592,19 +6633,25 @@ Return the 5 suggestions as a JSON array.`;
                     resultImage2d.src = newDataUrl;
                 }
                 
-                // Apply checkerboard background to preview and result containers
+                // Apply checkerboard background to Detail preview only (not center preview)
                 const previewContainer = $('#p2d-details-preview-container');
                 const resultMediaContainer = $('#p2d-result-media-container');
                 const previewCheckbox = $('#p2d-preview-checkerboard-checkbox') as HTMLInputElement;
-                const resultCheckbox = $('#p2d-result-checkerboard-checkbox') as HTMLInputElement;
                 const previewToggle = $('#p2d-preview-checkerboard-toggle');
                 const resultToggle = $('#p2d-result-checkerboard-toggle');
                 
-                // Show checkerboard toggles
+                // Show checkerboard toggle for Detail preview only
                 if (previewToggle) previewToggle.style.display = 'flex';
-                if (resultToggle) resultToggle.style.display = 'flex';
+                // Hide toggle for center preview
+                if (resultToggle) resultToggle.style.display = 'none';
                 
-                // Apply checkerboard background by default (when checkbox is checked)
+                // Center preview always white background
+                if (resultMediaContainer) {
+                    resultMediaContainer.style.backgroundImage = '';
+                    resultMediaContainer.style.backgroundColor = '#ffffff';
+                }
+                
+                // Apply checkerboard background to Detail preview only (checkbox checked by default)
                 const applyCheckerboard = (container: HTMLElement | null, enabled: boolean) => {
                     if (!container) return;
                     if (enabled) {
@@ -6618,20 +6665,17 @@ Return the 5 suggestions as a JSON array.`;
                     }
                 };
                 
-                // Apply initial checkerboard (checkbox is checked by default)
-                applyCheckerboard(previewContainer, true);
-                applyCheckerboard(resultMediaContainer, true);
+                // Apply initial checkerboard to Detail preview (checkbox checked by default)
+                if (previewCheckbox) {
+                    applyCheckerboard(previewContainer, previewCheckbox.checked);
+                } else {
+                    applyCheckerboard(previewContainer, true);
+                }
                 
-                // Toggle handlers
+                // Toggle handler for Detail preview only
                 if (previewCheckbox) {
                     previewCheckbox.addEventListener('change', () => {
                         applyCheckerboard(previewContainer, previewCheckbox.checked);
-                    });
-                }
-                
-                if (resultCheckbox) {
-                    resultCheckbox.addEventListener('change', () => {
-                        applyCheckerboard(resultMediaContainer, resultCheckbox.checked);
                     });
                 }
                 
@@ -7171,6 +7215,49 @@ Return the 5 suggestions as a JSON array.`;
                     resultImage.src = newDataUrl;
                     resultImage.classList.remove('hidden');
                     resultImage.classList.add('visible');
+                }
+                
+                // Center preview always white background (no checkerboard)
+                const resultMediaContainer3d = $('#result-media-container-3d');
+                if (resultMediaContainer3d) {
+                    resultMediaContainer3d.style.backgroundImage = '';
+                    resultMediaContainer3d.style.backgroundColor = '#ffffff';
+                }
+                
+                // Apply checkerboard background to Detail preview only (not center preview)
+                const previewContainer3d = $('#details-preview-container-3d');
+                const previewCheckbox3d = $('#details-preview-checkerboard-checkbox-3d') as HTMLInputElement;
+                const previewToggle3d = $('#details-preview-checkerboard-toggle-3d');
+                
+                // Show checkerboard toggle for Detail preview only
+                if (previewToggle3d) previewToggle3d.style.display = 'flex';
+                
+                // Apply checkerboard background to Detail preview only (checkbox checked by default)
+                const applyCheckerboard = (container: HTMLElement | null, enabled: boolean) => {
+                    if (!container) return;
+                    if (enabled) {
+                        container.style.backgroundColor = '';
+                        container.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
+                        container.style.backgroundPosition = '0 0, 8px 8px';
+                        container.style.backgroundSize = '16px 16px';
+                    } else {
+                        container.style.backgroundImage = '';
+                        container.style.backgroundColor = '#ffffff';
+                    }
+                };
+                
+                // Apply initial checkerboard to Detail preview (checkbox checked by default)
+                if (previewCheckbox3d) {
+                    applyCheckerboard(previewContainer3d, previewCheckbox3d.checked);
+                } else {
+                    applyCheckerboard(previewContainer3d, true);
+                }
+                
+                // Toggle handler for Detail preview only
+                if (previewCheckbox3d) {
+                    previewCheckbox3d.addEventListener('change', () => {
+                        applyCheckerboard(previewContainer3d, previewCheckbox3d.checked);
+                    });
                 }
                 
                 // Update download button
