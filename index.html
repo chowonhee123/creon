@@ -1241,22 +1241,6 @@
                                     </button>
                                 </div>
                                 <div id="image-fix-content" class="options-group">
-                                    <!-- Zoom Out Button -->
-                                    <div style="margin-bottom: var(--spacing-3);">
-                                        <button id="details-zoom-out-1-5x-btn-image" class="secondary-btn" style="width: 100%;">
-                                            <span class="material-symbols-outlined">zoom_out</span>
-                                            <span class="btn-text">Zoom Out 1.5x</span>
-                                            <div class="btn-loader"></div>
-                                        </button>
-                                    </div>
-                                    
-                                    <!-- Upscale Button -->
-                                    <button id="details-upscale-fix-btn-image" class="secondary-btn" style="width: 100%; margin-bottom: var(--spacing-3);">
-                                        <span class="material-symbols-outlined">photo_size_select_actual</span>
-                                        <span class="btn-text">Upscale</span>
-                                        <div class="btn-loader"></div>
-                                    </button>
-                                    
                                     <!-- Color Inputs -->
                                     <div class="filter-group">
                                         <label>Background Color</label>
@@ -1272,8 +1256,22 @@
                                         </div>
                                     </div>
                                     
+                                    <!-- Zoom Out and Upscale Buttons -->
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-2); margin-top: var(--spacing-2); margin-bottom: var(--spacing-2);">
+                                        <button id="details-zoom-out-1-5x-btn-image" class="secondary-btn">
+                                            <span class="material-symbols-outlined">zoom_out</span>
+                                            <span class="btn-text">Zoom Out</span>
+                                            <div class="btn-loader"></div>
+                                        </button>
+                                        <button id="details-upscale-fix-btn-image" class="secondary-btn">
+                                            <span class="material-symbols-outlined">photo_size_select_actual</span>
+                                            <span class="btn-text">Upscale</span>
+                                            <div class="btn-loader"></div>
+                                        </button>
+                                    </div>
+                                    
                                     <!-- Regenerate Button -->
-                                    <button id="details-fix-btn-image" class="primary-btn" style="width: 100%; margin-top: var(--spacing-2);" disabled>
+                                    <button id="details-fix-btn-image" class="primary-btn" style="width: 100%;" disabled>
                                         <span class="material-symbols-outlined">autorenew</span>
                                         <span class="btn-text">Regenerate</span>
                                         <div class="btn-loader"></div>
