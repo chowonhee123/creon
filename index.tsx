@@ -7008,7 +7008,23 @@ Return the 5 suggestions as a JSON array.`;
                     detailsDownloadBtn.download = `${currentGeneratedImage.subject.replace(/\s+/g, '_')}-bg-removed.png`;
                 }
                 
-                // Add to details panel history (edit history for current base asset)
+                // Ensure Original entry exists in history before adding BG Removed entry
+                const originalEntry = detailsPanelHistory3d.find(item => item.modificationType === 'Original');
+                if (!originalEntry) {
+                    // If no Original entry exists, create one from the current image's original data
+                    const baseOriginalEntry: GeneratedImageData = {
+                        ...currentGeneratedImage,
+                        modificationType: 'Original',
+                        // Use original data if available, otherwise use current data
+                        data: currentGeneratedImage.originalData ? 
+                            currentGeneratedImage.originalData.split(',')[1] : 
+                            currentGeneratedImage.data,
+                        mimeType: currentGeneratedImage.originalMimeType || currentGeneratedImage.mimeType,
+                    };
+                    detailsPanelHistory3d.unshift(baseOriginalEntry); // Add Original at the beginning
+                }
+                
+                // Add to details panel history (edit history for current base asset) - NEW entry, Original stays
                 if (currentGeneratedImage) {
                     const bgRemovedImage: GeneratedImageData = {
                         ...currentGeneratedImage,
@@ -7104,12 +7120,29 @@ Return the 5 suggestions as a JSON array.`;
             };
             
             if (imageData) {
-                // Update current image with new data
+                // Ensure Original entry exists in history before adding Fix entry
+                const originalEntry = detailsPanelHistory3d.find(item => item.modificationType === 'Original');
+                if (!originalEntry) {
+                    // If no Original entry exists, create one from the current image
+                    // But first, we need to get the original data
+                    const baseOriginalEntry: GeneratedImageData = {
+                        ...currentGeneratedImage,
+                        modificationType: 'Original',
+                        // Keep original data if available, otherwise use current
+                        data: currentGeneratedImage.originalData ? 
+                            currentGeneratedImage.originalData.split(',')[1] : 
+                            currentGeneratedImage.data,
+                        mimeType: currentGeneratedImage.originalMimeType || currentGeneratedImage.mimeType,
+                    };
+                    detailsPanelHistory3d.unshift(baseOriginalEntry); // Add Original at the beginning
+                }
+                
+                // Update current image with new data (but don't modify Original entry)
                 currentGeneratedImage.data = imageData.data;
                 currentGeneratedImage.mimeType = imageData.mimeType;
                 currentGeneratedImage.styleConstraints = JSON.stringify(template, null, 2);
                 
-                // Update in history
+                // Update in main history (left sidebar)
                 const historyItem = imageHistory.find(item => item.id === currentGeneratedImage!.id);
                 if (historyItem) {
                     historyItem.data = imageData.data;
@@ -7121,13 +7154,13 @@ Return the 5 suggestions as a JSON array.`;
                     }
                 }
                 
-                // Add to details panel history (Fix modification)
+                // Add to details panel history (Fix modification) - NEW entry, Original stays
                 const fixImageData: GeneratedImageData = {
                     ...currentGeneratedImage,
                     data: imageData.data,
                     mimeType: imageData.mimeType,
-                    modificationType: 'Fix',
-                    id: `${currentGeneratedImage.id}_fix_${Date.now()}`,
+                    modificationType: 'Regenerated', // Changed from 'Fix' to 'Regenerated' for consistency
+                    id: `${currentGeneratedImage.id}_regenerated_${Date.now()}`,
                 };
                 detailsPanelHistory3d.push(fixImageData);
                 detailsPanelHistoryIndex3d = detailsPanelHistory3d.length - 1;
