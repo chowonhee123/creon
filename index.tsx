@@ -5613,6 +5613,69 @@ Return the 5 suggestions as a JSON array.`;
       });
   };
 
+  // Setup motion drop zones for Image Studio
+  const setupMotionDropZonesImage = () => {
+      const container = $('#motion-reference-image-container-image');
+      const inputEl = $('#motion-reference-image-input-image') as HTMLInputElement;
+      if (!container || !inputEl) return;
+
+      const zones = container.querySelectorAll<HTMLElement>('.image-drop-zone');
+
+      zones.forEach(zone => {
+          const index = parseInt(zone.dataset.index!);
+          const removeBtn = zone.querySelector('.remove-style-image-btn') as HTMLButtonElement;
+
+          const handleFile = (file: File | undefined) => {
+              if (!file || !file.type.startsWith('image/')) return;
+              
+              const reader = new FileReader();
+              reader.onload = e => {
+                  const dataUrl = e.target?.result as string;
+                  const frameData = { file, dataUrl };
+                  if (index === 0) {
+                      motionFirstFrameImageStudio = frameData;
+                  } else {
+                      motionLastFrameImageStudio = frameData;
+                  }
+                  updateDropZoneUI(zone, dataUrl);
+              };
+              reader.readAsDataURL(file);
+          };
+
+          const handleFileSelect = () => {
+              const file = inputEl.files?.[0];
+              if (file) handleFile(file);
+              inputEl.value = '';
+          };
+          
+          zone.addEventListener('click', () => {
+              const currentState = index === 0 ? motionFirstFrameImageStudio : motionLastFrameImageStudio;
+              if (currentState) return; 
+              inputEl.addEventListener('change', handleFileSelect, { once: true });
+              inputEl.click();
+          });
+          
+          zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('dragover'); });
+          zone.addEventListener('dragleave', (e) => { e.preventDefault(); zone.classList.remove('dragleave'); });
+          zone.addEventListener('drop', (e) => {
+              e.preventDefault();
+              zone.classList.remove('dragover');
+              const file = e.dataTransfer?.files[0];
+              handleFile(file);
+          });
+
+          removeBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              if (index === 0) {
+                  motionFirstFrameImageStudio = null;
+              } else {
+                  motionLastFrameImageStudio = null;
+              }
+              clearDropZoneUI(zone);
+          });
+      });
+  };
+
   // Create a new image reference zone
   const createImageReferenceZone = (index: number, container: HTMLElement) => {
     const zoneId = `image-studio-zone-${index}`;
@@ -6183,7 +6246,7 @@ Return the 5 suggestions as a JSON array.`;
         contents: { parts },
         config: {
           responseModalities: [Modality.IMAGE],
-          temperature: 0.3,
+          temperature: 0.1,
         },
       });
       
@@ -6242,129 +6305,7 @@ Return the 5 suggestions as a JSON array.`;
   
   zoomOut1_5xBtnImage?.addEventListener('click', () => handleZoomOut(1.5));
   
-  // Image Studio: Upscale from Fix section using waifu2x
-  const upscaleFixBtnImage = $('#details-upscale-fix-btn-image');
-  upscaleFixBtnImage?.addEventListener('click', async () => {
-    if (!currentGeneratedImageStudio) return;
-    
-    const loaderModal = $('#image-generation-loader-modal');
-    loaderModal?.classList.remove('hidden');
-    updateButtonLoadingState(upscaleFixBtnImage as HTMLButtonElement, true);
-    
-    try {
-      const dataUrl = `data:${currentGeneratedImageStudio.mimeType};base64,${currentGeneratedImageStudio.data}`;
-      
-      let upscaledBlob: Blob;
-      let upscaledData: string;
-      let upscaledMimeType: string;
-      
-      // Try waifu2x API first, fallback to Canvas if it fails
-      try {
-        // Convert base64 to blob
-        const response = await fetch(dataUrl);
-        const blob = await response.blob();
-        
-        // Use waifu2x web API
-        const formData = new FormData();
-        formData.append('file', blob, 'image.png');
-        formData.append('style', 'art'); // art or photo
-        formData.append('noise', '2'); // 0-3, 2 is recommended
-        formData.append('scale', '2'); // 1 or 2
-        
-        // Try waifu2x API endpoint
-        const waifu2xResponse = await fetch('https://api.waifu2x.net/upscale', {
-          method: 'POST',
-          body: formData
-        });
-        
-        if (waifu2xResponse.ok) {
-          upscaledBlob = await waifu2xResponse.blob();
-          upscaledData = await blobToBase64(new File([upscaledBlob], 'upscaled.png', { type: upscaledBlob.type }));
-          upscaledMimeType = upscaledBlob.type || 'image/png';
-        } else {
-          throw new Error('waifu2x API returned error status');
-        }
-      } catch (apiError) {
-        // Fallback: Use Canvas to upscale (simple 2x upscale)
-        console.warn('waifu2x API failed, using Canvas fallback:', apiError);
-        const img = new Image();
-        await new Promise<void>((resolve, reject) => {
-          img.onload = () => resolve();
-          img.onerror = reject;
-          img.src = dataUrl;
-        });
-        
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width * 2;
-        canvas.height = img.height * 2;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.imageSmoothingEnabled = true;
-          ctx.imageSmoothingQuality = 'high';
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        }
-        
-        // Convert canvas to base64
-        const upscaledDataUrl = canvas.toDataURL('image/png');
-        upscaledData = upscaledDataUrl.split(',')[1];
-        upscaledMimeType = 'image/png';
-        
-        // Also create blob for consistency
-        upscaledBlob = await new Promise<Blob>((resolve) => {
-          canvas.toBlob((blob) => {
-            resolve(blob || new Blob());
-          }, 'image/png');
-        });
-      }
-      
-      const upscaledDataUrl = `data:${upscaledMimeType};base64,${upscaledData}`;
-      
-      // Only add to right panel history, not left panel history
-      // Don't update currentGeneratedImageStudio to preserve original
-      if (!currentGeneratedImageStudio.rightPanelHistory) {
-        currentGeneratedImageStudio.rightPanelHistory = [{
-          ...currentGeneratedImageStudio,
-          modificationType: 'Original'
-        }];
-      }
-      const upscaledItem: GeneratedImageData = {
-        id: `img_${Date.now()}`,
-        data: upscaledData,
-        mimeType: upscaledMimeType,
-        subject: currentGeneratedImageStudio.subject,
-        styleConstraints: currentGeneratedImageStudio.styleConstraints,
-        timestamp: Date.now(),
-        modificationType: 'Upscaled'
-      };
-      currentGeneratedImageStudio.rightPanelHistory.push(upscaledItem);
-      
-      // Update preview with upscaled image
-      const resultImage = $('#result-image-image') as HTMLImageElement;
-      if (resultImage) {
-        resultImage.src = upscaledDataUrl;
-      }
-      if (detailsPreviewImageImage) {
-        detailsPreviewImageImage.src = upscaledDataUrl;
-        detailsPreviewImageImage.style.transform = 'scale(1)';
-      }
-      
-      const detailsDownload = $('#details-download-btn-image') as HTMLAnchorElement;
-      if (detailsDownload) {
-        detailsDownload.href = upscaledDataUrl;
-      }
-      
-      // Update right panel history display
-      updateImageStudioDetailsHistory();
-      
-      showToast({ type: 'success', title: 'Upscaled!', body: 'Image has been upscaled to 2x resolution.' });
-    } catch (error) {
-      console.error('Error upscaling image:', error);
-      showToast({ type: 'error', title: 'Upscale Failed', body: 'Failed to upscale image. Please try again.' });
-    } finally {
-      loaderModal?.classList.add('hidden');
-      updateButtonLoadingState(upscaleFixBtnImage as HTMLButtonElement, false);
-    }
-  });
+  // Image Studio: Upscale from Fix section removed - now available in More menu
   
   // Image Studio: Color pickers and Regenerate
   const detailsBackgroundColorPickerImage = $('#details-background-color-picker-image') as HTMLInputElement;
@@ -6415,6 +6356,7 @@ Return the 5 suggestions as a JSON array.`;
         contents: { parts },
         config: {
           responseModalities: [Modality.IMAGE],
+          temperature: 0.1,
         },
       });
       
@@ -6888,6 +6830,7 @@ Return the 5 suggestions as a JSON array.`;
     setupDropZoneListeners('#reference-image-container-3d', '#reference-image-input-3d', referenceImagesForIconStudio3d);
     setupDropZoneListeners('#p2d-edit-reference-image-container-3d', '#p2d-edit-reference-image-input-3d', referenceImagesForEdit2d);
     setupMotionDropZones();
+    setupMotionDropZonesImage();
     setupImageStudioDropZones();
     
     setupTabs($('#settings-panel'));
