@@ -32,6 +32,7 @@ type GeneratedImageData = {
   originalData?: string; // Original image data before fix
   originalMimeType?: string; // Original image mimeType before fix
   modificationType?: string; // Type of modification: Original, Remove Background, SVG, Modified
+  rightPanelHistory?: GeneratedImageData[]; // Right panel history for this item (Original + modifications)
 };
 
 // --- WRAP IN DOMCONTENTLOADED TO PREVENT RACE CONDITIONS ---
@@ -1708,22 +1709,35 @@ window.addEventListener('DOMContentLoaded', () => {
       mimeType: baseAsset.mimeType
     });
     currentBaseAssetId2d = baseAsset.id;
-    // Clear existing right history
-    detailsPanelHistory2d = [];
-    // Seed with one "Original" entry
-    const originalEntry: GeneratedImageData = {
-      ...baseAsset,
-      modificationType: 'Original'
-    };
-    detailsPanelHistory2d.push(originalEntry);
-    detailsPanelHistoryIndex2d = 0;
-    console.log('[2D Studio] History reset with Original entry:', {
-      id: originalEntry.id,
-      hasData: !!originalEntry.data,
-      dataLength: originalEntry.data?.length || 0,
-      mimeType: originalEntry.mimeType,
-      modificationType: originalEntry.modificationType
-    });
+    
+    // If this item already has a right panel history, use it (preserve Original)
+    if (baseAsset.rightPanelHistory && baseAsset.rightPanelHistory.length > 0) {
+      console.log('[2D Studio] Using existing right panel history for item:', baseAsset.id);
+      detailsPanelHistory2d = [...baseAsset.rightPanelHistory];
+      detailsPanelHistoryIndex2d = detailsPanelHistory2d.length > 0 ? 0 : 0;
+    } else {
+      // Clear existing right history and create new Original entry
+      detailsPanelHistory2d = [];
+      // Seed with one "Original" entry
+      const originalEntry: GeneratedImageData = {
+        ...baseAsset,
+        modificationType: 'Original'
+      };
+      detailsPanelHistory2d.push(originalEntry);
+      detailsPanelHistoryIndex2d = 0;
+      
+      // Store the right panel history in the base asset
+      baseAsset.rightPanelHistory = [...detailsPanelHistory2d];
+      
+      console.log('[2D Studio] History reset with Original entry:', {
+        id: originalEntry.id,
+        hasData: !!originalEntry.data,
+        dataLength: originalEntry.data?.length || 0,
+        mimeType: originalEntry.mimeType,
+        modificationType: originalEntry.modificationType
+      });
+    }
+    
     // Reset background removal state
     p2dHasBackgroundRemoved = false;
     p2dOriginalImageData = `data:${baseAsset.mimeType};base64,${baseAsset.data}`;
@@ -1742,22 +1756,34 @@ window.addEventListener('DOMContentLoaded', () => {
       dataLength: baseAsset.data?.length || 0,
       mimeType: baseAsset.mimeType
     });
-    // Clear existing right history
-    detailsPanelHistory3d = [];
-    // Seed with one "Original" entry
-    const originalEntry: GeneratedImageData = {
-      ...baseAsset,
-      modificationType: 'Original'
-    };
-    detailsPanelHistory3d.push(originalEntry);
-    detailsPanelHistoryIndex3d = 0;
-    console.log('[3D Studio] Reset history with Original entry:', {
-      id: originalEntry.id,
-      hasData: !!originalEntry.data,
-      dataLength: originalEntry.data?.length || 0,
-      mimeType: originalEntry.mimeType,
-      modificationType: originalEntry.modificationType
-    });
+    
+    // If this item already has a right panel history, use it (preserve Original)
+    if (baseAsset.rightPanelHistory && baseAsset.rightPanelHistory.length > 0) {
+      console.log('[3D Studio] Using existing right panel history for item:', baseAsset.id);
+      detailsPanelHistory3d = [...baseAsset.rightPanelHistory];
+      detailsPanelHistoryIndex3d = detailsPanelHistory3d.length > 0 ? 0 : 0;
+    } else {
+      // Clear existing right history and create new Original entry
+      detailsPanelHistory3d = [];
+      // Seed with one "Original" entry
+      const originalEntry: GeneratedImageData = {
+        ...baseAsset,
+        modificationType: 'Original'
+      };
+      detailsPanelHistory3d.push(originalEntry);
+      detailsPanelHistoryIndex3d = 0;
+      
+      // Store the right panel history in the base asset
+      baseAsset.rightPanelHistory = [...detailsPanelHistory3d];
+      
+      console.log('[3D Studio] Reset history with Original entry:', {
+        id: originalEntry.id,
+        hasData: !!originalEntry.data,
+        dataLength: originalEntry.data?.length || 0,
+        mimeType: originalEntry.mimeType,
+        modificationType: originalEntry.modificationType
+      });
+    }
     
     // Force update history UI immediately
     setTimeout(() => {
@@ -2924,6 +2950,10 @@ window.addEventListener('DOMContentLoaded', () => {
             
             if (imageHistory2d.length > 0) {
                 currentGeneratedImage2d = imageHistory2d[historyIndex2d];
+                
+                // Reset right panel history to match the selected left history item
+                resetRightHistoryForBaseAsset2d(currentGeneratedImage2d);
+                
                 update2dViewFromState();
             } else {
                 currentGeneratedImage2d = null;
@@ -6467,6 +6497,10 @@ Return the 5 suggestions as a JSON array.`;
         if (originalIndex > 0) {
             historyIndex2d = imageHistory2d.findIndex(h => h.id === originalHistory[originalIndex - 1].id);
             currentGeneratedImage2d = imageHistory2d[historyIndex2d];
+            
+            // Reset right panel history to match the selected left history item
+            resetRightHistoryForBaseAsset2d(currentGeneratedImage2d);
+            
             update2dViewFromState();
             renderHistory2d();
         }
@@ -6481,6 +6515,10 @@ Return the 5 suggestions as a JSON array.`;
         if (originalIndex < originalHistory.length - 1) {
             historyIndex2d = imageHistory2d.findIndex(h => h.id === originalHistory[originalIndex + 1].id);
             currentGeneratedImage2d = imageHistory2d[historyIndex2d];
+            
+            // Reset right panel history to match the selected left history item
+            resetRightHistoryForBaseAsset2d(currentGeneratedImage2d);
+            
             update2dViewFromState();
             renderHistory2d();
         }
@@ -6629,6 +6667,11 @@ Return the 5 suggestions as a JSON array.`;
                 detailsPanelHistory2d.push(regeneratedImage);
                 detailsPanelHistoryIndex2d = detailsPanelHistory2d.length - 1;
                 
+                // Update base asset's right panel history
+                if (currentGeneratedImage2d) {
+                    currentGeneratedImage2d.rightPanelHistory = [...detailsPanelHistory2d];
+                }
+                
                 update2dViewFromState();
                 updateDetailsPanelHistory2d();
                 
@@ -6769,6 +6812,10 @@ Return the 5 suggestions as a JSON array.`;
                         modificationType: 'BG Removed'
                     });
                     detailsPanelHistoryIndex2d = detailsPanelHistory2d.length - 1;
+                    
+                    // Update base asset's right panel history
+                    currentGeneratedImage2d.rightPanelHistory = [...detailsPanelHistory2d];
+                    
                     updateDetailsPanelHistory2d();
                 }
                 
@@ -6942,6 +6989,12 @@ Return the 5 suggestions as a JSON array.`;
                 (svgHistoryItem as any).svgString = svgString;
                 detailsPanelHistory2d.push(svgHistoryItem);
                 detailsPanelHistoryIndex2d = detailsPanelHistory2d.length - 1;
+                
+                // Update base asset's right panel history
+                if (currentGeneratedImage2d) {
+                    currentGeneratedImage2d.rightPanelHistory = [...detailsPanelHistory2d];
+                }
+                
                 updateDetailsPanelHistory2d();
             }
             
@@ -7410,6 +7463,12 @@ Return the 5 suggestions as a JSON array.`;
                     };
                     detailsPanelHistory3d.push(bgRemovedImage);
                     detailsPanelHistoryIndex3d = detailsPanelHistory3d.length - 1;
+                    
+                    // Update base asset's right panel history
+                    if (currentGeneratedImage) {
+                        currentGeneratedImage.rightPanelHistory = [...detailsPanelHistory3d];
+                    }
+                    
                     updateDetailsPanelHistory3d();
                 }
                 
@@ -7571,6 +7630,11 @@ Return the 5 suggestions as a JSON array.`;
                 };
                 detailsPanelHistory3d.push(fixImageData);
                 detailsPanelHistoryIndex3d = detailsPanelHistory3d.length - 1;
+                
+                // Update base asset's right panel history
+                if (currentGeneratedImage) {
+                    currentGeneratedImage.rightPanelHistory = [...detailsPanelHistory3d];
+                }
                 
                 // Update UI
                 update3dViewFromState();
