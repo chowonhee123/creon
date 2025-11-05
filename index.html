@@ -716,12 +716,12 @@
                                         <div class="btn-loader"></div>
                                     </button>
                                     
-                                    <!-- Remove BG and Convert to SVG (side by side, below) -->
-                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-2); margin-top: var(--spacing-2);">
+                                    <!-- Remove BG and Convert to SVG (below) -->
+                                    <div id="p2d-action-buttons-container" style="display: grid; grid-template-columns: 1fr; gap: var(--spacing-2); margin-top: var(--spacing-2);">
                                         <button id="p2d-remove-background-btn" class="secondary-btn">
                                             <span class="material-symbols-outlined">content_cut</span> Remove BG
                                         </button>
-                                        <button id="p2d-convert-to-svg-btn" class="secondary-btn">
+                                        <button id="p2d-convert-to-svg-btn" class="secondary-btn" style="display: none;">
                                             <span class="material-symbols-outlined">code</span> Convert to SVG
                                         </button>
                                     </div>

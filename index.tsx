@@ -6688,7 +6688,19 @@ Return the 5 suggestions as a JSON array.`;
                 // Update UI state
                 p2dHasBackgroundRemoved = true;
                 const removeBgBtn = $('#p2d-remove-background-btn');
+                const convertToSvgBtn = $('#p2d-convert-to-svg-btn');
+                const actionButtonsContainer = $('#p2d-action-buttons-container');
+                
+                // Hide Remove BG button, show Convert to SVG button, make it full width
                 if (removeBgBtn) removeBgBtn.classList.add('hidden');
+                if (convertToSvgBtn) {
+                    convertToSvgBtn.style.display = 'flex';
+                    convertToSvgBtn.classList.remove('hidden');
+                }
+                // Make container single column (full width) when showing Convert to SVG
+                if (actionButtonsContainer) {
+                    actionButtonsContainer.style.gridTemplateColumns = '1fr';
+                }
                 
                 // Add to details panel history only (edit history for current base asset)
                 if (currentGeneratedImage2d && currentBaseAssetId2d) {
@@ -6876,6 +6888,12 @@ Return the 5 suggestions as a JSON array.`;
             // Hide loader modal and show SVG modal
             if (p2dLoaderModal) p2dLoaderModal.classList.add('hidden');
             if (p2dSvgPreviewModal) p2dSvgPreviewModal.classList.remove('hidden');
+            
+            // Hide Convert to SVG button after conversion
+            if (convertToSvgBtn2d) {
+                convertToSvgBtn2d.style.display = 'none';
+                convertToSvgBtn2d.classList.add('hidden');
+            }
             
         } catch (error) {
             console.error('SVG conversion failed:', error);
