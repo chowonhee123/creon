@@ -2434,6 +2434,27 @@ window.addEventListener('DOMContentLoaded', () => {
         });
         
         detailsHistoryList.appendChild(historyItem);
+        console.log(`[3D Studio] Added history item ${index} to DOM:`, item.id);
+        console.log(`[3D Studio] DOM children count:`, detailsHistoryList.children.length);
+        
+        // Verify the element is actually in the DOM
+        const addedElement = detailsHistoryList.querySelector(`[data-index="${index}"]`);
+        if (!addedElement) {
+            console.error(`[3D Studio] Failed to find added element with index ${index} in DOM`);
+        } else {
+            console.log(`[3D Studio] Verified element ${index} exists in DOM`);
+        }
+    });
+    
+    console.log(`[3D Studio] ✅ Rendered ${detailsPanelHistory3d.length} history items`);
+    console.log(`[3D Studio] Final DOM children count:`, detailsHistoryList.children.length);
+    console.log(`[3D Studio] History list computed styles:`, {
+      display: window.getComputedStyle(detailsHistoryList).display,
+      gridTemplateColumns: window.getComputedStyle(detailsHistoryList).gridTemplateColumns,
+      visibility: window.getComputedStyle(detailsHistoryList).visibility,
+      opacity: window.getComputedStyle(detailsHistoryList).opacity,
+      width: window.getComputedStyle(detailsHistoryList).width,
+      height: window.getComputedStyle(detailsHistoryList).height
     });
   };
   
