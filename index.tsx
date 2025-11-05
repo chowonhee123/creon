@@ -1750,14 +1750,19 @@ window.addEventListener('DOMContentLoaded', () => {
         if (item.data && item.mimeType) {
             img.src = `data:${item.mimeType};base64,${item.data}`;
             img.loading = 'lazy';
-            img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; pointer-events: none;';
+            img.style.cssText = 'width: 100%; height: 100%; object-fit: contain; pointer-events: none;';
             img.alt = `History item ${index + 1}`;
             img.onerror = () => {
+                console.error(`[2D Studio] Failed to load thumbnail for item ${index}:`, item);
                 img.style.display = 'none';
                 thumbnailContainer.innerHTML = '<span class="material-symbols-outlined" style="font-size: 24px; color: var(--text-secondary); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">image</span>';
             };
+            img.onload = () => {
+                console.log(`[2D Studio] Thumbnail loaded for item ${index}:`, item.id);
+            };
             thumbnailContainer.appendChild(img);
         } else {
+            console.warn(`[2D Studio] Missing data for history item ${index}:`, item);
             // Fallback: show placeholder icon if data is missing
             thumbnailContainer.innerHTML = '<span class="material-symbols-outlined" style="font-size: 24px; color: var(--text-secondary); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">image</span>';
         }
@@ -1956,7 +1961,10 @@ window.addEventListener('DOMContentLoaded', () => {
         });
         
         detailsHistoryList.appendChild(historyItem);
+        console.log(`[2D Studio] Added history item ${index} to DOM:`, item.id);
     });
+    
+    console.log(`[2D Studio] Rendered ${detailsPanelHistory2d.length} history items`);
   };
 
   // 3D Studio: Update details panel history (similar to 2D Studio)
