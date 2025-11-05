@@ -1536,7 +1536,7 @@ window.addEventListener('DOMContentLoaded', () => {
         historyIndex2d = imageHistory2d.length - 1;
             
             // Reset right panel history and seed with "Original" entry for this new base asset
-            resetRightHistoryForBaseAsset(newImage);
+            resetRightHistoryForBaseAsset2d(newImage);
 
         const dataUrl = `data:${newImage.mimeType};base64,${newImage.data}`;
         const newLibraryItem = { id: newImage.id, dataUrl, mimeType: newImage.mimeType };
@@ -2340,7 +2340,7 @@ window.addEventListener('DOMContentLoaded', () => {
             currentGeneratedImage2d = selectedItem;
             
             // Reset right panel history and seed with "Original" entry for this base asset
-            resetRightHistoryForBaseAsset(selectedItem);
+            resetRightHistoryForBaseAsset2d(selectedItem);
             
             update2dViewFromState();
             renderHistory2d();
@@ -2889,7 +2889,7 @@ window.addEventListener('DOMContentLoaded', () => {
       historyIndex2d = imageHistory2d.length - 1;
 
       // Reset right panel history and seed with "Original" entry for this new base asset
-      resetRightHistoryForBaseAsset(imageData);
+      resetRightHistoryForBaseAsset2d(imageData);
 
       // Update 2D Studio UI with the generated image
       // Use setTimeout to ensure DOM is ready after page transition
