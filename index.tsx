@@ -6820,8 +6820,8 @@ Return the 5 suggestions as a JSON array.`;
                 updateHistoryTab();
                 
                 // Update details panel history if History tab is visible
-                const historyTabContent = $('#3d-details-history-list')?.closest('.details-tab-content');
-                if (historyTabContent && !historyTabContent.classList.contains('hidden')) {
+                const historyTabContent = document.getElementById('3d-details-history-list')?.closest('.details-tab-content');
+                if (historyTabContent && !(historyTabContent as HTMLElement).classList.contains('hidden')) {
                     updateDetailsPanelHistory3d();
                 }
                 
