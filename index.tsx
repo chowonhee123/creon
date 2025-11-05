@@ -5,6 +5,7 @@
 
 import { GoogleGenAI, GenerateContentResponse, Modality, Chat, Type } from '@google/genai';
 import {marked} from 'https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js';
+import ImageTracer from 'imagetracerjs';
 
 // --- TYPE DEFINITIONS ---
 interface IconData {
@@ -6070,101 +6071,40 @@ Return the 5 suggestions as a JSON array.`;
             
             // Update loading message
             if (p2dLoaderMessage) {
-                p2dLoaderMessage.textContent = 'Loading vectorizer...';
-            }
-            
-            // Dynamically import vectortracer (loads WASM only when needed)
-            let BinaryImageConverter: any;
-            try {
-                const vectortracerModule = await import('vectortracer');
-                BinaryImageConverter = vectortracerModule.BinaryImageConverter;
-                
-                if (!BinaryImageConverter) {
-                    throw new Error('BinaryImageConverter not found in vectortracer module');
-                }
-            } catch (importError) {
-                console.error('Failed to import vectortracer:', importError);
-                throw new Error('Failed to load vectorizer library. Please refresh the page and try again.');
-            }
-            
-            // Update loading message
-            if (p2dLoaderMessage) {
                 p2dLoaderMessage.textContent = 'Vectorizing image...';
             }
             
-            // VTracer options
-            const vtracerOptions = {
-                debug: false,
-                mode: 'spline' as const,
-                cornerThreshold: 60,
-                lengthThreshold: 4.0,
-                maxIterations: 10,
-                spliceThreshold: 45,
-                filterSpeckle: 4,
-                pathPrecision: 3
+            // Convert to SVG using ImageTracer
+            const options = {
+                ltres: 1,
+                qtres: 1,
+                pathomit: 8,
+                colorsampling: 2,
+                numberofcolors: 256,
+                mincolorratio: 0.02,
+                colorquantcycles: 5,
+                scale: 1,
+                roundcoords: 1,
+                blurradius: 0,
+                blurdelta: 20,
+                strokewidth: 1,
+                linefilter: true,
+                layercontainer: 'g',
+                layerbgcolor: '',
+                viewbox: false,
+                desc: false,
+                lcpr: 0,
+                qcpr: 0,
+                minroundedstops: 0,
+                minrectroundedstops: 0,
+                blursvg: false,
+                despeckle: false,
+                despecklelevel: 0,
+                simplifytolerance: 0,
+                corsenabled: false
             };
             
-            const additionalOptions = {
-                invert: false,
-                pathFill: '#000000',
-                backgroundColor: undefined,
-                attributes: undefined,
-                scale: 1
-            };
-            
-            // Convert to SVG using VectorTracer
-            let converter: any;
-            try {
-                converter = new BinaryImageConverter(imageData, vtracerOptions, additionalOptions);
-            } catch (converterError) {
-                console.error('Failed to create BinaryImageConverter:', converterError);
-                throw new Error('Failed to initialize vectorizer. Please try again.');
-            }
-            
-            // Process conversion with progress updates
-            try {
-                converter.init();
-                let done = false;
-                let tickCount = 0;
-                while (!done) {
-                    try {
-                        done = converter.tick();
-                        tickCount++;
-                        
-                        // Update progress message every 10 ticks
-                        if (!done && tickCount % 10 === 0 && p2dLoaderMessage) {
-                            try {
-                                const progress = converter.progress();
-                                p2dLoaderMessage.textContent = `Vectorizing image... ${Math.round(progress * 100)}%`;
-                            } catch (e) {
-                                // progress() might not be available, ignore
-                            }
-                        }
-                        
-                        // Small delay to keep UI responsive
-                        if (!done) {
-                            await new Promise(resolve => setTimeout(resolve, 0));
-                        }
-                    } catch (tickError) {
-                        console.error('Error during conversion tick:', tickError);
-                        throw new Error('Conversion process failed. Please try again.');
-                    }
-                }
-                
-                const svgString = converter.getResult();
-                converter.free();
-                
-            } catch (conversionError) {
-                console.error('Conversion error:', conversionError);
-                if (converter) {
-                    try {
-                        converter.free();
-                    } catch (e) {
-                        // Ignore free error
-                    }
-                }
-                throw conversionError;
-            }
+            const svgString = ImageTracer.imagedataToSVG(imageData, options);
             
             // Show SVG preview modal instead of immediate download
             const svgCodeView = $('#p2d-svg-code-view') as HTMLTextAreaElement;
