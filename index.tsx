@@ -6039,21 +6039,10 @@ Return the 5 suggestions as a JSON array.`;
             
             const dataUrl = `data:${currentGeneratedImage2d.mimeType};base64,${currentGeneratedImage2d.data}`;
             
-            // Wait for image to load
-            await new Promise<void>((resolve, reject) => {
-                const img = new Image();
-                img.crossOrigin = 'anonymous';
-                
-                img.onload = () => resolve();
-                img.onerror = () => reject(new Error('Failed to load image'));
-                img.src = dataUrl;
-            });
-            
-            // Create image element to get image data
+            // Create image element and wait for it to load
             const img = new Image();
             img.crossOrigin = 'anonymous';
             
-            // Wait for image load again (for canvas operations)
             await new Promise<void>((resolve, reject) => {
                 img.onload = () => resolve();
                 img.onerror = () => reject(new Error('Failed to load image'));
