@@ -6156,7 +6156,6 @@ Return the 5 suggestions as a JSON array.`;
   
   // Image Studio: Zoom Out (Frame Expansion)
   const zoomOut1_5xBtnImage = $('#details-zoom-out-1-5x-btn-image');
-  const zoomOut2xBtnImage = $('#details-zoom-out-2x-btn-image');
   const detailsPreviewImageImage = $('#details-preview-image-image') as HTMLImageElement;
   
   const handleZoomOut = async (scale: number) => {
@@ -6242,7 +6241,6 @@ Return the 5 suggestions as a JSON array.`;
   };
   
   zoomOut1_5xBtnImage?.addEventListener('click', () => handleZoomOut(1.5));
-  zoomOut2xBtnImage?.addEventListener('click', () => handleZoomOut(2));
   
   // Image Studio: Upscale from Fix section using waifu2x
   const upscaleFixBtnImage = $('#details-upscale-fix-btn-image');
