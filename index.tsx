@@ -1069,23 +1069,38 @@ window.addEventListener('DOMContentLoaded', () => {
           console.log('[3D Studio] History tab clicked via setupTabs');
           console.log('[3D Studio] Current image:', currentGeneratedImage);
           console.log('[3D Studio] History count before init:', detailsPanelHistory3d.length);
+          console.log('[3D Studio] History items:', detailsPanelHistory3d);
           
           // If history is empty but we have a current image, initialize it
           if (detailsPanelHistory3d.length === 0 && currentGeneratedImage) {
             console.log('[3D Studio] History is empty, initializing with current image');
             resetRightHistoryForBaseAsset3d(currentGeneratedImage);
+            console.log('[3D Studio] History after init:', detailsPanelHistory3d);
           }
           
           // Force update history immediately and with delays
           setTimeout(() => {
+            console.log('[3D Studio] Force update history (0ms) - tab should be visible now');
+            const historyTabContent = $('#3d-details-history-list')?.closest('.details-tab-content[data-tab-content="history"]');
+            console.log('[3D Studio] Tab visible check:', historyTabContent ? !(historyTabContent as HTMLElement).classList.contains('hidden') : 'tab not found');
             updateDetailsPanelHistory3d();
           }, 0);
           setTimeout(() => {
+            console.log('[3D Studio] Force update history (50ms)');
+            updateDetailsPanelHistory3d();
+          }, 50);
+          setTimeout(() => {
+            console.log('[3D Studio] Force update history (100ms)');
             updateDetailsPanelHistory3d();
           }, 100);
           setTimeout(() => {
+            console.log('[3D Studio] Force update history (300ms)');
             updateDetailsPanelHistory3d();
           }, 300);
+          setTimeout(() => {
+            console.log('[3D Studio] Force update history (500ms)');
+            updateDetailsPanelHistory3d();
+          }, 500);
         }
         
         // Special handling for 2D Studio history tab
@@ -2102,8 +2117,8 @@ window.addEventListener('DOMContentLoaded', () => {
       return;
     }
     
-    const historyTabContent = detailsHistoryList.closest('.details-tab-content[data-tab-content="history"]');
-    if (!historyTabContent) {
+    const historyTabContentElement = detailsHistoryList.closest('.details-tab-content[data-tab-content="history"]') as HTMLElement;
+    if (!historyTabContentElement) {
       console.warn('[3D Studio] History tab content not found');
       return;
     }
@@ -2111,22 +2126,27 @@ window.addEventListener('DOMContentLoaded', () => {
     console.log('[3D Studio] updateDetailsPanelHistory3d called');
     console.log('[3D Studio] History count:', detailsPanelHistory3d.length);
     console.log('[3D Studio] Current image:', currentGeneratedImage);
-    console.log('[3D Studio] History tab visible:', !historyTabContent.classList.contains('hidden'));
+    console.log('[3D Studio] History tab visible:', !historyTabContentElement.classList.contains('hidden'));
+    console.log('[3D Studio] History tab classes:', historyTabContentElement.className);
     
     // If history is empty but we have a current image, initialize it
     if (detailsPanelHistory3d.length === 0 && currentGeneratedImage) {
       console.log('[3D Studio] History is empty, initializing with current image');
       resetRightHistoryForBaseAsset3d(currentGeneratedImage);
       console.log('[3D Studio] History after init:', detailsPanelHistory3d.length);
+      console.log('[3D Studio] History items after init:', detailsPanelHistory3d);
     }
     
     // Always render, even if tab is hidden (will be shown when tab is clicked)
     if (detailsPanelHistory3d.length === 0) {
+        console.log('[3D Studio] No history items, showing empty state');
         detailsHistoryList.innerHTML = '<p style="padding: var(--spacing-4); text-align: center; color: var(--text-secondary);">No history available</p>';
         return;
     }
     
+    // Clear existing content
     detailsHistoryList.innerHTML = '';
+    console.log('[3D Studio] Cleared history list innerHTML');
     
     console.log('[3D Studio] Rendering history items:', detailsPanelHistory3d.map(item => ({
         id: item.id,
