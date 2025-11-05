@@ -4326,8 +4326,15 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
     const hasVideo = !!currentGeneratedImageStudio.videoDataUrl;
 
     // Update prompt display
+    // Don't overwrite the prompt if it was already updated during video generation
     if (hasMotionPrompt && finalEnglishPromptEl && koreanDescEl) {
-        finalEnglishPromptEl.value = currentGeneratedImageStudio.motionPrompt!.english;
+        // Only update if the textarea is empty or contains the original prompt (not the enhanced final prompt)
+        const currentValue = finalEnglishPromptEl.value.trim();
+        const originalPrompt = currentGeneratedImageStudio.motionPrompt!.english.trim();
+        // Only overwrite if the current value matches the original prompt (meaning it hasn't been enhanced)
+        if (currentValue === originalPrompt || currentValue === '') {
+            finalEnglishPromptEl.value = currentGeneratedImageStudio.motionPrompt!.english;
+        }
         koreanDescEl.textContent = currentGeneratedImageStudio.motionPrompt!.korean;
         if (motionPromptOutputStudio) motionPromptOutputStudio.classList.remove('hidden');
     } else {
@@ -4398,8 +4405,15 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
     const hasVideo = !!currentGeneratedImage.videoDataUrl;
 
     // Update prompt display
+    // Don't overwrite the prompt if it was already updated during video generation
     if (hasMotionPrompt && finalEnglishPromptEl && koreanDescEl) {
-        finalEnglishPromptEl.value = currentGeneratedImage.motionPrompt!.english;
+        // Only update if the textarea is empty or contains the original prompt (not the enhanced final prompt)
+        const currentValue = finalEnglishPromptEl.value.trim();
+        const originalPrompt = currentGeneratedImage.motionPrompt!.english.trim();
+        // Only overwrite if the current value matches the original prompt (meaning it hasn't been enhanced)
+        if (currentValue === originalPrompt || currentValue === '') {
+            finalEnglishPromptEl.value = currentGeneratedImage.motionPrompt!.english;
+        }
         koreanDescEl.textContent = currentGeneratedImage.motionPrompt!.korean;
         motionPromptOutput.classList.remove('hidden');
     } else {
