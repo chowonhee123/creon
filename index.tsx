@@ -1676,8 +1676,20 @@ window.addEventListener('DOMContentLoaded', () => {
     // Reset background removal state when new image loads
     p2dHasBackgroundRemoved = false;
     
+    const convertToSvgBtn = $('#p2d-convert-to-svg-btn');
+    const actionButtonsContainer = $('#p2d-action-buttons-container');
+    
+    // Show Remove BG button, hide Convert to SVG button (default state)
     if (removeBgBtn) {
         removeBgBtn.classList.remove('hidden');
+    }
+    if (convertToSvgBtn) {
+        convertToSvgBtn.style.display = 'none';
+        convertToSvgBtn.classList.add('hidden');
+    }
+    // Reset container to single column (default state)
+    if (actionButtonsContainer) {
+        actionButtonsContainer.style.gridTemplateColumns = '1fr';
     }
   };
 
