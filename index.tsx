@@ -7375,6 +7375,23 @@ Return the 5 suggestions as a JSON array.`;
                 currentGeneratedImage.originalMimeType = currentGeneratedImage.mimeType;
             }
             
+            // Parse and update styleConstraints template
+            let template: any;
+            try {
+                template = JSON.parse(currentGeneratedImage.styleConstraints);
+                // Update colors in template
+                if (template.background) {
+                    template.background.color = backgroundColor;
+                }
+                if (template.colors) {
+                    template.colors.dominant_blue = objectColor;
+                }
+            } catch (e) {
+                console.error('Failed to parse styleConstraints:', e);
+                // Fallback: use original styleConstraints without parsing
+                template = currentGeneratedImage.styleConstraints;
+            }
+            
             // Get current image as reference - convert to File for reference
             const currentDataUrl = `data:${currentGeneratedImage.mimeType};base64,${currentGeneratedImage.data}`;
             const response = await fetch(currentDataUrl);
@@ -7452,7 +7469,8 @@ Return the 5 suggestions as a JSON array.`;
                 // Update current image with new data (but don't modify Original entry)
                 currentGeneratedImage.data = imageData.data;
                 currentGeneratedImage.mimeType = imageData.mimeType;
-                currentGeneratedImage.styleConstraints = JSON.stringify(template, null, 2);
+                // Update styleConstraints with new colors
+                currentGeneratedImage.styleConstraints = typeof template === 'string' ? template : JSON.stringify(template, null, 2);
                 
                 // Update in main history (left sidebar)
                 const historyItem = imageHistory.find(item => item.id === currentGeneratedImage!.id);
