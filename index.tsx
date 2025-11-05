@@ -1620,7 +1620,7 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 
   // Reset right panel history and seed with "Original" entry for a new base asset
-  const resetRightHistoryForBaseAsset = (baseAsset: GeneratedImageData) => {
+  const resetRightHistoryForBaseAsset2d = (baseAsset: GeneratedImageData) => {
     currentBaseAssetId2d = baseAsset.id;
     // Clear existing right history
     detailsPanelHistory2d = [];
