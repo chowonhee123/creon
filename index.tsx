@@ -1103,10 +1103,17 @@ window.addEventListener('DOMContentLoaded', () => {
           }
           
           // Force update history immediately and with delays
+          // First update right after tab visibility changes
           setTimeout(() => {
-            console.log('[2D Studio] Force update history (0ms)');
+            console.log('[2D Studio] Force update history (0ms) - tab should be visible now');
+            const historyTabContent = $('#p2d-details-history-list')?.closest('.details-tab-content[data-tab-content="history"]');
+            console.log('[2D Studio] Tab visible check:', historyTabContent ? !historyTabContent.classList.contains('hidden') : 'tab not found');
             updateDetailsPanelHistory2d();
           }, 0);
+          setTimeout(() => {
+            console.log('[2D Studio] Force update history (50ms)');
+            updateDetailsPanelHistory2d();
+          }, 50);
           setTimeout(() => {
             console.log('[2D Studio] Force update history (100ms)');
             updateDetailsPanelHistory2d();
@@ -1676,16 +1683,19 @@ window.addEventListener('DOMContentLoaded', () => {
     console.log('[2D Studio] History count:', detailsPanelHistory2d.length);
     console.log('[2D Studio] Current image:', currentGeneratedImage2d);
     console.log('[2D Studio] History tab visible:', !historyTabContent.classList.contains('hidden'));
+    console.log('[2D Studio] History tab classes:', historyTabContent.className);
     
     // If history is empty but we have a current image, initialize it
     if (detailsPanelHistory2d.length === 0 && currentGeneratedImage2d) {
       console.log('[2D Studio] History is empty, initializing with current image');
       resetRightHistoryForBaseAsset2d(currentGeneratedImage2d);
       console.log('[2D Studio] History after init:', detailsPanelHistory2d.length);
+      console.log('[2D Studio] History items after init:', detailsPanelHistory2d);
     }
     
     // Always render, even if tab is hidden (will be shown when tab is clicked)
     if (detailsPanelHistory2d.length === 0) {
+        console.log('[2D Studio] No history items, showing empty state');
         detailsHistoryList.innerHTML = '<p style="padding: var(--spacing-4); text-align: center; color: var(--text-secondary);">No Fix history available</p>';
         return;
     }
