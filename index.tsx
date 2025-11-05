@@ -1637,6 +1637,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Reset right panel history and seed with "Original" entry for a new base asset
   const resetRightHistoryForBaseAsset2d = (baseAsset: GeneratedImageData) => {
+    console.log('[2D Studio] resetRightHistoryForBaseAsset2d called with:', {
+      id: baseAsset.id,
+      hasData: !!baseAsset.data,
+      dataLength: baseAsset.data?.length || 0,
+      mimeType: baseAsset.mimeType
+    });
     currentBaseAssetId2d = baseAsset.id;
     // Clear existing right history
     detailsPanelHistory2d = [];
@@ -1647,9 +1653,21 @@ window.addEventListener('DOMContentLoaded', () => {
     };
     detailsPanelHistory2d.push(originalEntry);
     detailsPanelHistoryIndex2d = 0;
+    console.log('[2D Studio] History reset with Original entry:', {
+      id: originalEntry.id,
+      hasData: !!originalEntry.data,
+      dataLength: originalEntry.data?.length || 0,
+      mimeType: originalEntry.mimeType,
+      modificationType: originalEntry.modificationType
+    });
     // Reset background removal state
     p2dHasBackgroundRemoved = false;
     p2dOriginalImageData = `data:${baseAsset.mimeType};base64,${baseAsset.data}`;
+    
+    // Force update history UI immediately
+    setTimeout(() => {
+      updateDetailsPanelHistory2d();
+    }, 0);
   };
   
   // 3D Studio: Reset right panel history and seed with "Original" entry for a new base asset
