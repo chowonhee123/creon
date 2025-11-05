@@ -2251,6 +2251,8 @@ a.secondary-btn[disabled] {
     position: sticky;
     bottom: 0;
     margin-bottom: var(--spacing-4);
+    background: var(--surface-color);
+    padding-bottom: var(--spacing-4);
 }
 
 /* Hide details-actions in motion and history tabs */
