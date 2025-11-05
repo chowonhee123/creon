@@ -2237,6 +2237,8 @@ a.secondary-btn[disabled] {
     border-top: 1px solid var(--border-color);
     z-index: 10;
     margin-top: auto;
+    position: sticky;
+    bottom: 0;
 }
 
 /* Hide details-actions in motion and history tabs */
