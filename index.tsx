@@ -6210,27 +6210,109 @@ Return the 5 suggestions as a JSON array.`;
     }
   });
   
-  // Image Studio: Zoom In/Out
-  const zoomInBtnImage = $('#details-zoom-in-btn-image');
-  const zoomOutBtnImage = $('#details-zoom-out-btn-image');
+  // Image Studio: Zoom Out (Frame Expansion)
+  const zoomOut1_5xBtnImage = $('#details-zoom-out-1.5x-btn-image');
+  const zoomOut2xBtnImage = $('#details-zoom-out-2x-btn-image');
   const detailsPreviewImageImage = $('#details-preview-image-image') as HTMLImageElement;
-  let currentZoomLevel = 1;
   
-  zoomInBtnImage?.addEventListener('click', () => {
-    if (detailsPreviewImageImage) {
-      currentZoomLevel = Math.min(currentZoomLevel + 0.25, 3);
-      detailsPreviewImageImage.style.transform = `scale(${currentZoomLevel})`;
-      detailsPreviewImageImage.style.transition = 'transform 0.2s ease';
+  const handleZoomOut = async (scale: number) => {
+    if (!currentGeneratedImageStudio) return;
+    
+    const btn = scale === 1.5 ? zoomOut1_5xBtnImage : zoomOut2xBtnImage;
+    const loaderModal = $('#image-generation-loader-modal');
+    loaderModal?.classList.remove('hidden');
+    updateButtonLoadingState(btn as HTMLButtonElement, true);
+    
+    try {
+      const dataUrl = `data:${currentGeneratedImageStudio.mimeType};base64,${currentGeneratedImageStudio.data}`;
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      const file = new File([blob], 'image.png', { type: currentGeneratedImageStudio.mimeType });
+      const base64Data = await blobToBase64(file);
+      
+      const parts = [
+        { inlineData: { data: base64Data, mimeType: currentGeneratedImageStudio.mimeType } },
+        { text: `Expand the frame by ${scale}x while maintaining the original image content. Show more surrounding area around the subject. Keep the same style and quality. The image should be ${scale} times wider in frame coverage.` }
+      ];
+      
+      const zoomOutResponse = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image',
+        contents: { parts },
+        config: {
+          responseModalities: [Modality.IMAGE],
+          temperature: 0.1,
+        },
+      });
+      
+      const zoomOutPart = zoomOutResponse.candidates?.[0]?.content?.parts?.[0];
+      if (zoomOutPart && zoomOutPart.inlineData) {
+        const { data, mimeType } = zoomOutPart.inlineData;
+        const zoomedOutDataUrl = `data:${mimeType};base64,${data}`;
+        
+        const timestamp = Date.now();
+        const newImage: GeneratedImageData = {
+          id: `img_${timestamp}`,
+          data,
+          mimeType,
+          subject: currentGeneratedImageStudio.subject,
+          styleConstraints: currentGeneratedImageStudio.styleConstraints,
+          timestamp,
+          modificationType: `Zoom Out ${scale}x`
+        };
+        
+        imageStudioHistory.push(newImage);
+        imageStudioHistoryIndex = imageStudioHistory.length - 1;
+        currentGeneratedImageStudio = newImage;
+        
+        const resultImage = $('#result-image-image') as HTMLImageElement;
+        if (resultImage) {
+          resultImage.src = zoomedOutDataUrl;
+        }
+        if (detailsPreviewImageImage) {
+          detailsPreviewImageImage.src = zoomedOutDataUrl;
+        }
+        
+        const detailsDownload = $('#details-download-btn-image') as HTMLAnchorElement;
+        if (detailsDownload) {
+          detailsDownload.href = zoomedOutDataUrl;
+        }
+        
+        // Update right panel history
+        if (!currentGeneratedImageStudio.rightPanelHistory) {
+          // Find original in main history
+          const originalInHistory = imageStudioHistory.find(item => 
+            item.id === currentGeneratedImageStudio?.id || 
+            (item.subject === currentGeneratedImageStudio?.subject && !item.modificationType)
+          );
+          if (originalInHistory) {
+            currentGeneratedImageStudio.rightPanelHistory = [{
+              ...originalInHistory,
+              modificationType: 'Original'
+            }];
+          }
+        }
+        if (currentGeneratedImageStudio.rightPanelHistory) {
+          currentGeneratedImageStudio.rightPanelHistory.push({
+            ...newImage,
+            modificationType: `Zoom Out ${scale}x`
+          });
+        }
+        
+        renderImageStudioHistory();
+        
+        showToast({ type: 'success', title: `Zoomed Out ${scale}x!`, body: `Frame has been expanded by ${scale} times.` });
+      }
+    } catch (error) {
+      console.error('Error zooming out image:', error);
+      showToast({ type: 'error', title: 'Zoom Out Failed', body: 'Failed to expand frame.' });
+    } finally {
+      loaderModal?.classList.add('hidden');
+      updateButtonLoadingState(btn as HTMLButtonElement, false);
     }
-  });
+  };
   
-  zoomOutBtnImage?.addEventListener('click', () => {
-    if (detailsPreviewImageImage) {
-      currentZoomLevel = Math.max(currentZoomLevel - 0.25, 0.5);
-      detailsPreviewImageImage.style.transform = `scale(${currentZoomLevel})`;
-      detailsPreviewImageImage.style.transition = 'transform 0.2s ease';
-    }
-  });
+  zoomOut1_5xBtnImage?.addEventListener('click', () => handleZoomOut(1.5));
+  zoomOut2xBtnImage?.addEventListener('click', () => handleZoomOut(2));
   
   // Image Studio: Upscale from Fix section
   const upscaleFixBtnImage = $('#details-upscale-fix-btn-image');
