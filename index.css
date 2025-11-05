@@ -1079,10 +1079,13 @@ a.secondary-btn[disabled] {
   justify-content: space-between;
   align-items: center;
   flex-shrink: 0;
+  height: 20px;
 }
 .history-header h3 {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
+  line-height: 20px;
+  margin: 0;
 }
 .history-actions {
   display: flex;
