@@ -2246,6 +2246,13 @@ a.secondary-btn[disabled] {
     margin-bottom: var(--spacing-4);
 }
 
+/* 2D Studio: Bottom actions with fixed position and bottom margin */
+.p2d-details-actions {
+    position: sticky;
+    bottom: 0;
+    margin-bottom: var(--spacing-4);
+}
+
 /* Hide details-actions in motion and history tabs */
 .details-tab-content[data-tab-content="motion"] .details-actions,
 .details-tab-content[data-tab-content="history"] .details-actions {
