@@ -6351,7 +6351,7 @@ Return the 5 suggestions as a JSON array.`;
           detailsDownload.href = upscaledDataUrl;
         }
         
-        // Update right panel history
+        // Only add to right panel history, not left panel history
         if (!currentGeneratedImageStudio.rightPanelHistory) {
           currentGeneratedImageStudio.rightPanelHistory = [{
             ...currentGeneratedImageStudio,
@@ -6365,6 +6365,9 @@ Return the 5 suggestions as a JSON array.`;
           modificationType: 'Upscaled'
         };
         currentGeneratedImageStudio.rightPanelHistory.push(upscaledItem);
+        
+        // Update right panel history display
+        updateImageStudioDetailsHistory();
         
         showToast({ type: 'success', title: 'Upscaled!', body: 'Image has been upscaled to higher resolution.' });
       }
