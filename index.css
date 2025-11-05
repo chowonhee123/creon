@@ -918,7 +918,10 @@ input[type='range']::-moz-range-thumb {
   align-items: center; justify-content: center; transition: background-color 0.2s, color 0.2s;
 }
 .icon-button:hover { background-color: var(--input-bg); color: var(--text-primary); }
-.icon-button .material-symbols-outlined { font-size: 24px; }
+.icon-button .material-symbols-outlined { 
+  font-size: 24px;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
 .primary-btn, .secondary-btn {
   padding: var(--spacing-3) var(--spacing-4); border-radius: var(--border-radius-md); border: 1px solid;
   font-size: 15px; font-weight: 600; cursor: pointer;
