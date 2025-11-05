@@ -4869,6 +4869,10 @@ Return the 5 suggestions as a JSON array.`;
             
             if (imageHistory.length > 0) {
                 currentGeneratedImage = imageHistory[historyIndex];
+                
+                // Reset right panel history to match the selected left history item
+                resetRightHistoryForBaseAsset3d(currentGeneratedImage);
+                
                 // Update motion first/last frame images to match selected history item
                 setInitialMotionFrames(currentGeneratedImage);
                 update3dViewFromState();
