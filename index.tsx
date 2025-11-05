@@ -5,7 +5,7 @@
 
 import { GoogleGenAI, GenerateContentResponse, Modality, Chat, Type } from '@google/genai';
 import {marked} from 'https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js';
-import ImageTracer from 'imagetracerjs';
+import { VectorTracer } from 'vectortracer';
 
 // --- TYPE DEFINITIONS ---
 interface IconData {
@@ -6044,97 +6044,76 @@ Return the 5 suggestions as a JSON array.`;
             const img = new Image();
             img.crossOrigin = 'anonymous';
             
-            img.onload = () => {
-                // Create canvas
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                if (!ctx) {
-                    throw new Error('Could not get canvas context');
-                }
-                
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
-                
-                // Get image data
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                
-                // Convert to SVG using ImageTracer
-                const options = {
-                    ltres: 1,
-                    qtres: 1,
-                    pathomit: 8,
-                    colorsampling: 2,
-                    numberofcolors: 256,
-                    mincolorratio: 0.02,
-                    colorquantcycles: 5,
-                    scale: 1,
-                    roundcoords: 1,
-                    blurradius: 0,
-                    blurdelta: 20,
-                    strokewidth: 1,
-                    linefilter: true,
-                    layercontainer: 'g',
-                    layerbgcolor: '',
-                    viewbox: false,
-                    desc: false,
-                    lcpr: 0,
-                    qcpr: 0,
-                    minroundedstops: 0,
-                    minrectroundedstops: 0,
-                    blursvg: false,
-                    despeckle: false,
-                    despecklelevel: 0,
-                    simplifytolerance: 0,
-                    corsenabled: false
-                };
-                
-                const svgString = ImageTracer.imagedataToSVG(imageData, options);
-                
-                // Show SVG preview modal instead of immediate download
-                const svgCodeView = $('#p2d-svg-code-view') as HTMLTextAreaElement;
-                const svgPreviewContent = $('#p2d-svg-preview-content');
-                const svgBgToggle = $('#p2d-svg-bg-toggle') as HTMLInputElement;
-                const svgPreviewContainer = $('#p2d-svg-preview-container');
-                
-                if (svgCodeView) svgCodeView.value = svgString;
-                
-                // Render SVG preview
-                if (svgPreviewContent) {
-                    svgPreviewContent.innerHTML = svgString;
-                }
-                
-                // Background toggle handler
-                const updateSvgPreview = () => {
-                    if (svgPreviewContainer) {
-                        if (svgBgToggle?.checked) {
-                            svgPreviewContainer.style.backgroundColor = '';
-                            svgPreviewContainer.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
-                        } else {
-                            svgPreviewContainer.style.backgroundColor = 'white';
-                            svgPreviewContainer.style.backgroundImage = 'none';
-                        }
+            img.onload = async () => {
+                try {
+                    // Create canvas
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) {
+                        throw new Error('Could not get canvas context');
                     }
-                };
-                svgBgToggle?.addEventListener('change', updateSvgPreview);
-                updateSvgPreview();
-                
-                // Store SVG string for download
-                (currentGeneratedImage2d as any).svgString = svgString;
-                
-                // Add to details panel history (edit history for current base asset)
-                if (currentGeneratedImage2d && currentBaseAssetId2d) {
-                    detailsPanelHistory2d.push({
-                        ...currentGeneratedImage2d,
-                        modificationType: 'SVG'
-                    });
-                    detailsPanelHistoryIndex2d = detailsPanelHistory2d.length - 1;
-                    updateDetailsPanelHistory2d();
+                    
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    
+                    // Get image data
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    
+                    // Initialize VectorTracer (WASM)
+                    const tracer = await VectorTracer.init();
+                    
+                    // Convert to SVG using VectorTracer
+                    const svgString = tracer.trace(imageData);
+                    
+                    // Show SVG preview modal instead of immediate download
+                    const svgCodeView = $('#p2d-svg-code-view') as HTMLTextAreaElement;
+                    const svgPreviewContent = $('#p2d-svg-preview-content');
+                    const svgBgToggle = $('#p2d-svg-bg-toggle') as HTMLInputElement;
+                    const svgPreviewContainer = $('#p2d-svg-preview-container');
+                    
+                    if (svgCodeView) svgCodeView.value = svgString;
+                    
+                    // Render SVG preview
+                    if (svgPreviewContent) {
+                        svgPreviewContent.innerHTML = svgString;
+                    }
+                    
+                    // Background toggle handler
+                    const updateSvgPreview = () => {
+                        if (svgPreviewContainer) {
+                            if (svgBgToggle?.checked) {
+                                svgPreviewContainer.style.backgroundColor = '';
+                                svgPreviewContainer.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
+                            } else {
+                                svgPreviewContainer.style.backgroundColor = 'white';
+                                svgPreviewContainer.style.backgroundImage = 'none';
+                            }
+                        }
+                    };
+                    svgBgToggle?.addEventListener('change', updateSvgPreview);
+                    updateSvgPreview();
+                    
+                    // Store SVG string for download
+                    (currentGeneratedImage2d as any).svgString = svgString;
+                    
+                    // Add to details panel history (edit history for current base asset)
+                    if (currentGeneratedImage2d && currentBaseAssetId2d) {
+                        detailsPanelHistory2d.push({
+                            ...currentGeneratedImage2d,
+                            modificationType: 'SVG'
+                        });
+                        detailsPanelHistoryIndex2d = detailsPanelHistory2d.length - 1;
+                        updateDetailsPanelHistory2d();
+                    }
+                    
+                    // Hide loader modal and show SVG modal
+                    if (p2dLoaderModal) p2dLoaderModal.classList.add('hidden');
+                    if (p2dSvgPreviewModal) p2dSvgPreviewModal.classList.remove('hidden');
+                } catch (error) {
+                    console.error('SVG conversion error:', error);
+                    throw error;
                 }
-                
-                // Hide loader modal and show SVG modal
-                if (p2dLoaderModal) p2dLoaderModal.classList.add('hidden');
-                if (p2dSvgPreviewModal) p2dSvgPreviewModal.classList.remove('hidden');
             };
             
             img.onerror = () => {

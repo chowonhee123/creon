@@ -11,8 +11,8 @@
   "dependencies": {
     "@google/genai": "latest",
     "@imgly/background-removal": "^1.7.0",
-    "imagetracerjs": "^1.2.6",
-    "reshaped": "^3.8.5"
+    "reshaped": "^3.8.5",
+    "vectortracer": "^0.1.2"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

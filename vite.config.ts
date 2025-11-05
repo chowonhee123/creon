@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => {
         }
       },
       optimizeDeps: {
-        exclude: ['@imgly/background-removal']
+        exclude: ['@imgly/background-removal', 'vectortracer']
       },
       assetsInclude: ['**/*.wasm']
     };
