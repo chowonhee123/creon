@@ -1782,21 +1782,31 @@ window.addEventListener('DOMContentLoaded', () => {
         // For SVG items, use original image data for thumbnail (not SVG string)
         const img = document.createElement('img');
         if (item.data && item.mimeType) {
-            img.src = `data:${item.mimeType};base64,${item.data}`;
+            const dataUrl = `data:${item.mimeType};base64,${item.data}`;
+            console.log(`[2D Studio] Setting image src for item ${index}, data length:`, item.data.length, 'mimeType:', item.mimeType);
+            img.src = dataUrl;
             img.loading = 'lazy';
             img.style.cssText = 'width: 100%; height: 100%; object-fit: contain; pointer-events: none;';
             img.alt = `History item ${index + 1}`;
-            img.onerror = () => {
-                console.error(`[2D Studio] Failed to load thumbnail for item ${index}:`, item);
+            img.onerror = (e) => {
+                console.error(`[2D Studio] ❌ Failed to load thumbnail for item ${index}:`, e);
+                console.error(`[2D Studio] Image src preview:`, dataUrl.substring(0, 100) + '...');
+                console.error(`[2D Studio] Item data:`, { id: item.id, hasData: !!item.data, dataLength: item.data?.length, mimeType: item.mimeType });
                 img.style.display = 'none';
                 thumbnailContainer.innerHTML = '<span class="material-symbols-outlined" style="font-size: 24px; color: var(--text-secondary); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">image</span>';
             };
             img.onload = () => {
-                console.log(`[2D Studio] Thumbnail loaded for item ${index}:`, item.id);
+                console.log(`[2D Studio] ✅ Thumbnail loaded successfully for item ${index}:`, item.id);
             };
             thumbnailContainer.appendChild(img);
+            console.log(`[2D Studio] Image element appended to thumbnail container for item ${index}`);
         } else {
-            console.warn(`[2D Studio] Missing data for history item ${index}:`, item);
+            console.warn(`[2D Studio] ⚠️ Missing data for history item ${index}:`, {
+                hasData: !!item.data,
+                hasMimeType: !!item.mimeType,
+                itemId: item.id,
+                modificationType: item.modificationType
+            });
             // Fallback: show placeholder icon if data is missing
             thumbnailContainer.innerHTML = '<span class="material-symbols-outlined" style="font-size: 24px; color: var(--text-secondary); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">image</span>';
         }
