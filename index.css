@@ -2082,9 +2082,12 @@ a.secondary-btn[disabled] {
 
 #image-details-panel-image .details-actions {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
     gap: var(--spacing-2);
     margin-top: auto;
+    position: relative;
 }
 
 .details-preview {
@@ -3719,6 +3722,7 @@ a.secondary-btn[disabled] {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  height: 19px;
 }
 
 .prompt-card-header > h3,

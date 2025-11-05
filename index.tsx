@@ -6030,10 +6030,27 @@ Return the 5 suggestions as a JSON array.`;
     }
   });
   
-  // Upscale button for Image Studio
-  const upscaleBtnImage = $('#details-upscale-btn-image');
+  // More menu toggle for Image Studio
+  const moreMenuBtnImage = $('#details-more-menu-btn-image');
+  const moreMenuImage = $('#details-more-menu-image');
+  moreMenuBtnImage?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    moreMenuImage?.classList.toggle('hidden');
+  });
+  
+  // Close more menu when clicking outside
+  document.addEventListener('click', (e) => {
+    if (moreMenuImage && !moreMenuImage.contains(e.target as Node) && !moreMenuBtnImage?.contains(e.target as Node)) {
+      moreMenuImage.classList.add('hidden');
+    }
+  });
+  
+  // Upscale button for Image Studio (from More menu)
+  const upscaleBtnImage = $('#details-more-upscale-image');
   upscaleBtnImage?.addEventListener('click', async () => {
     if (!currentGeneratedImageStudio) return;
+    
+    moreMenuImage?.classList.add('hidden');
     
     const loaderModal = $('#image-generation-loader-modal');
     loaderModal?.classList.remove('hidden');
@@ -6095,6 +6112,64 @@ Return the 5 suggestions as a JSON array.`;
       showToast({ type: 'error', title: 'Upscale Failed', body: 'Failed to upscale image.' });
     } finally {
       loaderModal?.classList.add('hidden');
+    }
+  });
+  
+  // Delete button for Image Studio (from More menu)
+  const deleteBtnImage = $('#details-more-delete-image');
+  deleteBtnImage?.addEventListener('click', () => {
+    if (!currentGeneratedImageStudio) return;
+    
+    moreMenuImage?.classList.add('hidden');
+    
+    if (confirm('Are you sure you want to delete this image?')) {
+      // Remove from history
+      const indexToDelete = imageStudioHistory.findIndex(item => item.id === currentGeneratedImageStudio?.id);
+      if (indexToDelete !== -1) {
+        imageStudioHistory.splice(indexToDelete, 1);
+      }
+      
+      // Update history index
+      if (imageStudioHistory.length === 0) {
+        currentGeneratedImageStudio = null;
+        imageStudioHistoryIndex = -1;
+        
+        // Clear UI
+        const resultImage = $('#result-image-image') as HTMLImageElement;
+        const resultIdlePlaceholder = $('#result-idle-placeholder-image');
+        if (resultImage) resultImage.classList.add('hidden');
+        if (resultIdlePlaceholder) resultIdlePlaceholder.classList.remove('hidden');
+      } else {
+        // Adjust index if needed
+        if (imageStudioHistoryIndex >= imageStudioHistory.length) {
+          imageStudioHistoryIndex = imageStudioHistory.length - 1;
+        }
+        currentGeneratedImageStudio = imageStudioHistory[imageStudioHistoryIndex] || null;
+        
+        // Update UI with current image
+        if (currentGeneratedImageStudio) {
+          const dataUrl = `data:${currentGeneratedImageStudio.mimeType};base64,${currentGeneratedImageStudio.data}`;
+          const resultImage = $('#result-image-image') as HTMLImageElement;
+          const detailsPreview = $('#details-preview-image-image') as HTMLImageElement;
+          const detailsDownload = $('#details-download-btn-image') as HTMLAnchorElement;
+          
+          if (resultImage) {
+            resultImage.src = dataUrl;
+            resultImage.classList.remove('hidden');
+          }
+          if (detailsPreview) detailsPreview.src = dataUrl;
+          if (detailsDownload) detailsDownload.href = dataUrl;
+        }
+      }
+      
+      // Render history
+      renderImageStudioHistory();
+      
+      // Close details panel if open
+      const detailsPanel = $('#image-details-panel-image');
+      detailsPanel?.classList.add('hidden');
+      
+      showToast({ type: 'success', title: 'Deleted', body: 'Image removed from history.' });
     }
   });
 

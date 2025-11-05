@@ -1231,15 +1231,22 @@
                                 <img id="details-preview-image-image" src="" alt="Details preview">
                             </div>
                             <div class="details-actions">
-                                <button id="details-upscale-btn-image" class="secondary-btn">
-                                    <span class="material-symbols-outlined">image</span> Upscale
+                                <button id="details-more-menu-btn-image" class="icon-button" aria-label="More actions" title="More actions">
+                                    <span class="material-symbols-outlined">more_horiz</span>
                                 </button>
-                                <a href="#" id="details-download-btn-image" class="secondary-btn" download>
-                                    <span class="material-symbols-outlined">download</span> Download
+                                <!-- More menu dropdown -->
+                                <div id="details-more-menu-image" class="kebab-menu hidden" style="position: absolute; left: 0; bottom: 56px; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); box-shadow: 0 8px 24px rgba(0,0,0,0.12); width: 200px; overflow: hidden; z-index: 20;">
+                                    <button id="details-more-upscale-image" class="secondary-btn" style="width: 100%; justify-content: flex-start; gap: var(--spacing-2); border: none; background: transparent;">
+                                        <span class="material-symbols-outlined">photo_size_select_actual</span> Upscale
+                                    </button>
+                                    <button id="details-more-delete-image" class="secondary-btn danger" style="width: 100%; justify-content: flex-start; gap: var(--spacing-2); border: none; background: transparent;">
+                                        <span class="material-symbols-outlined">delete</span> Delete
+                                    </button>
+                                </div>
+                                <a href="#" id="details-download-btn-image" class="secondary-btn" download style="flex: 1;">
+                                    <span class="material-symbols-outlined">download</span>
+                                    <span class="btn-text">Download</span>
                                 </a>
-                                <button id="details-delete-btn-image" class="secondary-btn danger">
-                                    <span class="material-symbols-outlined">delete</span> Delete
-                                </button>
                             </div>
                         </div>
                         <div class="details-tab-content hidden" data-tab-content="motion">
