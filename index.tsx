@@ -1948,12 +1948,14 @@ window.addEventListener('DOMContentLoaded', () => {
                 const modalContent = document.createElement('div');
                 modalContent.style.cssText = `
                     position: relative;
-                    width: 100%;
-                    max-width: 900px;
+                    width: 800px;
+                    height: 600px;
                     background: var(--surface-color);
                     border-radius: var(--border-radius-lg);
                     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
                     overflow: hidden;
+                    display: flex;
+                    flex-direction: column;
                 `;
                 
                 // Close button
@@ -1982,6 +1984,7 @@ window.addEventListener('DOMContentLoaded', () => {
                     padding: 16px 24px;
                     background: var(--surface-color);
                     border-bottom: 1px solid var(--border-color);
+                    flex-shrink: 0;
                 `;
                 const originalLabel = document.createElement('div');
                 originalLabel.style.cssText = 'font-size: 14px; font-weight: 600; color: var(--text-primary);';
@@ -1998,7 +2001,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 comparisonContainer.style.cssText = `
                     position: relative;
                     width: 100%;
-                    aspect-ratio: 1;
+                    flex: 1;
                     overflow: hidden;
                     background-color: #ffffff;
                 `;
@@ -2465,12 +2468,14 @@ window.addEventListener('DOMContentLoaded', () => {
                 const modalContent = document.createElement('div');
                 modalContent.style.cssText = `
                     position: relative;
-                    width: 100%;
-                    max-width: 900px;
+                    width: 800px;
+                    height: 600px;
                     background: var(--surface-color);
                     border-radius: var(--border-radius-lg);
                     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
                     overflow: hidden;
+                    display: flex;
+                    flex-direction: column;
                 `;
                 
                 // Close button
@@ -2499,6 +2504,7 @@ window.addEventListener('DOMContentLoaded', () => {
                     padding: 16px 24px;
                     background: var(--surface-color);
                     border-bottom: 1px solid var(--border-color);
+                    flex-shrink: 0;
                 `;
                 const originalLabel = document.createElement('div');
                 originalLabel.style.cssText = 'font-size: 14px; font-weight: 600; color: var(--text-primary);';
@@ -2515,7 +2521,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 comparisonContainer.style.cssText = `
                     position: relative;
                     width: 100%;
-                    aspect-ratio: 1;
+                    flex: 1;
                     overflow: hidden;
                     background-color: #ffffff;
                 `;
@@ -6332,16 +6338,63 @@ Return the 5 suggestions as a JSON array.`;
                 p2dLoaderModal.classList.remove('hidden');
             }
             
-            // Re-generate using the existing generation logic with full template AND original image reference
-            const imageData = await generateImage(
-                colorPrompt,
-                resultImage2d,
-                resultPlaceholder2d,
-                resultError2d,
-                resultIdlePlaceholder2d,
-                p2dRegenerateBtn,
-                [originalReference] // Pass original image as reference to maintain shape
-            );
+            // Use gemini-2.5-flash-image directly with current image as reference
+            // Create prompt: Keep the image exactly the same, only change icon color
+            const colorChangePrompt = `Keep this icon image exactly the same in shape, composition, and all details. Only change the icon color to ${iconColor}. Do not modify, transform, or change any other aspects of the image.`;
+            
+            const parts: any[] = [
+                { text: colorChangePrompt },
+                {
+                    inlineData: {
+                        data: originalEntry.data,
+                        mimeType: originalEntry.mimeType,
+                    }
+                }
+            ];
+            
+            // Show loading
+            if (p2dRegenerateBtn) {
+                p2dRegenerateBtn.setAttribute('disabled', 'true');
+                p2dRegenerateBtn.classList.add('loading');
+            }
+            
+            if (p2dLoaderModal && p2dLoaderMessage) {
+                p2dLoaderMessage.textContent = 'Regenerating icon with new color...';
+                p2dLoaderModal.classList.remove('hidden');
+            }
+            
+            const aiResponse = await ai.models.generateContent({
+                model: 'gemini-2.5-flash-image',
+                contents: { parts },
+                config: {
+                    responseModalities: [Modality.IMAGE],
+                    temperature: 0.1, // Low temperature for minimal variation
+                    topP: 0.95,
+                    topK: 40,
+                },
+            });
+            
+            const candidate = aiResponse.candidates?.[0];
+            const content = candidate?.content;
+            const responseParts = content?.parts;
+            const firstPart = responseParts?.[0];
+            const inlineData = firstPart?.inlineData;
+            
+            if (!inlineData || !inlineData.data || !inlineData.mimeType) {
+                throw new Error('No image data received from API.');
+            }
+            
+            const imageData = {
+                data: inlineData.data,
+                mimeType: inlineData.mimeType
+            };
+            
+            // Update UI with generated image
+            if (resultImage2d) {
+                const dataUrl = `data:${imageData.mimeType};base64,${imageData.data}`;
+                resultImage2d.src = dataUrl;
+                resultImage2d.classList.remove('hidden');
+            }
             
             // Update history - add to right panel history only (edit history for current base asset)
             if (imageData && currentGeneratedImage2d && currentBaseAssetId2d) {
@@ -7016,25 +7069,52 @@ Return the 5 suggestions as a JSON array.`;
                 currentGeneratedImage.originalMimeType = currentGeneratedImage.mimeType;
             }
             
-            // Parse current style constraints
-            let template = JSON.parse(currentGeneratedImage.styleConstraints);
+            // Get current image as reference - convert to File for reference
+            const currentDataUrl = `data:${currentGeneratedImage.mimeType};base64,${currentGeneratedImage.data}`;
+            const response = await fetch(currentDataUrl);
+            const blob = await response.blob();
+            const currentImageFile = new File([blob], 'current-image.png', { type: currentGeneratedImage.mimeType });
+            const currentImageReference = { file: currentImageFile, dataUrl: currentDataUrl };
             
-            // Update colors
-            template.background.color = backgroundColor;
-            template.colors.dominant_blue = objectColor;
+            // Create prompt: Keep the image exactly the same, only change colors
+            const colorChangePrompt = `Keep this image exactly the same in shape, composition, and all details. Only change the colors: background color to ${backgroundColor} and object color to ${objectColor}. Do not modify, transform, or change any other aspects of the image.`;
             
-            // Create new prompt with updated colors (Fix mode)
-            const imagePromptText = createImagePromptFromTemplate(template, userPrompt3d?.value || '', true);
+            // Use gemini-2.5-flash-image directly with current image as reference
+            const parts: any[] = [
+                { text: colorChangePrompt },
+                {
+                    inlineData: {
+                        data: currentGeneratedImage.data,
+                        mimeType: currentGeneratedImage.mimeType,
+                    }
+                }
+            ];
             
-            const imageData = await generateImage(
-                imagePromptText,
-                resultImage,
-                resultPlaceholder,
-                resultError,
-                resultIdlePlaceholder,
-                imageGenerateBtn,
-                referenceImagesFor3d
-            );
+            const aiResponse = await ai.models.generateContent({
+                model: 'gemini-2.5-flash-image',
+                contents: { parts },
+                config: {
+                    responseModalities: [Modality.IMAGE],
+                    temperature: 0.1, // Low temperature for minimal variation
+                    topP: 0.95,
+                    topK: 40,
+                },
+            });
+            
+            const candidate = aiResponse.candidates?.[0];
+            const content = candidate?.content;
+            const responseParts = content?.parts;
+            const firstPart = responseParts?.[0];
+            const inlineData = firstPart?.inlineData;
+            
+            if (!inlineData || !inlineData.data || !inlineData.mimeType) {
+                throw new Error('No image data received from API.');
+            }
+            
+            const imageData = {
+                data: inlineData.data,
+                mimeType: inlineData.mimeType
+            };
             
             if (imageData) {
                 // Update current image with new data
