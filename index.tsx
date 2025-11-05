@@ -6027,7 +6027,7 @@ Return the 5 suggestions as a JSON array.`;
             return;
         }
 
-        // Show loading modal
+        // Show loading modal immediately
         if (p2dLoaderModal && p2dLoaderMessage) {
             p2dLoaderMessage.textContent = 'Converting to SVG...';
             p2dLoaderModal.classList.remove('hidden');
@@ -6039,132 +6039,156 @@ Return the 5 suggestions as a JSON array.`;
             
             const dataUrl = `data:${currentGeneratedImage2d.mimeType};base64,${currentGeneratedImage2d.data}`;
             
+            // Wait for image to load
+            await new Promise<void>((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                
+                img.onload = () => resolve();
+                img.onerror = () => reject(new Error('Failed to load image'));
+                img.src = dataUrl;
+            });
+            
             // Create image element to get image data
             const img = new Image();
             img.crossOrigin = 'anonymous';
             
-            img.onload = async () => {
-                try {
-                    // Create canvas
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    if (!ctx) {
-                        throw new Error('Could not get canvas context');
+            // Wait for image load again (for canvas operations)
+            await new Promise<void>((resolve, reject) => {
+                img.onload = () => resolve();
+                img.onerror = () => reject(new Error('Failed to load image'));
+                img.src = dataUrl;
+            });
+            
+            // Create canvas
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                throw new Error('Could not get canvas context');
+            }
+            
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            
+            // Get image data
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            
+            // Update loading message
+            if (p2dLoaderMessage) {
+                p2dLoaderMessage.textContent = 'Loading vectorizer...';
+            }
+            
+            // Dynamically import vectortracer (loads WASM only when needed)
+            const { BinaryImageConverter } = await import('vectortracer');
+            
+            // Update loading message
+            if (p2dLoaderMessage) {
+                p2dLoaderMessage.textContent = 'Vectorizing image...';
+            }
+            
+            // VTracer options
+            const vtracerOptions = {
+                debug: false,
+                mode: 'spline' as const,
+                cornerThreshold: 60,
+                lengthThreshold: 4.0,
+                maxIterations: 10,
+                spliceThreshold: 45,
+                filterSpeckle: 4,
+                pathPrecision: 3
+            };
+            
+            const additionalOptions = {
+                invert: false,
+                pathFill: '#000000',
+                backgroundColor: undefined,
+                attributes: undefined,
+                scale: 1
+            };
+            
+            // Convert to SVG using VectorTracer
+            const converter = new BinaryImageConverter(imageData, vtracerOptions, additionalOptions);
+            
+            // Process conversion with progress updates
+            converter.init();
+            let done = false;
+            let tickCount = 0;
+            while (!done) {
+                done = converter.tick();
+                tickCount++;
+                
+                // Update progress message every 10 ticks
+                if (!done && tickCount % 10 === 0 && p2dLoaderMessage) {
+                    const progress = converter.progress();
+                    p2dLoaderMessage.textContent = `Vectorizing image... ${Math.round(progress * 100)}%`;
+                }
+                
+                // Small delay to keep UI responsive
+                if (!done) {
+                    await new Promise(resolve => setTimeout(resolve, 0));
+                }
+            }
+            
+            const svgString = converter.getResult();
+            converter.free();
+            
+            // Show SVG preview modal instead of immediate download
+            const svgCodeView = $('#p2d-svg-code-view') as HTMLTextAreaElement;
+            const svgPreviewContent = $('#p2d-svg-preview-content');
+            const svgBgToggle = $('#p2d-svg-bg-toggle') as HTMLInputElement;
+            const svgPreviewContainer = $('#p2d-svg-preview-container');
+            
+            if (svgCodeView) svgCodeView.value = svgString;
+            
+            // Render SVG preview
+            if (svgPreviewContent) {
+                svgPreviewContent.innerHTML = svgString;
+            }
+            
+            // Background toggle handler
+            const updateSvgPreview = () => {
+                if (svgPreviewContainer) {
+                    if (svgBgToggle?.checked) {
+                        svgPreviewContainer.style.backgroundColor = '';
+                        svgPreviewContainer.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
+                    } else {
+                        svgPreviewContainer.style.backgroundColor = 'white';
+                        svgPreviewContainer.style.backgroundImage = 'none';
                     }
-                    
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    ctx.drawImage(img, 0, 0);
-                    
-                    // Get image data
-                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    
-                    // Dynamically import vectortracer (loads WASM only when needed)
-                    const { BinaryImageConverter } = await import('vectortracer');
-                    
-                    // VTracer options
-                    const vtracerOptions = {
-                        debug: false,
-                        mode: 'spline' as const,
-                        cornerThreshold: 60,
-                        lengthThreshold: 4.0,
-                        maxIterations: 10,
-                        spliceThreshold: 45,
-                        filterSpeckle: 4,
-                        pathPrecision: 3
-                    };
-                    
-                    const additionalOptions = {
-                        invert: false,
-                        pathFill: '#000000',
-                        backgroundColor: undefined,
-                        attributes: undefined,
-                        scale: 1
-                    };
-                    
-                    // Convert to SVG using VectorTracer
-                    const converter = new BinaryImageConverter(imageData, vtracerOptions, additionalOptions);
-                    
-                    // Process conversion with progress updates
-                    converter.init();
-                    let done = false;
-                    while (!done) {
-                        done = converter.tick();
-                        // Small delay to keep UI responsive
-                        if (!done) {
-                            await new Promise(resolve => setTimeout(resolve, 0));
-                        }
-                    }
-                    
-                    const svgString = converter.getResult();
-                    converter.free();
-                    
-                    // Show SVG preview modal instead of immediate download
-                    const svgCodeView = $('#p2d-svg-code-view') as HTMLTextAreaElement;
-                    const svgPreviewContent = $('#p2d-svg-preview-content');
-                    const svgBgToggle = $('#p2d-svg-bg-toggle') as HTMLInputElement;
-                    const svgPreviewContainer = $('#p2d-svg-preview-container');
-                    
-                    if (svgCodeView) svgCodeView.value = svgString;
-                    
-                    // Render SVG preview
-                    if (svgPreviewContent) {
-                        svgPreviewContent.innerHTML = svgString;
-                    }
-                    
-                    // Background toggle handler
-                    const updateSvgPreview = () => {
-                        if (svgPreviewContainer) {
-                            if (svgBgToggle?.checked) {
-                                svgPreviewContainer.style.backgroundColor = '';
-                                svgPreviewContainer.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
-                            } else {
-                                svgPreviewContainer.style.backgroundColor = 'white';
-                                svgPreviewContainer.style.backgroundImage = 'none';
-                            }
-                        }
-                    };
-                    svgBgToggle?.addEventListener('change', updateSvgPreview);
-                    updateSvgPreview();
-                    
-                    // Store SVG string for download
-                    (currentGeneratedImage2d as any).svgString = svgString;
-                    
-                    // Add to details panel history (edit history for current base asset)
-                    if (currentGeneratedImage2d && currentBaseAssetId2d) {
-                        detailsPanelHistory2d.push({
-                            ...currentGeneratedImage2d,
-                            modificationType: 'SVG'
-                        });
-                        detailsPanelHistoryIndex2d = detailsPanelHistory2d.length - 1;
-                        updateDetailsPanelHistory2d();
-                    }
-                    
-                    // Hide loader modal and show SVG modal
-                    if (p2dLoaderModal) p2dLoaderModal.classList.add('hidden');
-                    if (p2dSvgPreviewModal) p2dSvgPreviewModal.classList.remove('hidden');
-                } catch (error) {
-                    console.error('SVG conversion error:', error);
-                    throw error;
                 }
             };
+            svgBgToggle?.addEventListener('change', updateSvgPreview);
+            updateSvgPreview();
             
-            img.onerror = () => {
-                throw new Error('Failed to load image');
-            };
+            // Store SVG string for download
+            (currentGeneratedImage2d as any).svgString = svgString;
             
-            img.src = dataUrl;
+            // Add to details panel history (edit history for current base asset)
+            if (currentGeneratedImage2d && currentBaseAssetId2d) {
+                detailsPanelHistory2d.push({
+                    ...currentGeneratedImage2d,
+                    modificationType: 'SVG'
+                });
+                detailsPanelHistoryIndex2d = detailsPanelHistory2d.length - 1;
+                updateDetailsPanelHistory2d();
+            }
+            
+            // Hide loader modal and show SVG modal
+            if (p2dLoaderModal) p2dLoaderModal.classList.add('hidden');
+            if (p2dSvgPreviewModal) p2dSvgPreviewModal.classList.remove('hidden');
             
         } catch (error) {
             console.error('SVG conversion failed:', error);
             showToast({ type: 'error', title: 'Conversion Failed', body: 'Failed to convert image to SVG. Please try again.' });
-        } finally {
-            convertToSvgBtn2d?.removeAttribute('disabled');
-            convertToSvgBtn2d?.classList.remove('loading');
-            // Hide loading modal
+            
+            // Hide loading modal on error
             if (p2dLoaderModal) {
                 p2dLoaderModal.classList.add('hidden');
             }
+        } finally {
+            convertToSvgBtn2d?.removeAttribute('disabled');
+            convertToSvgBtn2d?.classList.remove('loading');
         }
     });
 
