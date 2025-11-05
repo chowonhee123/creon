@@ -6069,7 +6069,18 @@ Return the 5 suggestions as a JSON array.`;
             }
             
             // Dynamically import vectortracer (loads WASM only when needed)
-            const { BinaryImageConverter } = await import('vectortracer');
+            let BinaryImageConverter: any;
+            try {
+                const vectortracerModule = await import('vectortracer');
+                BinaryImageConverter = vectortracerModule.BinaryImageConverter;
+                
+                if (!BinaryImageConverter) {
+                    throw new Error('BinaryImageConverter not found in vectortracer module');
+                }
+            } catch (importError) {
+                console.error('Failed to import vectortracer:', importError);
+                throw new Error('Failed to load vectorizer library. Please refresh the page and try again.');
+            }
             
             // Update loading message
             if (p2dLoaderMessage) {
@@ -6097,30 +6108,58 @@ Return the 5 suggestions as a JSON array.`;
             };
             
             // Convert to SVG using VectorTracer
-            const converter = new BinaryImageConverter(imageData, vtracerOptions, additionalOptions);
-            
-            // Process conversion with progress updates
-            converter.init();
-            let done = false;
-            let tickCount = 0;
-            while (!done) {
-                done = converter.tick();
-                tickCount++;
-                
-                // Update progress message every 10 ticks
-                if (!done && tickCount % 10 === 0 && p2dLoaderMessage) {
-                    const progress = converter.progress();
-                    p2dLoaderMessage.textContent = `Vectorizing image... ${Math.round(progress * 100)}%`;
-                }
-                
-                // Small delay to keep UI responsive
-                if (!done) {
-                    await new Promise(resolve => setTimeout(resolve, 0));
-                }
+            let converter: any;
+            try {
+                converter = new BinaryImageConverter(imageData, vtracerOptions, additionalOptions);
+            } catch (converterError) {
+                console.error('Failed to create BinaryImageConverter:', converterError);
+                throw new Error('Failed to initialize vectorizer. Please try again.');
             }
             
-            const svgString = converter.getResult();
-            converter.free();
+            // Process conversion with progress updates
+            try {
+                converter.init();
+                let done = false;
+                let tickCount = 0;
+                while (!done) {
+                    try {
+                        done = converter.tick();
+                        tickCount++;
+                        
+                        // Update progress message every 10 ticks
+                        if (!done && tickCount % 10 === 0 && p2dLoaderMessage) {
+                            try {
+                                const progress = converter.progress();
+                                p2dLoaderMessage.textContent = `Vectorizing image... ${Math.round(progress * 100)}%`;
+                            } catch (e) {
+                                // progress() might not be available, ignore
+                            }
+                        }
+                        
+                        // Small delay to keep UI responsive
+                        if (!done) {
+                            await new Promise(resolve => setTimeout(resolve, 0));
+                        }
+                    } catch (tickError) {
+                        console.error('Error during conversion tick:', tickError);
+                        throw new Error('Conversion process failed. Please try again.');
+                    }
+                }
+                
+                const svgString = converter.getResult();
+                converter.free();
+                
+            } catch (conversionError) {
+                console.error('Conversion error:', conversionError);
+                if (converter) {
+                    try {
+                        converter.free();
+                    } catch (e) {
+                        // Ignore free error
+                    }
+                }
+                throw conversionError;
+            }
             
             // Show SVG preview modal instead of immediate download
             const svgCodeView = $('#p2d-svg-code-view') as HTMLTextAreaElement;
@@ -6154,11 +6193,18 @@ Return the 5 suggestions as a JSON array.`;
             (currentGeneratedImage2d as any).svgString = svgString;
             
             // Add to details panel history (edit history for current base asset)
+            // Keep original image data for thumbnail display, but store SVG string separately
             if (currentGeneratedImage2d && currentBaseAssetId2d) {
-                detailsPanelHistory2d.push({
+                const svgHistoryItem: GeneratedImageData = {
                     ...currentGeneratedImage2d,
-                    modificationType: 'SVG'
-                });
+                    modificationType: 'SVG',
+                    // Keep original image data for thumbnail
+                    data: currentGeneratedImage2d.data,
+                    mimeType: currentGeneratedImage2d.mimeType
+                };
+                // Store SVG string separately
+                (svgHistoryItem as any).svgString = svgString;
+                detailsPanelHistory2d.push(svgHistoryItem);
                 detailsPanelHistoryIndex2d = detailsPanelHistory2d.length - 1;
                 updateDetailsPanelHistory2d();
             }
