@@ -4228,6 +4228,12 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
 
         const selectedModel = (document.querySelector('input[name="motion-model-image"]:checked') as HTMLInputElement)?.value || 'veo-3.1-fast-generate-preview';
 
+        // Update Final Prompt textarea to show the full prompt that will be used
+        const finalEnglishPromptElStudio = $('#motion-prompt-final-english-image') as HTMLTextAreaElement;
+        if (finalEnglishPromptElStudio) {
+            finalEnglishPromptElStudio.value = finalPrompt;
+        }
+
         const payload: any = {
             model: selectedModel,
             prompt: finalPrompt,
