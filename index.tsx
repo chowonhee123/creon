@@ -7009,17 +7009,27 @@ Return the 5 suggestions as a JSON array.`;
                 }
                 
                 // Ensure Original entry exists in history before adding BG Removed entry
+                // Original entry should always be preserved and never modified
                 const originalEntry = detailsPanelHistory3d.find(item => item.modificationType === 'Original');
                 if (!originalEntry) {
-                    // If no Original entry exists, create one from the current image's original data
-                    const baseOriginalEntry: GeneratedImageData = {
-                        ...currentGeneratedImage,
-                        modificationType: 'Original',
-                        // Use original data if available, otherwise use current data
-                        data: currentGeneratedImage.originalData ? 
+                    // If no Original entry exists, create one from the original data
+                    // Use originalData if available (from before any modifications)
+                    // Otherwise, use the current data as a fallback
+                    const originalData = currentGeneratedImage.originalData ? 
+                        (currentGeneratedImage.originalData.includes(',') ? 
                             currentGeneratedImage.originalData.split(',')[1] : 
-                            currentGeneratedImage.data,
-                        mimeType: currentGeneratedImage.originalMimeType || currentGeneratedImage.mimeType,
+                            currentGeneratedImage.originalData) : 
+                        currentGeneratedImage.data;
+                    const originalMimeType = currentGeneratedImage.originalMimeType || currentGeneratedImage.mimeType;
+                    
+                    const baseOriginalEntry: GeneratedImageData = {
+                        id: currentGeneratedImage.id,
+                        subject: currentGeneratedImage.subject,
+                        styleConstraints: currentGeneratedImage.styleConstraints,
+                        timestamp: currentGeneratedImage.timestamp,
+                        modificationType: 'Original',
+                        data: originalData, // Use original/base data, not modified data
+                        mimeType: originalMimeType,
                     };
                     detailsPanelHistory3d.unshift(baseOriginalEntry); // Add Original at the beginning
                 }
@@ -7121,18 +7131,27 @@ Return the 5 suggestions as a JSON array.`;
             
             if (imageData) {
                 // Ensure Original entry exists in history before adding Fix entry
+                // Original entry should always be preserved and never modified
                 const originalEntry = detailsPanelHistory3d.find(item => item.modificationType === 'Original');
                 if (!originalEntry) {
-                    // If no Original entry exists, create one from the current image
-                    // But first, we need to get the original data
-                    const baseOriginalEntry: GeneratedImageData = {
-                        ...currentGeneratedImage,
-                        modificationType: 'Original',
-                        // Keep original data if available, otherwise use current
-                        data: currentGeneratedImage.originalData ? 
+                    // If no Original entry exists, create one from the original data
+                    // Use originalData if available (from before any modifications)
+                    // Otherwise, use the current data as a fallback
+                    const originalData = currentGeneratedImage.originalData ? 
+                        (currentGeneratedImage.originalData.includes(',') ? 
                             currentGeneratedImage.originalData.split(',')[1] : 
-                            currentGeneratedImage.data,
-                        mimeType: currentGeneratedImage.originalMimeType || currentGeneratedImage.mimeType,
+                            currentGeneratedImage.originalData) : 
+                        currentGeneratedImage.data;
+                    const originalMimeType = currentGeneratedImage.originalMimeType || currentGeneratedImage.mimeType;
+                    
+                    const baseOriginalEntry: GeneratedImageData = {
+                        id: currentGeneratedImage.id,
+                        subject: currentGeneratedImage.subject,
+                        styleConstraints: currentGeneratedImage.styleConstraints,
+                        timestamp: currentGeneratedImage.timestamp,
+                        modificationType: 'Original',
+                        data: originalData, // Use original/base data, not modified data
+                        mimeType: originalMimeType,
                     };
                     detailsPanelHistory3d.unshift(baseOriginalEntry); // Add Original at the beginning
                 }
