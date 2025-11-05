@@ -2172,6 +2172,45 @@ window.addEventListener('DOMContentLoaded', () => {
             // Update main preview area
             if (resultImage2d && currentGeneratedImage2d) {
                 resultImage2d.src = `data:${currentGeneratedImage2d.mimeType};base64,${currentGeneratedImage2d.data}`;
+                
+                // Apply checkerboard to result media container if transparent
+                const isTransparentResult = currentGeneratedImage2d.modificationType === 'BG Removed' || currentGeneratedImage2d.modificationType === 'SVG';
+                const resultMediaContainer = $('#p2d-result-media-container');
+                const resultCheckbox = $('#p2d-result-checkerboard-checkbox') as HTMLInputElement;
+                const resultToggle = $('#p2d-result-checkerboard-toggle');
+                
+                if (isTransparentResult && resultMediaContainer) {
+                    // Show toggle
+                    if (resultToggle) resultToggle.style.display = 'flex';
+                    
+                    // Apply checkerboard based on checkbox state
+                    const applyCheckerboard = (enabled: boolean) => {
+                        if (!resultMediaContainer) return;
+                        if (enabled) {
+                            resultMediaContainer.style.backgroundColor = '';
+                            resultMediaContainer.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
+                            resultMediaContainer.style.backgroundPosition = '0 0, 8px 8px';
+                            resultMediaContainer.style.backgroundSize = '16px 16px';
+                        } else {
+                            resultMediaContainer.style.backgroundImage = '';
+                            resultMediaContainer.style.backgroundColor = '#ffffff';
+                        }
+                    };
+                    
+                    // Apply initial state (checkbox checked by default)
+                    if (resultCheckbox) {
+                        applyCheckerboard(resultCheckbox.checked);
+                    } else {
+                        applyCheckerboard(true);
+                    }
+                } else {
+                    // Hide toggle and reset background
+                    if (resultToggle) resultToggle.style.display = 'none';
+                    if (resultMediaContainer) {
+                        resultMediaContainer.style.backgroundImage = '';
+                        resultMediaContainer.style.backgroundColor = '#ffffff';
+                    }
+                }
             }
             
             // Update details panel preview
