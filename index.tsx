@@ -4869,6 +4869,8 @@ Return the 5 suggestions as a JSON array.`;
             
             if (imageHistory.length > 0) {
                 currentGeneratedImage = imageHistory[historyIndex];
+                // Update motion first/last frame images to match selected history item
+                setInitialMotionFrames(currentGeneratedImage);
                 update3dViewFromState();
             } else {
                 currentGeneratedImage = null;
@@ -7127,19 +7129,23 @@ Return the 5 suggestions as a JSON array.`;
     });
 
     // 3D History Button Listeners
-    historyBackBtn?.addEventListener('click', () => {
+    historyBackBtn?.addEventListener('click', async () => {
         if (historyIndex > 0) {
             historyIndex--;
             currentGeneratedImage = imageHistory[historyIndex];
+            // Update motion first/last frame images to match selected history item
+            await setInitialMotionFrames(currentGeneratedImage);
             update3dViewFromState();
             renderHistory();
         }
     });
 
-    historyForwardBtn?.addEventListener('click', () => {
+    historyForwardBtn?.addEventListener('click', async () => {
         if (historyIndex < imageHistory.length - 1) {
             historyIndex++;
             currentGeneratedImage = imageHistory[historyIndex];
+            // Update motion first/last frame images to match selected history item
+            await setInitialMotionFrames(currentGeneratedImage);
             update3dViewFromState();
             renderHistory();
         }
