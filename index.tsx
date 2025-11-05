@@ -1744,17 +1744,22 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         
         // Create thumbnail image
+        // For SVG items, use original image data for thumbnail (not SVG string)
         const img = document.createElement('img');
-        img.src = `data:${item.mimeType};base64,${item.data}`;
-        img.loading = 'lazy';
-        img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; pointer-events: none;';
-        img.alt = `History item ${index + 1}`;
-        img.onerror = () => {
-            img.style.display = 'none';
+        if (item.data && item.mimeType) {
+            img.src = `data:${item.mimeType};base64,${item.data}`;
+            img.loading = 'lazy';
+            img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; pointer-events: none;';
+            img.alt = `History item ${index + 1}`;
+            img.onerror = () => {
+                img.style.display = 'none';
+                thumbnailContainer.innerHTML = '<span class="material-symbols-outlined" style="font-size: 24px; color: var(--text-secondary); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">image</span>';
+            };
+            thumbnailContainer.appendChild(img);
+        } else {
+            // Fallback: show placeholder icon if data is missing
             thumbnailContainer.innerHTML = '<span class="material-symbols-outlined" style="font-size: 24px; color: var(--text-secondary); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">image</span>';
-        };
-        
-        thumbnailContainer.appendChild(img);
+        }
         
         // Create tag overlay (top-left corner)
         const tagOverlay = document.createElement('div');
