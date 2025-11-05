@@ -1733,8 +1733,6 @@ window.addEventListener('DOMContentLoaded', () => {
         tagOverlay.textContent = tagText;
         thumbnailContainer.appendChild(tagOverlay);
         
-        historyItem.appendChild(thumbnailContainer);
-        
         // Create Compare button (only for non-Original items)
         let compareButton: HTMLElement | null = null;
         if (originalItem && item.id !== originalItem.id) {
