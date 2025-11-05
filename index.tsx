@@ -5673,15 +5673,19 @@ Return the 5 suggestions as a JSON array.`;
     
     // Note: History tab click handling is now done in setupTabs function
     
-    // 3D Studio: Fix the image accordion toggle
-    const fixSectionToggle = document.querySelector('.details-fix-section-toggle');
-    const fixSection = document.querySelector('.details-fix-section');
-    fixSectionToggle?.addEventListener('click', () => {
-        const isExpanded = fixSectionToggle.getAttribute('aria-expanded') === 'true';
-        const newExpanded = !isExpanded;
-        fixSectionToggle.setAttribute('aria-expanded', String(newExpanded));
-        if (fixSection) {
-            fixSection.setAttribute('data-collapsed', String(!newExpanded));
+    // 3D Studio: Fix the image accordion toggle (using event delegation)
+    document.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        const toggleBtn = target.closest('.details-fix-section-toggle');
+        if (toggleBtn) {
+            const fixSection = toggleBtn.closest('.details-fix-section');
+            if (fixSection) {
+                const isExpanded = toggleBtn.getAttribute('aria-expanded') === 'true';
+                const newExpanded = !isExpanded;
+                toggleBtn.setAttribute('aria-expanded', String(newExpanded));
+                fixSection.setAttribute('data-collapsed', String(!newExpanded));
+                console.log('[3D Studio] Fix section toggled:', newExpanded);
+            }
         }
     });
     
