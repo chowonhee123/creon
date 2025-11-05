@@ -6175,7 +6175,7 @@ Return the 5 suggestions as a JSON array.`;
       
       const parts = [
         { inlineData: { data: base64Data, mimeType: currentGeneratedImageStudio.mimeType } },
-        { text: `Shrink the original image by 1.5x (make it 1.5 times smaller) and expand the frame to show more background. The subject should appear 1.5 times smaller in the center, revealing significantly more surrounding background area. Keep the same composition style, colors, and quality. The frame should be wider to accommodate the expanded background while maintaining the original image's visual style.` }
+        { text: `IMPORTANT: Take the original image and make the main subject 1.5 times SMALLER (reduce its size by 1.5x). Then expand the frame/canvas to show MORE background area around the subject. The subject should appear smaller in the center, with significantly more surrounding background visible. The overall image dimensions should remain the same, but the subject takes up less space, revealing more background context. Keep the same style, colors, and quality. This is a zoom-out effect - the subject shrinks, the background expands.` }
       ];
       
       const zoomOutResponse = await ai.models.generateContent({
@@ -6183,7 +6183,7 @@ Return the 5 suggestions as a JSON array.`;
         contents: { parts },
         config: {
           responseModalities: [Modality.IMAGE],
-          temperature: 0.1,
+          temperature: 0.3,
         },
       });
       
