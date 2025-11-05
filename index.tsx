@@ -846,6 +846,12 @@ window.addEventListener('DOMContentLoaded', () => {
   const generateVideoBtn = $('#generate-video-btn');
   const regenerateVideoBtn = $('#regenerate-video-btn');
   const downloadVideoBtn = $('#download-video-btn') as HTMLAnchorElement;
+  
+  // Motion More Menu
+  const motionMoreMenuBtn = $('#motion-more-menu-btn');
+  const motionMoreMenu = $('#motion-more-menu');
+  const motionMoreRegeneratePrompt = $('#motion-more-regenerate-prompt');
+  const motionMoreRegenerateVideo = $('#motion-more-regenerate-video');
   const motionPromptOutput = $('#motion-prompt-output');
   const motionGenStatusText = $('#motion-gen-status-text');
   const motionPlayBtn = $('#motion-play-btn');
@@ -4442,11 +4448,12 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
 
     // Update action buttons visibility
     if (hasVideo) {
-        // Video has been generated: show regenerate and download options
+        // Video has been generated: show more menu (left) and download (right)
         generateMotionPromptBtn.classList.add('hidden');
         generateVideoBtn.classList.add('hidden');
-        regenerateMotionPromptBtn.classList.remove('hidden');
-        regenerateVideoBtn.classList.remove('hidden');
+        regenerateMotionPromptBtn.classList.add('hidden');
+        regenerateVideoBtn.classList.add('hidden');
+        if (motionMoreMenuBtn) motionMoreMenuBtn.classList.remove('hidden');
         downloadVideoBtn.classList.remove('hidden');
     } else if (hasMotionPrompt) {
         // Prompt is ready, waiting to generate video
@@ -4454,6 +4461,7 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
         generateVideoBtn.classList.remove('hidden');
         regenerateMotionPromptBtn.classList.remove('hidden');
         regenerateVideoBtn.classList.add('hidden');
+        if (motionMoreMenuBtn) motionMoreMenuBtn.classList.add('hidden');
         downloadVideoBtn.classList.add('hidden');
     } else {
         // Initial state, no prompt yet
@@ -4461,6 +4469,7 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
         generateVideoBtn.classList.add('hidden');
         regenerateMotionPromptBtn.classList.add('hidden');
         regenerateVideoBtn.classList.add('hidden');
+        if (motionMoreMenuBtn) motionMoreMenuBtn.classList.add('hidden');
         downloadVideoBtn.classList.add('hidden');
     }
   };
