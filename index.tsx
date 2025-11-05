@@ -6325,8 +6325,6 @@ Return the 5 suggestions as a JSON array.`;
             const response = await fetch(originalDataUrl);
             const blob = await response.blob();
             const originalFile = new File([blob], 'original-icon.png', { type: originalEntry.mimeType });
-            const originalReference = { file: originalFile, dataUrl: originalDataUrl };
-            
             // Show loading
             if (p2dRegenerateBtn) {
                 p2dRegenerateBtn.setAttribute('disabled', 'true');
@@ -6334,7 +6332,7 @@ Return the 5 suggestions as a JSON array.`;
             }
             
             if (p2dLoaderModal && p2dLoaderMessage) {
-                p2dLoaderMessage.textContent = 'Regenerating icon with new colors...';
+                p2dLoaderMessage.textContent = 'Regenerating icon with new color...';
                 p2dLoaderModal.classList.remove('hidden');
             }
             
@@ -6351,17 +6349,6 @@ Return the 5 suggestions as a JSON array.`;
                     }
                 }
             ];
-            
-            // Show loading
-            if (p2dRegenerateBtn) {
-                p2dRegenerateBtn.setAttribute('disabled', 'true');
-                p2dRegenerateBtn.classList.add('loading');
-            }
-            
-            if (p2dLoaderModal && p2dLoaderMessage) {
-                p2dLoaderMessage.textContent = 'Regenerating icon with new color...';
-                p2dLoaderModal.classList.remove('hidden');
-            }
             
             const aiResponse = await ai.models.generateContent({
                 model: 'gemini-2.5-flash-image',
