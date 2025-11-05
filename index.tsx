@@ -4882,9 +4882,13 @@ Return the 5 suggestions as a JSON array.`;
             showToast({ type: 'success', title: 'Deleted', body: 'Item removed from history.' });
         });
         
-        li.addEventListener('click', () => {
+        li.addEventListener('click', async () => {
             historyIndex = index;
             currentGeneratedImage = imageHistory[historyIndex];
+            
+            // Update motion first/last frame images to match selected history item
+            await setInitialMotionFrames(currentGeneratedImage);
+            
             update3dViewFromState();
             renderHistory();
         });
