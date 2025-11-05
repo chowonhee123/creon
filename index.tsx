@@ -2050,14 +2050,15 @@ window.addEventListener('DOMContentLoaded', () => {
       height: window.getComputedStyle(detailsHistoryList).height
     });
     console.log(`[2D Studio] History list parent:`, detailsHistoryList.parentElement);
-    const historyTabContentElement = detailsHistoryList.closest('.details-tab-content') as HTMLElement;
-    console.log(`[2D Studio] History tab content:`, historyTabContentElement);
-    if (historyTabContentElement) {
+    const historyTabContentElementForDebug = detailsHistoryList.closest('.details-tab-content');
+    console.log(`[2D Studio] History tab content:`, historyTabContentElementForDebug);
+    if (historyTabContentElementForDebug) {
+      const tabElement = historyTabContentElementForDebug as HTMLElement;
       console.log(`[2D Studio] History tab content computed styles:`, {
-        display: window.getComputedStyle(historyTabContentElement).display,
-        visibility: window.getComputedStyle(historyTabContentElement).visibility,
-        opacity: window.getComputedStyle(historyTabContentElement).opacity,
-        hasHiddenClass: historyTabContentElement.classList.contains('hidden')
+        display: window.getComputedStyle(tabElement).display,
+        visibility: window.getComputedStyle(tabElement).visibility,
+        opacity: window.getComputedStyle(tabElement).opacity,
+        hasHiddenClass: tabElement.classList.contains('hidden')
       });
     }
     
