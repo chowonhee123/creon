@@ -5,7 +5,6 @@
 
 import { GoogleGenAI, GenerateContentResponse, Modality, Chat, Type } from '@google/genai';
 import {marked} from 'https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js';
-import { BinaryImageConverter, BinaryImageConverterParams, Options } from 'vectortracer';
 
 // --- TYPE DEFINITIONS ---
 interface IconData {
@@ -6060,10 +6059,13 @@ Return the 5 suggestions as a JSON array.`;
                     // Get image data
                     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                     
+                    // Dynamically import vectortracer (loads WASM only when needed)
+                    const { BinaryImageConverter } = await import('vectortracer');
+                    
                     // VTracer options
-                    const vtracerOptions: BinaryImageConverterParams = {
+                    const vtracerOptions = {
                         debug: false,
-                        mode: 'spline',
+                        mode: 'spline' as const,
                         cornerThreshold: 60,
                         lengthThreshold: 4.0,
                         maxIterations: 10,
@@ -6072,7 +6074,7 @@ Return the 5 suggestions as a JSON array.`;
                         pathPrecision: 3
                     };
                     
-                    const additionalOptions: Options = {
+                    const additionalOptions = {
                         invert: false,
                         pathFill: '#000000',
                         backgroundColor: undefined,
