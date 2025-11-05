@@ -1093,23 +1093,32 @@ window.addEventListener('DOMContentLoaded', () => {
           console.log('[2D Studio] History tab clicked via setupTabs');
           console.log('[2D Studio] Current image:', currentGeneratedImage2d);
           console.log('[2D Studio] History count before init:', detailsPanelHistory2d.length);
+          console.log('[2D Studio] History items:', detailsPanelHistory2d);
           
           // If history is empty but we have a current image, initialize it
           if (detailsPanelHistory2d.length === 0 && currentGeneratedImage2d) {
             console.log('[2D Studio] History is empty, initializing with current image');
             resetRightHistoryForBaseAsset2d(currentGeneratedImage2d);
+            console.log('[2D Studio] History after init:', detailsPanelHistory2d);
           }
           
           // Force update history immediately and with delays
           setTimeout(() => {
+            console.log('[2D Studio] Force update history (0ms)');
             updateDetailsPanelHistory2d();
           }, 0);
           setTimeout(() => {
+            console.log('[2D Studio] Force update history (100ms)');
             updateDetailsPanelHistory2d();
           }, 100);
           setTimeout(() => {
+            console.log('[2D Studio] Force update history (300ms)');
             updateDetailsPanelHistory2d();
           }, 300);
+          setTimeout(() => {
+            console.log('[2D Studio] Force update history (500ms)');
+            updateDetailsPanelHistory2d();
+          }, 500);
         }
       });
     });
@@ -1683,6 +1692,13 @@ window.addEventListener('DOMContentLoaded', () => {
     
     detailsHistoryList.innerHTML = '';
     
+    console.log('[2D Studio] Rendering history items:', detailsPanelHistory2d.map(item => ({
+        id: item.id,
+        modificationType: item.modificationType,
+        hasData: !!item.data,
+        hasMimeType: !!item.mimeType
+    })));
+    
     // Find original item for comparison
     const originalItem = detailsPanelHistory2d.find(item => item.modificationType === 'Original');
     
@@ -1691,6 +1707,14 @@ window.addEventListener('DOMContentLoaded', () => {
     reversedHistory.forEach((item, originalIndex) => {
         const index = detailsPanelHistory2d.length - 1 - originalIndex;
         const isActive = index === detailsPanelHistoryIndex2d;
+        
+        console.log(`[2D Studio] Rendering history item ${index}:`, {
+            id: item.id,
+            modificationType: item.modificationType,
+            hasData: !!item.data,
+            dataLength: item.data?.length || 0,
+            mimeType: item.mimeType
+        });
         
         // Determine modification type and tag text
         let modificationType = item.modificationType || 'Original';
