@@ -4209,7 +4209,7 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
         }
 
         // Add specific prompts to avoid letterboxing and maintain background
-        const finalPrompt = `no black bars, no letterboxing, full-frame composition, fill the entire frame. Maintain full frame coverage with no black bars, borders, or letterboxing. Keep the entire image visible. Preserve the exact background from the source image without any cropping or black bars. ${sanitizedUserPrompt}. CRITICAL NEGATIVE PROMPT: black bars, letterboxing, black borders, black edges, cinematic crop, pillarbox, narrow frame, cropped edges, missing background.`;
+        const finalPrompt = `no black bars, no letterboxing, full-frame composition, fill the entire frame. Maintain full frame coverage with no black bars, borders, or letterboxing. Keep the entire image visible. Preserve the exact background from the source image without any cropping or black bars. ${sanitizedUserPrompt}. CRITICAL NEGATIVE PROMPT: black bars, letterboxing, black borders, black edges, cinematic crop, pillarbox, narrow frame, cropped edges, missing background. avoid letterboxing, use 1.25:1 aspect ratio`;
 
         const config: any = {
             numberOfVideos: 1,
