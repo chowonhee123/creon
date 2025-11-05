@@ -2236,15 +2236,24 @@ a.secondary-btn[disabled] {
     background: var(--surface-color);
     border-top: 1px solid var(--border-color);
     z-index: 10;
+    margin-top: auto;
+}
+
+/* Hide details-actions in motion and history tabs */
+.details-tab-content[data-tab-content="motion"] .details-actions,
+.details-tab-content[data-tab-content="history"] .details-actions {
+    display: none;
 }
 
 .details-tab-content[data-tab-content="detail"] {
     padding: var(--spacing-5);
+    padding-bottom: 0;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
     flex-grow: 1;
     min-height: 0;
+    position: relative;
 }
 
 .details-tab-content[data-tab-content="motion"] {
