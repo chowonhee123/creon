@@ -6260,10 +6260,16 @@ Return the 5 suggestions as a JSON array.`;
           modificationType: `Zoom Out ${scale}x`
         };
         
-        imageStudioHistory.push(newImage);
-        imageStudioHistoryIndex = imageStudioHistory.length - 1;
-        currentGeneratedImageStudio = newImage;
+        // Only add to right panel history, not left panel history
+        if (!currentGeneratedImageStudio.rightPanelHistory) {
+          currentGeneratedImageStudio.rightPanelHistory = [{
+            ...currentGeneratedImageStudio,
+            modificationType: 'Original'
+          }];
+        }
+        currentGeneratedImageStudio.rightPanelHistory.push(newImage);
         
+        // Update preview with new image
         const resultImage = $('#result-image-image') as HTMLImageElement;
         if (resultImage) {
           resultImage.src = zoomedOutDataUrl;
@@ -6277,28 +6283,8 @@ Return the 5 suggestions as a JSON array.`;
           detailsDownload.href = zoomedOutDataUrl;
         }
         
-        // Update right panel history
-        if (!currentGeneratedImageStudio.rightPanelHistory) {
-          // Find original in main history
-          const originalInHistory = imageStudioHistory.find(item => 
-            item.id === currentGeneratedImageStudio?.id || 
-            (item.subject === currentGeneratedImageStudio?.subject && !item.modificationType)
-          );
-          if (originalInHistory) {
-            currentGeneratedImageStudio.rightPanelHistory = [{
-              ...originalInHistory,
-              modificationType: 'Original'
-            }];
-          }
-        }
-        if (currentGeneratedImageStudio.rightPanelHistory) {
-          currentGeneratedImageStudio.rightPanelHistory.push({
-            ...newImage,
-            modificationType: `Zoom Out ${scale}x`
-          });
-        }
-        
-        renderImageStudioHistory();
+        // Update right panel history display
+        updateImageStudioDetailsHistory();
         
         showToast({ type: 'success', title: `Zoomed Out ${scale}x!`, body: `Frame has been expanded by ${scale} times.` });
       }
@@ -6358,7 +6344,6 @@ Return the 5 suggestions as a JSON array.`;
         if (detailsPreviewImageImage) {
           detailsPreviewImageImage.src = upscaledDataUrl;
           detailsPreviewImageImage.style.transform = 'scale(1)';
-          currentZoomLevel = 1;
         }
         
         const detailsDownload = $('#details-download-btn-image') as HTMLAnchorElement;
@@ -6460,10 +6445,16 @@ Return the 5 suggestions as a JSON array.`;
           modificationType: 'Modified'
         };
         
-        imageStudioHistory.push(newImage);
-        imageStudioHistoryIndex = imageStudioHistory.length - 1;
-        currentGeneratedImageStudio = newImage;
+        // Only add to right panel history, not left panel history
+        if (!currentGeneratedImageStudio.rightPanelHistory) {
+          currentGeneratedImageStudio.rightPanelHistory = [{
+            ...currentGeneratedImageStudio,
+            modificationType: 'Original'
+          }];
+        }
+        currentGeneratedImageStudio.rightPanelHistory.push(newImage);
         
+        // Update preview with new image
         const resultImage = $('#result-image-image') as HTMLImageElement;
         if (resultImage) {
           resultImage.src = regeneratedDataUrl;
@@ -6471,7 +6462,6 @@ Return the 5 suggestions as a JSON array.`;
         if (detailsPreviewImageImage) {
           detailsPreviewImageImage.src = regeneratedDataUrl;
           detailsPreviewImageImage.style.transform = 'scale(1)';
-          currentZoomLevel = 1;
         }
         
         const detailsDownload = $('#details-download-btn-image') as HTMLAnchorElement;
@@ -6479,19 +6469,8 @@ Return the 5 suggestions as a JSON array.`;
           detailsDownload.href = regeneratedDataUrl;
         }
         
-        // Update right panel history
-        if (!currentGeneratedImageStudio.rightPanelHistory) {
-          currentGeneratedImageStudio.rightPanelHistory = [{
-            ...currentGeneratedImageStudio,
-            modificationType: 'Original'
-          }];
-        }
-        currentGeneratedImageStudio.rightPanelHistory.push({
-          ...newImage,
-          modificationType: 'Modified'
-        });
-        
-        renderImageStudioHistory();
+        // Update right panel history display
+        updateImageStudioDetailsHistory();
         detailsFixBtnImage.setAttribute('disabled', '');
         
         showToast({ type: 'success', title: 'Regenerated!', body: 'Image has been regenerated with new colors.' });
@@ -6541,6 +6520,43 @@ Return the 5 suggestions as a JSON array.`;
       }
       
       historyItem.appendChild(thumbnailContainer);
+      
+      // Add click handler to update preview
+      historyItem.addEventListener('click', () => {
+        const selectedItem = rightPanelHistory[index];
+        if (!selectedItem) return;
+        
+        // Update main preview area
+        const resultImage = $('#result-image-image') as HTMLImageElement;
+        if (resultImage && selectedItem) {
+          resultImage.src = `data:${selectedItem.mimeType};base64,${selectedItem.data}`;
+          resultImage.classList.remove('hidden');
+        }
+        
+        // Update details panel preview
+        const detailsPreviewImage = $('#details-preview-image-image') as HTMLImageElement;
+        if (detailsPreviewImage && selectedItem) {
+          detailsPreviewImage.src = `data:${selectedItem.mimeType};base64,${selectedItem.data}`;
+          detailsPreviewImage.style.transform = 'scale(1)';
+        }
+        
+        // Update download button
+        const detailsDownload = $('#details-download-btn-image') as HTMLAnchorElement;
+        if (detailsDownload && selectedItem) {
+          detailsDownload.href = `data:${selectedItem.mimeType};base64,${selectedItem.data}`;
+        }
+        
+        // Update visual selection
+        const allHistoryItems = historyListEl.querySelectorAll('div');
+        allHistoryItems.forEach((el, i) => {
+          if (i === index) {
+            el.style.border = '2px solid var(--accent-color)';
+          } else {
+            el.style.border = '2px solid transparent';
+          }
+        });
+      });
+      
       historyListEl.appendChild(historyItem);
     });
   };
