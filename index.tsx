@@ -3900,7 +3900,16 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
             mimeType,
             subject: imageStudioReferenceImages[0]?.file.name || '',
             styleConstraints: imageStudioReferenceImages[1]?.file.name || '',
-            timestamp
+            timestamp,
+            rightPanelHistory: [{
+              id: `img_${timestamp}`,
+              data,
+              mimeType,
+              subject: imageStudioReferenceImages[0]?.file.name || '',
+              styleConstraints: imageStudioReferenceImages[1]?.file.name || '',
+              timestamp,
+              modificationType: 'Original'
+            }]
           };
           imageStudioHistory.push(currentGeneratedImageStudio);
           imageStudioHistoryIndex = imageStudioHistory.length - 1;
@@ -3994,7 +4003,16 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
             mimeType,
             subject: imageStudioReferenceImages[0]?.file.name || promptText || '',
             styleConstraints: promptText || '',
-            timestamp
+            timestamp,
+            rightPanelHistory: [{
+              id: `img_${timestamp}`,
+              data,
+              mimeType,
+              subject: imageStudioReferenceImages[0]?.file.name || promptText || '',
+              styleConstraints: promptText || '',
+              timestamp,
+              modificationType: 'Original'
+            }]
           };
           imageStudioHistory.push(currentGeneratedImageStudio);
           imageStudioHistoryIndex = imageStudioHistory.length - 1;
@@ -6171,6 +6189,290 @@ Return the 5 suggestions as a JSON array.`;
       
       showToast({ type: 'success', title: 'Deleted', body: 'Image removed from history.' });
     }
+  });
+  
+  // Image Studio: Fix the image section toggle
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    const toggleBtn = target.closest('#image-details-panel-image .details-fix-section-toggle');
+    if (toggleBtn) {
+      const fixSection = toggleBtn.closest('.details-fix-section');
+      if (fixSection) {
+        const isExpanded = toggleBtn.getAttribute('aria-expanded') === 'true';
+        const newExpanded = !isExpanded;
+        toggleBtn.setAttribute('aria-expanded', String(newExpanded));
+        fixSection.setAttribute('data-collapsed', String(!newExpanded));
+        const icon = toggleBtn.querySelector('.material-symbols-outlined');
+        if (icon) {
+          icon.textContent = newExpanded ? 'expand_less' : 'expand_more';
+        }
+      }
+    }
+  });
+  
+  // Image Studio: Zoom In/Out
+  const zoomInBtnImage = $('#details-zoom-in-btn-image');
+  const zoomOutBtnImage = $('#details-zoom-out-btn-image');
+  const detailsPreviewImageImage = $('#details-preview-image-image') as HTMLImageElement;
+  let currentZoomLevel = 1;
+  
+  zoomInBtnImage?.addEventListener('click', () => {
+    if (detailsPreviewImageImage) {
+      currentZoomLevel = Math.min(currentZoomLevel + 0.25, 3);
+      detailsPreviewImageImage.style.transform = `scale(${currentZoomLevel})`;
+      detailsPreviewImageImage.style.transition = 'transform 0.2s ease';
+    }
+  });
+  
+  zoomOutBtnImage?.addEventListener('click', () => {
+    if (detailsPreviewImageImage) {
+      currentZoomLevel = Math.max(currentZoomLevel - 0.25, 0.5);
+      detailsPreviewImageImage.style.transform = `scale(${currentZoomLevel})`;
+      detailsPreviewImageImage.style.transition = 'transform 0.2s ease';
+    }
+  });
+  
+  // Image Studio: Upscale from Fix section
+  const upscaleFixBtnImage = $('#details-upscale-fix-btn-image');
+  upscaleFixBtnImage?.addEventListener('click', async () => {
+    if (!currentGeneratedImageStudio) return;
+    
+    const loaderModal = $('#image-generation-loader-modal');
+    loaderModal?.classList.remove('hidden');
+    updateButtonLoadingState(upscaleFixBtnImage as HTMLButtonElement, true);
+    
+    try {
+      const dataUrl = `data:${currentGeneratedImageStudio.mimeType};base64,${currentGeneratedImageStudio.data}`;
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      const file = new File([blob], 'image.png', { type: currentGeneratedImageStudio.mimeType });
+      const base64Data = await blobToBase64(file);
+      
+      const parts = [
+        { inlineData: { data: base64Data, mimeType: currentGeneratedImageStudio.mimeType } },
+        { text: 'Upscale this image to 4K resolution while maintaining quality and details' }
+      ];
+      
+      const upscaleResponse = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image',
+        contents: { parts },
+        config: {
+          responseModalities: [Modality.IMAGE],
+        },
+      });
+      
+      const upscalePart = upscaleResponse.candidates?.[0]?.content?.parts?.[0];
+      if (upscalePart && upscalePart.inlineData) {
+        const { data, mimeType } = upscalePart.inlineData;
+        const upscaledDataUrl = `data:${mimeType};base64,${data}`;
+        
+        currentGeneratedImageStudio.data = data;
+        currentGeneratedImageStudio.mimeType = mimeType;
+        
+        const resultImage = $('#result-image-image') as HTMLImageElement;
+        if (resultImage) {
+          resultImage.src = upscaledDataUrl;
+        }
+        if (detailsPreviewImageImage) {
+          detailsPreviewImageImage.src = upscaledDataUrl;
+          detailsPreviewImageImage.style.transform = 'scale(1)';
+          currentZoomLevel = 1;
+        }
+        
+        const detailsDownload = $('#details-download-btn-image') as HTMLAnchorElement;
+        if (detailsDownload) {
+          detailsDownload.href = upscaledDataUrl;
+        }
+        
+        // Update right panel history
+        if (!currentGeneratedImageStudio.rightPanelHistory) {
+          currentGeneratedImageStudio.rightPanelHistory = [{
+            ...currentGeneratedImageStudio,
+            modificationType: 'Original'
+          }];
+        }
+        const upscaledItem: GeneratedImageData = {
+          ...currentGeneratedImageStudio,
+          data,
+          mimeType,
+          modificationType: 'Upscaled'
+        };
+        currentGeneratedImageStudio.rightPanelHistory.push(upscaledItem);
+        
+        showToast({ type: 'success', title: 'Upscaled!', body: 'Image has been upscaled to higher resolution.' });
+      }
+    } catch (error) {
+      console.error('Error upscaling image:', error);
+      showToast({ type: 'error', title: 'Upscale Failed', body: 'Failed to upscale image.' });
+    } finally {
+      loaderModal?.classList.add('hidden');
+      updateButtonLoadingState(upscaleFixBtnImage as HTMLButtonElement, false);
+    }
+  });
+  
+  // Image Studio: Color pickers and Regenerate
+  const detailsBackgroundColorPickerImage = $('#details-background-color-picker-image') as HTMLInputElement;
+  const detailsObjectColorPickerImage = $('#details-object-color-picker-image') as HTMLInputElement;
+  const detailsFixBtnImage = $('#details-fix-btn-image');
+  
+  if (detailsBackgroundColorPickerImage) {
+    detailsBackgroundColorPickerImage.addEventListener('input', () => {
+      if (detailsFixBtnImage) {
+        detailsFixBtnImage.removeAttribute('disabled');
+      }
+    });
+  }
+  
+  if (detailsObjectColorPickerImage) {
+    detailsObjectColorPickerImage.addEventListener('input', () => {
+      if (detailsFixBtnImage) {
+        detailsFixBtnImage.removeAttribute('disabled');
+      }
+    });
+  }
+  
+  // Image Studio: Regenerate with new colors
+  detailsFixBtnImage?.addEventListener('click', async () => {
+    if (!currentGeneratedImageStudio) return;
+    
+    const loaderModal = $('#image-generation-loader-modal');
+    loaderModal?.classList.remove('hidden');
+    updateButtonLoadingState(detailsFixBtnImage as HTMLButtonElement, true);
+    
+    try {
+      const bgColor = detailsBackgroundColorPickerImage?.value || '#FFFFFF';
+      const objColor = detailsObjectColorPickerImage?.value || '#2962FF';
+      
+      const dataUrl = `data:${currentGeneratedImageStudio.mimeType};base64,${currentGeneratedImageStudio.data}`;
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      const file = new File([blob], 'image.png', { type: currentGeneratedImageStudio.mimeType });
+      const base64Data = await blobToBase64(file);
+      
+      const parts = [
+        { inlineData: { data: base64Data, mimeType: currentGeneratedImageStudio.mimeType } },
+        { text: `Regenerate this image with background color ${bgColor} and object color ${objColor}. Maintain the same composition and style.` }
+      ];
+      
+      const regenerateResponse = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image',
+        contents: { parts },
+        config: {
+          responseModalities: [Modality.IMAGE],
+        },
+      });
+      
+      const regeneratePart = regenerateResponse.candidates?.[0]?.content?.parts?.[0];
+      if (regeneratePart && regeneratePart.inlineData) {
+        const { data, mimeType } = regeneratePart.inlineData;
+        const regeneratedDataUrl = `data:${mimeType};base64,${data}`;
+        
+        const timestamp = Date.now();
+        const newImage: GeneratedImageData = {
+          id: `img_${timestamp}`,
+          data,
+          mimeType,
+          subject: currentGeneratedImageStudio.subject,
+          styleConstraints: currentGeneratedImageStudio.styleConstraints,
+          timestamp,
+          modificationType: 'Modified'
+        };
+        
+        imageStudioHistory.push(newImage);
+        imageStudioHistoryIndex = imageStudioHistory.length - 1;
+        currentGeneratedImageStudio = newImage;
+        
+        const resultImage = $('#result-image-image') as HTMLImageElement;
+        if (resultImage) {
+          resultImage.src = regeneratedDataUrl;
+        }
+        if (detailsPreviewImageImage) {
+          detailsPreviewImageImage.src = regeneratedDataUrl;
+          detailsPreviewImageImage.style.transform = 'scale(1)';
+          currentZoomLevel = 1;
+        }
+        
+        const detailsDownload = $('#details-download-btn-image') as HTMLAnchorElement;
+        if (detailsDownload) {
+          detailsDownload.href = regeneratedDataUrl;
+        }
+        
+        // Update right panel history
+        if (!currentGeneratedImageStudio.rightPanelHistory) {
+          currentGeneratedImageStudio.rightPanelHistory = [{
+            ...currentGeneratedImageStudio,
+            modificationType: 'Original'
+          }];
+        }
+        currentGeneratedImageStudio.rightPanelHistory.push({
+          ...newImage,
+          modificationType: 'Modified'
+        });
+        
+        renderImageStudioHistory();
+        detailsFixBtnImage.setAttribute('disabled', '');
+        
+        showToast({ type: 'success', title: 'Regenerated!', body: 'Image has been regenerated with new colors.' });
+      }
+    } catch (error) {
+      console.error('Error regenerating image:', error);
+      showToast({ type: 'error', title: 'Regeneration Failed', body: 'Failed to regenerate image.' });
+    } finally {
+      loaderModal?.classList.add('hidden');
+      updateButtonLoadingState(detailsFixBtnImage as HTMLButtonElement, false);
+    }
+  });
+  
+  // Image Studio: History tab rendering
+  const updateImageStudioDetailsHistory = () => {
+    const historyListEl = $('#image-details-history-list');
+    if (!historyListEl || !currentGeneratedImageStudio) return;
+    
+    historyListEl.innerHTML = '';
+    
+    // Get right panel history for current image
+    let rightPanelHistory: GeneratedImageData[] = [];
+    if (currentGeneratedImageStudio.rightPanelHistory) {
+      rightPanelHistory = currentGeneratedImageStudio.rightPanelHistory;
+    } else {
+      // Initialize with Original
+      rightPanelHistory = [{
+        ...currentGeneratedImageStudio,
+        modificationType: 'Original'
+      }];
+      currentGeneratedImageStudio.rightPanelHistory = rightPanelHistory;
+    }
+    
+    rightPanelHistory.forEach((item, index) => {
+      const historyItem = document.createElement('div');
+      historyItem.style.cssText = 'position: relative; aspect-ratio: 1; border-radius: var(--border-radius-md); overflow: hidden; cursor: pointer; border: 2px solid transparent;';
+      
+      const thumbnailContainer = document.createElement('div');
+      thumbnailContainer.style.cssText = 'width: 100%; height: 100%; position: relative; display: flex; align-items: center; justify-content: center;';
+      
+      if (item.data && item.mimeType) {
+        const dataUrl = `data:${item.mimeType};base64,${item.data}`;
+        const img = document.createElement('img');
+        img.src = dataUrl;
+        img.style.cssText = 'width: 100%; height: 100%; object-fit: contain; pointer-events: none;';
+        thumbnailContainer.appendChild(img);
+      }
+      
+      historyItem.appendChild(thumbnailContainer);
+      historyListEl.appendChild(historyItem);
+    });
+  };
+  
+  // Update history when History tab is clicked
+  const imageDetailsPanelTabs = $('#image-details-panel-image')?.querySelectorAll('.tab-item');
+  imageDetailsPanelTabs?.forEach(tab => {
+    tab.addEventListener('click', () => {
+      if (tab.getAttribute('data-tab') === 'history') {
+        setTimeout(() => {
+          updateImageStudioDetailsHistory();
+        }, 50);
+      }
+    });
   });
 
   themeToggleButton?.addEventListener('click', () => {

@@ -1224,12 +1224,66 @@
                     <nav class="details-panel-tabs">
                         <button class="tab-item active" data-tab="detail">Detail</button>
                         <button class="tab-item" data-tab="motion">Motion</button>
+                        <button class="tab-item" data-tab="history">History</button>
                     </nav>
                     <div class="details-panel-body">
                         <div class="details-tab-content active" data-tab-content="detail">
                             <div class="details-preview">
                                 <img id="details-preview-image-image" src="" alt="Details preview">
                             </div>
+                            
+                            <!-- Fix the image section -->
+                            <div class="details-fix-section">
+                                <div class="details-fix-section-header">
+                                    <h3>Fix the image</h3>
+                                    <button class="details-fix-section-toggle" type="button" aria-expanded="true">
+                                        <span class="material-symbols-outlined">expand_less</span>
+                                    </button>
+                                </div>
+                                <div id="image-fix-content" class="options-group">
+                                    <!-- Zoom and Action Buttons -->
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-2); margin-bottom: var(--spacing-3);">
+                                        <button id="details-zoom-in-btn-image" class="secondary-btn">
+                                            <span class="material-symbols-outlined">zoom_in</span>
+                                            <span class="btn-text">Zoom In</span>
+                                        </button>
+                                        <button id="details-zoom-out-btn-image" class="secondary-btn">
+                                            <span class="material-symbols-outlined">zoom_out</span>
+                                            <span class="btn-text">Zoom Out</span>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Upscale Button -->
+                                    <button id="details-upscale-fix-btn-image" class="secondary-btn" style="width: 100%; margin-bottom: var(--spacing-3);">
+                                        <span class="material-symbols-outlined">photo_size_select_actual</span>
+                                        <span class="btn-text">Upscale</span>
+                                        <div class="btn-loader"></div>
+                                    </button>
+                                    
+                                    <!-- Color Inputs -->
+                                    <div class="filter-group">
+                                        <label>Background Color</label>
+                                        <div class="input-with-suffix">
+                                            <input type="color" id="details-background-color-picker-image" value="#FFFFFF" class="color-swatch-input" />
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="filter-group">
+                                        <label>Object Color</label>
+                                        <div class="input-with-suffix">
+                                            <input type="color" id="details-object-color-picker-image" value="#2962FF" class="color-swatch-input" />
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Regenerate Button -->
+                                    <button id="details-fix-btn-image" class="primary-btn" style="width: 100%; margin-top: var(--spacing-2);" disabled>
+                                        <span class="material-symbols-outlined">autorenew</span>
+                                        <span class="btn-text">Regenerate</span>
+                                        <div class="btn-loader"></div>
+                                    </button>
+                                </div>
+                            </div>
+                            
                             <div class="details-actions">
                                 <button id="details-more-menu-btn-image" class="icon-button" aria-label="More actions" title="More actions">
                                     <span class="material-symbols-outlined">more_horiz</span>
@@ -1249,6 +1303,14 @@
                                 </a>
                             </div>
                         </div>
+                        
+                        <!-- History Tab Content -->
+                        <div class="details-tab-content hidden" data-tab-content="history">
+                            <div id="image-details-history-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; padding: var(--spacing-2); overflow-y: auto;">
+                                <!-- History items will be rendered here -->
+                            </div>
+                        </div>
+                        
                         <div class="details-tab-content hidden" data-tab-content="motion">
                             <div class="motion-fixed-header">
                                 <div class="motion-thumbnail-container">
