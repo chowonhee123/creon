@@ -6211,7 +6211,7 @@ Return the 5 suggestions as a JSON array.`;
   });
   
   // Image Studio: Zoom Out (Frame Expansion)
-  const zoomOut1_5xBtnImage = $('#details-zoom-out-1.5x-btn-image');
+  const zoomOut1_5xBtnImage = $('#details-zoom-out-1-5x-btn-image');
   const zoomOut2xBtnImage = $('#details-zoom-out-2x-btn-image');
   const detailsPreviewImageImage = $('#details-preview-image-image') as HTMLImageElement;
   
