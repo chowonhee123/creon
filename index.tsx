@@ -1691,8 +1691,8 @@ window.addEventListener('DOMContentLoaded', () => {
       return;
     }
     
-    const historyTabContent = detailsHistoryList.closest('.details-tab-content[data-tab-content="history"]');
-    if (!historyTabContent) {
+    const historyTabContentElement = detailsHistoryList.closest('.details-tab-content[data-tab-content="history"]') as HTMLElement;
+    if (!historyTabContentElement) {
       console.warn('[2D Studio] History tab content not found');
       return;
     }
@@ -1700,8 +1700,8 @@ window.addEventListener('DOMContentLoaded', () => {
     console.log('[2D Studio] updateDetailsPanelHistory2d called');
     console.log('[2D Studio] History count:', detailsPanelHistory2d.length);
     console.log('[2D Studio] Current image:', currentGeneratedImage2d);
-    console.log('[2D Studio] History tab visible:', !historyTabContent.classList.contains('hidden'));
-    console.log('[2D Studio] History tab classes:', historyTabContent.className);
+    console.log('[2D Studio] History tab visible:', !historyTabContentElement.classList.contains('hidden'));
+    console.log('[2D Studio] History tab classes:', historyTabContentElement.className);
     
     // If history is empty but we have a current image, initialize it
     if (detailsPanelHistory2d.length === 0 && currentGeneratedImage2d) {
@@ -1873,7 +1873,10 @@ window.addEventListener('DOMContentLoaded', () => {
                 z-index: 3;
                 pointer-events: auto;
             `;
-            compareButton.querySelector('.material-symbols-outlined')!.style.cssText = 'font-size: 18px;';
+            const iconElement = compareButton.querySelector('.material-symbols-outlined') as HTMLElement;
+            if (iconElement) {
+                iconElement.style.cssText = 'font-size: 18px;';
+            }
             thumbnailContainer.appendChild(compareButton);
             
             // Show compare button on hover
@@ -2047,14 +2050,14 @@ window.addEventListener('DOMContentLoaded', () => {
       height: window.getComputedStyle(detailsHistoryList).height
     });
     console.log(`[2D Studio] History list parent:`, detailsHistoryList.parentElement);
-    const historyTabContent = detailsHistoryList.closest('.details-tab-content');
-    console.log(`[2D Studio] History tab content:`, historyTabContent);
-    if (historyTabContent) {
+    const historyTabContentElement = detailsHistoryList.closest('.details-tab-content') as HTMLElement;
+    console.log(`[2D Studio] History tab content:`, historyTabContentElement);
+    if (historyTabContentElement) {
       console.log(`[2D Studio] History tab content computed styles:`, {
-        display: window.getComputedStyle(historyTabContent).display,
-        visibility: window.getComputedStyle(historyTabContent).visibility,
-        opacity: window.getComputedStyle(historyTabContent).opacity,
-        hasHiddenClass: historyTabContent.classList.contains('hidden')
+        display: window.getComputedStyle(historyTabContentElement).display,
+        visibility: window.getComputedStyle(historyTabContentElement).visibility,
+        opacity: window.getComputedStyle(historyTabContentElement).opacity,
+        hasHiddenClass: historyTabContentElement.classList.contains('hidden')
       });
     }
     
@@ -2216,7 +2219,10 @@ window.addEventListener('DOMContentLoaded', () => {
                 z-index: 3;
                 pointer-events: auto;
             `;
-            compareButton.querySelector('.material-symbols-outlined')!.style.cssText = 'font-size: 18px;';
+            const iconElement = compareButton.querySelector('.material-symbols-outlined') as HTMLElement;
+            if (iconElement) {
+                iconElement.style.cssText = 'font-size: 18px;';
+            }
             thumbnailContainer.appendChild(compareButton);
             
             // Show compare button on hover
