@@ -2035,11 +2035,42 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    console.log(`[2D Studio] Rendered ${detailsPanelHistory2d.length} history items`);
+    console.log(`[2D Studio] ✅ Rendered ${detailsPanelHistory2d.length} history items`);
     console.log(`[2D Studio] Final DOM children count:`, detailsHistoryList.children.length);
     console.log(`[2D Studio] History list element:`, detailsHistoryList);
+    console.log(`[2D Studio] History list computed styles:`, {
+      display: window.getComputedStyle(detailsHistoryList).display,
+      gridTemplateColumns: window.getComputedStyle(detailsHistoryList).gridTemplateColumns,
+      visibility: window.getComputedStyle(detailsHistoryList).visibility,
+      opacity: window.getComputedStyle(detailsHistoryList).opacity,
+      width: window.getComputedStyle(detailsHistoryList).width,
+      height: window.getComputedStyle(detailsHistoryList).height
+    });
     console.log(`[2D Studio] History list parent:`, detailsHistoryList.parentElement);
-    console.log(`[2D Studio] History tab content:`, detailsHistoryList.closest('.details-tab-content'));
+    const historyTabContent = detailsHistoryList.closest('.details-tab-content');
+    console.log(`[2D Studio] History tab content:`, historyTabContent);
+    if (historyTabContent) {
+      console.log(`[2D Studio] History tab content computed styles:`, {
+        display: window.getComputedStyle(historyTabContent).display,
+        visibility: window.getComputedStyle(historyTabContent).visibility,
+        opacity: window.getComputedStyle(historyTabContent).opacity,
+        hasHiddenClass: historyTabContent.classList.contains('hidden')
+      });
+    }
+    
+    // Verify each child element
+    Array.from(detailsHistoryList.children).forEach((child, idx) => {
+      console.log(`[2D Studio] Child ${idx}:`, {
+        tagName: child.tagName,
+        className: child.className,
+        styles: {
+          display: window.getComputedStyle(child).display,
+          width: window.getComputedStyle(child).width,
+          height: window.getComputedStyle(child).height,
+          visibility: window.getComputedStyle(child).visibility
+        }
+      });
+    });
   };
 
   // 3D Studio: Update details panel history (similar to 2D Studio)
