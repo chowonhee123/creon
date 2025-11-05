@@ -6331,48 +6331,48 @@ Return the 5 suggestions as a JSON array.`;
       
       const upscalePart = upscaleResponse.candidates?.[0]?.content?.parts?.[0];
       if (upscalePart && upscalePart.inlineData) {
-          const { data, mimeType } = upscalePart.inlineData;
-          const upscaledDataUrl = `data:${mimeType};base64,${data}`;
-          
-          // Only add to right panel history, not left panel history
-          // Don't update currentGeneratedImageStudio to preserve original
-          if (!currentGeneratedImageStudio.rightPanelHistory) {
-            currentGeneratedImageStudio.rightPanelHistory = [{
-              ...currentGeneratedImageStudio,
-              modificationType: 'Original'
-            }];
-          }
-          const upscaledItem: GeneratedImageData = {
-            id: `img_${Date.now()}`,
-            data,
-            mimeType,
-            subject: currentGeneratedImageStudio.subject,
-            styleConstraints: currentGeneratedImageStudio.styleConstraints,
-            timestamp: Date.now(),
-            modificationType: 'Upscaled'
-          };
-          currentGeneratedImageStudio.rightPanelHistory.push(upscaledItem);
-          
-          // Update preview with upscaled image
-          const resultImage = $('#result-image-image') as HTMLImageElement;
-          if (resultImage) {
-            resultImage.src = upscaledDataUrl;
-          }
-          if (detailsPreviewImageImage) {
-            detailsPreviewImageImage.src = upscaledDataUrl;
-            detailsPreviewImageImage.style.transform = 'scale(1)';
-          }
-          
-          const detailsDownload = $('#details-download-btn-image') as HTMLAnchorElement;
-          if (detailsDownload) {
-            detailsDownload.href = upscaledDataUrl;
-          }
-          
-          // Update right panel history display
-          updateImageStudioDetailsHistory();
-          
-          showToast({ type: 'success', title: 'Upscaled!', body: 'Image has been upscaled to higher resolution.' });
+        const { data, mimeType } = upscalePart.inlineData;
+        const upscaledDataUrl = `data:${mimeType};base64,${data}`;
+        
+        // Only add to right panel history, not left panel history
+        // Don't update currentGeneratedImageStudio to preserve original
+        if (!currentGeneratedImageStudio.rightPanelHistory) {
+          currentGeneratedImageStudio.rightPanelHistory = [{
+            ...currentGeneratedImageStudio,
+            modificationType: 'Original'
+          }];
         }
+        const upscaledItem: GeneratedImageData = {
+          id: `img_${Date.now()}`,
+          data,
+          mimeType,
+          subject: currentGeneratedImageStudio.subject,
+          styleConstraints: currentGeneratedImageStudio.styleConstraints,
+          timestamp: Date.now(),
+          modificationType: 'Upscaled'
+        };
+        currentGeneratedImageStudio.rightPanelHistory.push(upscaledItem);
+        
+        // Update preview with upscaled image
+        const resultImage = $('#result-image-image') as HTMLImageElement;
+        if (resultImage) {
+          resultImage.src = upscaledDataUrl;
+        }
+        if (detailsPreviewImageImage) {
+          detailsPreviewImageImage.src = upscaledDataUrl;
+          detailsPreviewImageImage.style.transform = 'scale(1)';
+        }
+        
+        const detailsDownload = $('#details-download-btn-image') as HTMLAnchorElement;
+        if (detailsDownload) {
+          detailsDownload.href = upscaledDataUrl;
+        }
+        
+        // Update right panel history display
+        updateImageStudioDetailsHistory();
+        
+        showToast({ type: 'success', title: 'Upscaled!', body: 'Image has been upscaled to higher resolution.' });
+      }
     } catch (error) {
       console.error('Error upscaling image:', error);
       showToast({ type: 'error', title: 'Upscale Failed', body: 'Failed to upscale image.' });
