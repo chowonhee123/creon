@@ -3132,9 +3132,14 @@ window.addEventListener('DOMContentLoaded', () => {
     const backgroundColor = template.background?.color || '#FFFFFF';
     const objectColor = template.colors?.dominant_blue || '#2962FF';
     const inherentColors = template.colors?.inherent_colors || '';
+    const imageSize = template.output?.size || '1920x1088';
+    const imageRatio = template.canvas?.ratio || '16:9';
     
     // Create a natural language prompt from the template
     let prompt = `Generate an isometric 3D ${subject}. `;
+    
+    // Add size and ratio specifications
+    prompt += `Image size: ${imageSize} pixels. Aspect ratio: ${imageRatio}. `;
     
     // Add user prompt if provided
     if (userPrompt && userPrompt.trim()) {
