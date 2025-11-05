@@ -6161,7 +6161,7 @@ Return the 5 suggestions as a JSON array.`;
   const handleZoomOut = async (scale: number) => {
     if (!currentGeneratedImageStudio) return;
     
-    const btn = scale === 1.5 ? zoomOut1_5xBtnImage : zoomOut2xBtnImage;
+    const btn = zoomOut1_5xBtnImage;
     const loaderModal = $('#image-generation-loader-modal');
     loaderModal?.classList.remove('hidden');
     updateButtonLoadingState(btn as HTMLButtonElement, true);
