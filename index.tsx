@@ -155,7 +155,7 @@ window.addEventListener('DOMContentLoaded', () => {
     "task": "generate isometric 3D icon",
     "subject": "{ICON_SUBJECT|backpack}",
     "style_lock": true,
-    "output": { "format": "png", "size": "1920x1088" },
+    "output": { "format": "png", "size": "1536x864" },
     "negative_prompt": "vignette, dark corners, shadow artifacts, patterns, gradients, ground/drop shadows, stroke/outline, textures, scratches, dirt, noise, bevel/emboss, text, watermark, photographic background, fabric/leather realism, grunge, low-res, aliasing",
     "brand_tone": "vibrant, modern, friendly, premium",
     "system": { "scalable": true, "interchangeable": true },
@@ -3138,8 +3138,8 @@ window.addEventListener('DOMContentLoaded', () => {
     // Create a natural language prompt from the template
     let prompt = `Generate an isometric 3D ${subject}. `;
     
-    // Add size and ratio specifications - make it very explicit and use 1920x1080
-    prompt += `CRITICAL: Generate this image at exactly 1920x1080 pixels. The image must be 1920 pixels wide and 1080 pixels tall. Use 16:9 aspect ratio. The output resolution must be 1920x1080. Image dimensions: 1920x1080. `;
+    // Add size and ratio specifications - make it very explicit and use 1536x864 (16:9 ratio)
+    prompt += `CRITICAL: Generate this image at exactly 1536x864 pixels. The image must be 1536 pixels wide and 864 pixels tall. Use 16:9 aspect ratio. The output resolution must be 1536x864. Image dimensions: 1536x864. `;
     
     // Add user prompt if provided
     if (userPrompt && userPrompt.trim()) {
