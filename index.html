@@ -38,9 +38,6 @@
           <a href="#" class="nav-item" data-page="page-image">Image Studio</a>
         </nav>
         <div class="header-actions">
-          <button class="header-action-btn" aria-label="API Usage" title="API Usage">
-            <span class="material-symbols-outlined">storage</span>
-          </button>
           <button class="theme-toggle-btn icon-button" aria-label="Toggle theme" title="Toggle theme">
             <span class="material-symbols-outlined">light_mode</span>
           </button>
@@ -89,10 +86,30 @@
                 <p class="hero-description">From icons to 3D motion, all in one creative pipeline.</p>
                 <!-- Generate Box moved inside hero-section -->
                 <div class="generate-box">
-                  <select id="studio-selector" class="studio-selector">
+                  <select id="studio-selector" class="studio-selector hidden">
                     <option value="icon">Icon</option>
                     <option value="3d" selected>3D</option>
                   </select>
+                  <div class="custom-dropdown" id="custom-studio-selector">
+                    <button class="custom-dropdown-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                      <span class="custom-dropdown-value">3D</span>
+                      <span class="material-symbols-outlined custom-dropdown-icon">expand_more</span>
+                    </button>
+                    <div class="custom-dropdown-menu hidden" role="listbox">
+                      <button class="custom-dropdown-option" role="option" data-value="icon" aria-selected="false">
+                        <span class="custom-dropdown-option-text">Icon</span>
+                        <span class="custom-dropdown-check hidden">
+                          <span class="material-symbols-outlined">check</span>
+                        </span>
+                      </button>
+                      <button class="custom-dropdown-option" role="option" data-value="3d" aria-selected="true">
+                        <span class="custom-dropdown-option-text">3D</span>
+                        <span class="custom-dropdown-check">
+                          <span class="material-symbols-outlined">check</span>
+                        </span>
+                      </button>
+                    </div>
+                  </div>
                   <input type="text" id="generate-input" placeholder="" />
                   <div class="dynamic-placeholder" id="dynamic-placeholder">Ask Contents Builder to create...</div>
                   <button id="generate-btn" class="generate-btn">

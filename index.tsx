@@ -1063,6 +1063,30 @@ window.addEventListener('DOMContentLoaded', () => {
           content.classList.toggle('hidden', contentName !== tabName);
           content.classList.toggle('active', contentName === tabName);
         });
+        
+        // Special handling for 3D Studio history tab
+        if (container.id === 'image-details-panel' && tabName === 'history') {
+          console.log('[3D Studio] History tab clicked via setupTabs');
+          console.log('[3D Studio] Current image:', currentGeneratedImage);
+          console.log('[3D Studio] History count before init:', detailsPanelHistory3d.length);
+          
+          // If history is empty but we have a current image, initialize it
+          if (detailsPanelHistory3d.length === 0 && currentGeneratedImage) {
+            console.log('[3D Studio] History is empty, initializing with current image');
+            resetRightHistoryForBaseAsset3d(currentGeneratedImage);
+          }
+          
+          // Force update history immediately and with delays
+          setTimeout(() => {
+            updateDetailsPanelHistory3d();
+          }, 0);
+          setTimeout(() => {
+            updateDetailsPanelHistory3d();
+          }, 100);
+          setTimeout(() => {
+            updateDetailsPanelHistory3d();
+          }, 300);
+        }
       });
     });
   };
@@ -1904,6 +1928,19 @@ window.addEventListener('DOMContentLoaded', () => {
       return;
     }
     
+    console.log('[3D Studio] updateDetailsPanelHistory3d called');
+    console.log('[3D Studio] History count:', detailsPanelHistory3d.length);
+    console.log('[3D Studio] Current image:', currentGeneratedImage);
+    console.log('[3D Studio] History tab visible:', !historyTabContent.classList.contains('hidden'));
+    
+    // If history is empty but we have a current image, initialize it
+    if (detailsPanelHistory3d.length === 0 && currentGeneratedImage) {
+      console.log('[3D Studio] History is empty, initializing with current image');
+      resetRightHistoryForBaseAsset3d(currentGeneratedImage);
+      console.log('[3D Studio] History after init:', detailsPanelHistory3d.length);
+    }
+    
+    // Always render, even if tab is hidden (will be shown when tab is clicked)
     if (detailsPanelHistory3d.length === 0) {
         detailsHistoryList.innerHTML = '<p style="padding: var(--spacing-4); text-align: center; color: var(--text-secondary);">No history available</p>';
         return;
@@ -5321,12 +5358,101 @@ Return the 5 suggestions as a JSON array.`;
   motionPlayBtn?.addEventListener('click', handlePlayMotion);
   searchInput?.addEventListener('input', () => populateIconGrid(searchInput.value));
   
-  // Studio Selector - Add color focus when selected (Main input on home page)
+  // Studio Selector - Custom dropdown (Toss Invest style)
   const studioSelector = $('#studio-selector') as HTMLSelectElement;
+  const customDropdown = $('#custom-studio-selector');
+  const customDropdownTrigger = customDropdown?.querySelector('.custom-dropdown-trigger') as HTMLButtonElement;
+  const customDropdownMenu = customDropdown?.querySelector('.custom-dropdown-menu');
+  const customDropdownValue = customDropdown?.querySelector('.custom-dropdown-value') as HTMLElement;
+  const customDropdownOptions = customDropdown?.querySelectorAll('.custom-dropdown-option');
   const generateBox = $('.generate-box');
+  
+  // Initialize: sync custom dropdown with hidden select
+  if (customDropdownValue && studioSelector) {
+    const selectedOption = studioSelector.options[studioSelector.selectedIndex];
+    customDropdownValue.textContent = selectedOption.textContent || '3D';
+  }
+  
+  // Toggle dropdown menu
+  customDropdownTrigger?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isExpanded = customDropdownTrigger.getAttribute('aria-expanded') === 'true';
+    customDropdownTrigger.setAttribute('aria-expanded', String(!isExpanded));
+    customDropdownMenu?.classList.toggle('hidden', isExpanded);
+    customDropdown?.setAttribute('aria-expanded', String(!isExpanded));
+  });
+  
+  // Handle option selection
+  customDropdownOptions?.forEach((option) => {
+    option.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const value = option.getAttribute('data-value');
+      const text = option.querySelector('.custom-dropdown-option-text')?.textContent || '';
+      
+      // Update hidden select
+      if (studioSelector && value) {
+        studioSelector.value = value;
+        studioSelector.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      
+      // Update custom dropdown display
+      if (customDropdownValue) {
+        customDropdownValue.textContent = text;
+      }
+      
+      // Update selected state
+      customDropdownOptions.forEach((opt) => {
+        const optValue = opt.getAttribute('data-value');
+        const isSelected = optValue === value;
+        opt.setAttribute('aria-selected', String(isSelected));
+        const check = opt.querySelector('.custom-dropdown-check');
+        if (check) {
+          check.classList.toggle('hidden', !isSelected);
+        }
+      });
+      
+      // Close dropdown
+      customDropdownTrigger.setAttribute('aria-expanded', 'false');
+      customDropdownMenu?.classList.add('hidden');
+      customDropdown?.setAttribute('aria-expanded', 'false');
+      
+      // Update generate box visual state
+      if (generateBox) {
+        generateBox.classList.add('has-studio-selected');
+      }
+    });
+  });
+  
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (customDropdown && !customDropdown.contains(e.target as Node)) {
+      customDropdownTrigger.setAttribute('aria-expanded', 'false');
+      customDropdownMenu?.classList.add('hidden');
+      customDropdown?.setAttribute('aria-expanded', 'false');
+    }
+  });
+  
+  // Sync with hidden select changes (if any)
   studioSelector?.addEventListener('change', () => {
     const selectedValue = studioSelector.value;
     console.log('[Home] Studio selected:', selectedValue);
+    
+    // Update custom dropdown display
+    const selectedOption = studioSelector.options[studioSelector.selectedIndex];
+    if (customDropdownValue && selectedOption) {
+      customDropdownValue.textContent = selectedOption.textContent || '3D';
+    }
+    
+    // Update selected state in custom dropdown
+    customDropdownOptions?.forEach((opt) => {
+      const optValue = opt.getAttribute('data-value');
+      const isSelected = optValue === selectedValue;
+      opt.setAttribute('aria-selected', String(isSelected));
+      const check = opt.querySelector('.custom-dropdown-check');
+      if (check) {
+        check.classList.toggle('hidden', !isSelected);
+      }
+    });
     
     // Update generate box visual state
     if (generateBox) {
@@ -5545,28 +5671,7 @@ Return the 5 suggestions as a JSON array.`;
         });
     });
     
-    // 3D Studio Details Panel: Update history when History tab is opened
-    const detailsPanelTabs = $('#image-details-panel')?.querySelectorAll('.tab-item');
-    detailsPanelTabs?.forEach(tab => {
-        tab.addEventListener('click', () => {
-            if (tab.getAttribute('data-tab') === 'history') {
-                console.log('[3D Studio] History tab clicked');
-                console.log('[3D Studio] Current image:', currentGeneratedImage);
-                console.log('[3D Studio] History count before init:', detailsPanelHistory3d.length);
-                
-                // If history is empty but we have a current image, initialize it
-                if (detailsPanelHistory3d.length === 0 && currentGeneratedImage) {
-                    console.log('[3D Studio] History is empty, initializing with current image');
-                    resetRightHistoryForBaseAsset3d(currentGeneratedImage);
-                }
-                
-                // Delay to ensure tab content is visible before updating
-                setTimeout(() => {
-                    updateDetailsPanelHistory3d();
-                }, 100);
-            }
-        });
-    });
+    // Note: History tab click handling is now done in setupTabs function
     
     // Icon Studio Details Listeners
     downloadSvgBtn?.addEventListener('click', handleDownloadSVG);
