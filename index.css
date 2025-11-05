@@ -2255,6 +2255,15 @@ a.secondary-btn[disabled] {
     padding-bottom: var(--spacing-4);
 }
 
+/* 3D Studio: Bottom actions with fixed position and bottom margin */
+.image-details-actions {
+    position: sticky;
+    bottom: 0;
+    margin-bottom: var(--spacing-4);
+    background: var(--surface-color);
+    padding-bottom: var(--spacing-4);
+}
+
 /* Hide details-actions in motion and history tabs */
 .details-tab-content[data-tab-content="motion"] .details-actions,
 .details-tab-content[data-tab-content="history"] .details-actions {
