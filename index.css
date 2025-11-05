@@ -2129,11 +2129,16 @@ a.secondary-btn[disabled] {
 .details-fix-section {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-2);
-    padding: 0;
-    background: transparent;
+    gap: 20px;
+    padding: var(--spacing-4);
+    background: var(--input-bg);
     border-radius: var(--border-radius-lg);
     margin-bottom: var(--spacing-4);
+}
+
+.details-fix-section h3 {
+    margin: 0;
+    margin-bottom: 20px;
 }
 
 .details-fix-section .options-group {
