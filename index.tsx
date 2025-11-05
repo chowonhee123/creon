@@ -155,7 +155,7 @@ window.addEventListener('DOMContentLoaded', () => {
     "task": "generate isometric 3D icon",
     "subject": "{ICON_SUBJECT|backpack}",
     "style_lock": true,
-    "output": { "format": "png", "size": "1536x672" },
+    "output": { "format": "png", "size": "1920x1088" },
     "negative_prompt": "vignette, dark corners, shadow artifacts, patterns, gradients, ground/drop shadows, stroke/outline, textures, scratches, dirt, noise, bevel/emboss, text, watermark, photographic background, fabric/leather realism, grunge, low-res, aliasing",
     "brand_tone": "vibrant, modern, friendly, premium",
     "system": { "scalable": true, "interchangeable": true },
@@ -193,7 +193,7 @@ window.addEventListener('DOMContentLoaded', () => {
       "framing": "The entire subject must be fully visible and centered inside the frame. Leave a small, clean margin around all edges. Do not crop any part of the subject."
     },
     "camera": { "type": "isometric", "static": true },
-    "canvas": { "ratio": "16:7", "safe_margins": true }
+    "canvas": { "ratio": "16:9", "safe_margins": true }
   }, null, 2);
   
   const DEFAULT_2D_STYLE_PROMPT_TEMPLATE = JSON.stringify({
