@@ -2051,6 +2051,7 @@ a.secondary-btn[disabled] {
     padding: 0;
     gap: var(--spacing-5);
     overflow-y: auto;
+    position: relative;
 }
 
 /* All details panel padding - consistent across all panels */
@@ -2138,7 +2139,6 @@ a.secondary-btn[disabled] {
 
 .details-fix-section h3 {
     margin: 0;
-    margin-bottom: 20px;
 }
 
 .details-fix-section .options-group {
@@ -2193,11 +2193,16 @@ a.secondary-btn[disabled] {
 
 .details-actions {
     display: flex;
-    flex-direction: column;
-    gap: var(--spacing-3);
+    flex-direction: row;
+    gap: var(--spacing-2);
     margin-top: auto;
-    padding-top: var(--spacing-4);
+    padding: var(--spacing-4) var(--spacing-5);
     flex-shrink: 0;
+    position: sticky;
+    bottom: 0;
+    background: var(--surface-color);
+    border-top: 1px solid var(--border-color);
+    z-index: 10;
 }
 
 .details-tab-content[data-tab-content="detail"] {
