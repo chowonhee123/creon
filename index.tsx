@@ -7477,7 +7477,7 @@ Return the 5 suggestions as a JSON array.`;
                 if (historyItem) {
                     historyItem.data = imageData.data;
                     historyItem.mimeType = imageData.mimeType;
-                    historyItem.styleConstraints = JSON.stringify(template, null, 2);
+                    historyItem.styleConstraints = typeof template === 'string' ? template : JSON.stringify(template, null, 2);
                     if (!historyItem.originalData) {
                         historyItem.originalData = currentGeneratedImage.originalData;
                         historyItem.originalMimeType = currentGeneratedImage.originalMimeType;
