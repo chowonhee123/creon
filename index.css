@@ -4400,11 +4400,11 @@ a.secondary-btn[disabled] {
 .header-action-btn {
   background: none;
   border: none;
-  color: var(--text-primary);
+  color: var(--text-secondary);
   cursor: pointer;
   border-radius: 50%;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -4414,9 +4414,11 @@ a.secondary-btn[disabled] {
 
 .header-action-btn:hover {
   background-color: var(--input-bg);
+  color: var(--text-primary);
 }
 
 .header-action-btn .material-symbols-outlined {
   font-size: 24px;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
