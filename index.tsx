@@ -5,7 +5,7 @@
 
 import { GoogleGenAI, GenerateContentResponse, Modality, Chat, Type } from '@google/genai';
 import {marked} from 'https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js';
-import { VectorTracer } from 'vectortracer';
+import { BinaryImageConverter, BinaryImageConverterParams, Options } from 'vectortracer';
 
 // --- TYPE DEFINITIONS ---
 interface IconData {
@@ -6060,11 +6060,42 @@ Return the 5 suggestions as a JSON array.`;
                     // Get image data
                     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                     
-                    // Initialize VectorTracer (WASM)
-                    const tracer = await VectorTracer.init();
+                    // VTracer options
+                    const vtracerOptions: BinaryImageConverterParams = {
+                        debug: false,
+                        mode: 'spline',
+                        cornerThreshold: 60,
+                        lengthThreshold: 4.0,
+                        maxIterations: 10,
+                        spliceThreshold: 45,
+                        filterSpeckle: 4,
+                        pathPrecision: 3
+                    };
+                    
+                    const additionalOptions: Options = {
+                        invert: false,
+                        pathFill: '#000000',
+                        backgroundColor: undefined,
+                        attributes: undefined,
+                        scale: 1
+                    };
                     
                     // Convert to SVG using VectorTracer
-                    const svgString = tracer.trace(imageData);
+                    const converter = new BinaryImageConverter(imageData, vtracerOptions, additionalOptions);
+                    
+                    // Process conversion with progress updates
+                    converter.init();
+                    let done = false;
+                    while (!done) {
+                        done = converter.tick();
+                        // Small delay to keep UI responsive
+                        if (!done) {
+                            await new Promise(resolve => setTimeout(resolve, 0));
+                        }
+                    }
+                    
+                    const svgString = converter.getResult();
+                    converter.free();
                     
                     // Show SVG preview modal instead of immediate download
                     const svgCodeView = $('#p2d-svg-code-view') as HTMLTextAreaElement;
