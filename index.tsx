@@ -7336,6 +7336,11 @@ Return the 5 suggestions as a JSON array.`;
                     updateDetailsPanelHistory3d();
                 }
                 
+                // Hide Remove BG button after background removal
+                if (detailsRemoveBgBtn) {
+                    detailsRemoveBgBtn.classList.add('hidden');
+                }
+                
                 showToast({ type: 'success', title: 'Background removed ✅', body: 'Background has been successfully removed.' });
             };
             reader.readAsDataURL(blobWithoutBg);
