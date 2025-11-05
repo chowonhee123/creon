@@ -6330,7 +6330,7 @@ Return the 5 suggestions as a JSON array.`;
       });
       
       const upscalePart = upscaleResponse.candidates?.[0]?.content?.parts?.[0];
-        if (upscalePart && upscalePart.inlineData) {
+      if (upscalePart && upscalePart.inlineData) {
           const { data, mimeType } = upscalePart.inlineData;
           const upscaledDataUrl = `data:${mimeType};base64,${data}`;
           
