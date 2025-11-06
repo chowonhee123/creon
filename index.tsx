@@ -4159,7 +4159,7 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
         const aspectRatio = '16:9';
 
         // Add specific prompts to avoid letterboxing and maintain background
-        const finalPrompt = `no black bars, no letterboxing, full-frame composition, fill the entire frame. Maintain full frame coverage with no black bars, borders, or letterboxing. Keep the entire image visible. Preserve the exact background from the source image without any cropping or black bars. ${sanitizedUserPrompt}. CRITICAL NEGATIVE PROMPT: black bars, letterboxing, black borders, black edges, cinematic crop, pillarbox, narrow frame, cropped edges, missing background. Use 16:9 aspect ratio.`;
+        const finalPrompt = `CRITICAL: Do NOT create new content. Only animate the existing content from the source image. Keep the exact same subject, colors, style, and composition. Only add movement to the existing elements. Do not add new objects, characters, or elements. Do not change the appearance, colors, or design of existing elements. Preserve the exact background from the source image. Maintain the exact same visual style and design. ${sanitizedUserPrompt}. no black bars, no letterboxing, full-frame composition, fill the entire frame. Maintain full frame coverage with no black bars, borders, or letterboxing. Keep the entire image visible. Preserve the exact background from the source image without any cropping or black bars. CRITICAL NEGATIVE PROMPT: black bars, letterboxing, black borders, black edges, cinematic crop, pillarbox, narrow frame, cropped edges, missing background, new objects, new characters, new elements, changing appearance, changing colors. Use 16:9 aspect ratio.`;
 
         const config: any = {
             numberOfVideos: 1,
@@ -4284,7 +4284,7 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
         const aspectRatio = '16:9';
 
         // Add specific prompts to avoid letterboxing and maintain background
-        const finalPrompt = `no black bars, no letterboxing, full-frame composition, fill the entire frame. Maintain full frame coverage with no black bars, borders, or letterboxing. Keep the entire image visible. Preserve the exact background from the source image without any cropping or black bars. ${sanitizedUserPrompt}. CRITICAL NEGATIVE PROMPT: black bars, letterboxing, black borders, black edges, cinematic crop, pillarbox, narrow frame, cropped edges, missing background. Use 16:9 aspect ratio.`;
+        const finalPrompt = `CRITICAL: Do NOT create new content. Only animate the existing content from the source image. Keep the exact same subject, colors, style, and composition. Only add movement to the existing elements. Do not add new objects, characters, or elements. Do not change the appearance, colors, or design of existing elements. Preserve the exact background from the source image. Maintain the exact same visual style and design. ${sanitizedUserPrompt}. no black bars, no letterboxing, full-frame composition, fill the entire frame. Maintain full frame coverage with no black bars, borders, or letterboxing. Keep the entire image visible. Preserve the exact background from the source image without any cropping or black bars. CRITICAL NEGATIVE PROMPT: black bars, letterboxing, black borders, black edges, cinematic crop, pillarbox, narrow frame, cropped edges, missing background, new objects, new characters, new elements, changing appearance, changing colors. Use 16:9 aspect ratio.`;
 
         const config: any = {
             numberOfVideos: 1,
