@@ -3201,7 +3201,7 @@ window.addEventListener('DOMContentLoaded', () => {
     let prompt = `Generate an isometric 3D ${subject}. `;
     
     // Add aspect ratio specification - 16:9 landscape (strong emphasis)
-    prompt += `CRITICAL REQUIREMENT - DO NOT CREATE A SQUARE IMAGE: The output image MUST be in 16:9 landscape aspect ratio (horizontal/wide format). The width must be 16 units and height must be 9 units. The image must be wider than it is tall. This is a landscape orientation image, NOT a square image. Aspect ratio: 16:9 (width:height). The image format must be horizontal/landscape. NEVER create a square image (1:1 ratio). The image must be wider than it is tall. Width: 16, Height: 9. `;
+    prompt += `CRITICAL REQUIREMENT - DO NOT CREATE A SQUARE IMAGE: The output image MUST be exactly 1024 pixels wide by 576 pixels tall (1024x576 resolution). This is a 16:9 landscape aspect ratio (horizontal/wide format). The width must be 1024 pixels and height must be 576 pixels. The image must be wider than it is tall. This is a landscape orientation image, NOT a square image. NEVER create a square image (1:1 ratio) or 1024x1024 image. Output dimensions: 1024x576 pixels. Image width: 1024px. Image height: 576px. `;
     
     // Add user prompt if provided
     if (userPrompt && userPrompt.trim()) {
@@ -3230,7 +3230,7 @@ window.addEventListener('DOMContentLoaded', () => {
     prompt += `Lighting: ${template.lighting?.mode || 'soft diffused studio'}, ${template.lighting?.source || 'top-front or top-right'}. ${shadowText}. `;
     prompt += `Camera: isometric view, static. `;
     prompt += `Composition: single main subject, centered, fully visible inside the frame with clean margins around all edges. CRITICAL: The entire subject must be completely contained within the frame boundaries. No part of the subject should extend beyond the frame edges. Ensure all elements are fully visible and contained within the image frame. Leave sufficient padding and margins on all sides. The subject must stay within the frame - do not let any part extend outside the frame boundaries. No cropping, no extra decorations, no elements cut off at the edges, no overflow beyond frame borders. `;
-    prompt += `FINAL REMINDER: The image aspect ratio MUST be 16:9 landscape (horizontal/wide format). DO NOT create a square image (1:1 ratio). The image must be wider than it is tall. Width: 16, Height: 9. Ensure all content stays within the frame boundaries. `;
+    prompt += `FINAL REMINDER: The image MUST be exactly 1024x576 pixels (16:9 landscape). DO NOT create a square image (1:1 ratio) or 1024x1024 image. The image must be wider than it is tall. Output dimensions: 1024 pixels wide by 576 pixels tall. Ensure all content stays within the frame boundaries. `;
     
     // Add negative prompt
     if (template.negative_prompt) {
