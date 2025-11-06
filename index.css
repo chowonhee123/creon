@@ -3486,6 +3486,11 @@ a.secondary-btn[disabled] {
   max-width: 520px;
   width: 90%;
   border-radius: 24px;
+  padding: var(--spacing-5); /* 32px -> 24px */
+}
+#motion-category-modal .modal-header {
+  height: 20px; /* 44px -> 20px */
+  margin-bottom: 20px; /* 타이틀과 콘텐츠 사이 간격 */
 }
 #motion-category-list {
   display: flex;
