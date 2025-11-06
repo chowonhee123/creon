@@ -5159,38 +5159,68 @@ Return the 5 suggestions as a JSON array.`;
     imageGenerationLoaderModal?.classList.remove('hidden');
 
     try {
-      // Yield to the UI thread so the modal can render before heavy work
-      await new Promise(requestAnimationFrame);
-
-      // Create a more robust SVG with proper font loading
-      // Use @font-face instead of @import for better compatibility
-      const fontFamilyName = `Material Symbols ${style}`;
-      const fontUrl = `https://fonts.googleapis.com/css2?family=Material+Symbols+${style}:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200`;
+      // Render icon to canvas first to get the actual rendered image
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.top = '0';
+      tempContainer.style.visibility = 'hidden';
+      tempContainer.style.width = `${size}px`;
+      tempContainer.style.height = `${size}px`;
+      tempContainer.style.display = 'flex';
+      tempContainer.style.alignItems = 'center';
+      tempContainer.style.justifyContent = 'center';
+      tempContainer.style.backgroundColor = '#FFFFFF';
       
-      // Escape the font variation settings for SVG
-      const escapedFontVariationSettings = fontVariationSettings.replace(/'/g, '');
-
+      const tempIcon = document.createElement('span');
+      tempIcon.textContent = name;
+      tempIcon.className = `material-symbols-${style.toLowerCase()}`;
+      tempIcon.style.fontVariationSettings = fontVariationSettings;
+      tempIcon.style.fontSize = `${size}px`;
+      tempIcon.style.color = color;
+      tempIcon.style.lineHeight = '1';
+      tempIcon.style.fontFamily = `'Material Symbols ${style}'`;
+      
+      tempContainer.appendChild(tempIcon);
+      document.body.appendChild(tempContainer);
+    
+      // Wait for fonts to load
+      await document.fonts.ready;
+      await new Promise(resolve => setTimeout(resolve, 200));
+    
+      const padding = Math.max(size * 0.1, 4);
+      const canvas = document.createElement('canvas');
+      canvas.width = size + padding * 2;
+      canvas.height = size + padding * 2;
+      const ctx = canvas.getContext('2d');
+    
+      if (!ctx) {
+        throw new Error('Failed to get canvas context');
+      }
+      
+      // Fill white background
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Get computed style and render
+      const computedStyle = window.getComputedStyle(tempIcon);
+      ctx.font = `${computedStyle.fontSize} ${computedStyle.fontFamily}`;
+      ctx.fillStyle = color;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(name, canvas.width / 2, canvas.height / 2);
+      
+      // Convert canvas to data URL
+      const imageDataUrl = canvas.toDataURL('image/png');
+      
+      // Create SVG with embedded image
       const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
-<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-  <defs>
-    <style type="text/css">
-      <![CDATA[
-        @import url('${fontUrl}');
-      ]]>
-    </style>
-  </defs>
-  <text 
-    x="50%" 
-    y="50%" 
-    dominant-baseline="central" 
-    text-anchor="middle" 
-    font-family="${fontFamilyName}, sans-serif"
-    font-size="${size}px"
-    fill="${color}"
-    font-variation-settings="${escapedFontVariationSettings}"
-  >${name}</text>
+<svg width="${size}" height="${size}" viewBox="0 0 ${canvas.width} ${canvas.height}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <image width="${canvas.width}" height="${canvas.height}" xlink:href="${imageDataUrl}"/>
 </svg>`.trim();
 
+      document.body.removeChild(tempContainer);
+      
       downloadText(svgContent, `${name}.svg`, 'image/svg+xml');
     } catch (error) {
       console.error('Error generating SVG:', error);
