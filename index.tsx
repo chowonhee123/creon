@@ -3098,7 +3098,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
         if (shadowToggle3d.checked) {
             template.negative_prompt = template.negative_prompt.replace(', ground/drop shadows', '');
-            template.lighting.shadows = "internal and soft ground shadow";
+            template.lighting.shadows = "soft ground shadow beneath the object";
         } else {
             if (!template.negative_prompt.includes('ground/drop shadows')) {
                  template.negative_prompt += ', ground/drop shadows';
