@@ -155,14 +155,13 @@ window.addEventListener('DOMContentLoaded', () => {
     "task": "generate isometric 3D icon",
     "subject": "{ICON_SUBJECT|backpack}",
     "style_lock": true,
-    "output": { "format": "png", "size": "1920x1088" },
+    "output": { "format": "png" },
     "negative_prompt": "vignette, dark corners, shadow artifacts, patterns, gradients, ground/drop shadows, stroke/outline, textures, scratches, dirt, noise, bevel/emboss, text, watermark, photographic background, fabric/leather realism, grunge, low-res, aliasing",
     "brand_tone": "vibrant, modern, friendly, premium",
     "system": { "scalable": true, "interchangeable": true },
     "background": { "type": "solid", "color": "#FFFFFF", "alpha": true },
     "render": {
       "quality": "ultra-high",
-      "resolution": 1920,
       "separation": "by color/lighting/depth only"
     },
     "colors": {
