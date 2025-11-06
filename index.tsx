@@ -3201,7 +3201,7 @@ window.addEventListener('DOMContentLoaded', () => {
     let prompt = `Generate an isometric 3D ${subject}. `;
     
     // Add aspect ratio specification - 16:9 landscape (strong emphasis)
-    prompt += `CRITICAL REQUIREMENT: The output image MUST be in 16:9 landscape aspect ratio (horizontal/wide format). Generate the image at exactly 1024 pixels wide by 576 pixels tall (1024x576 resolution). The width must be 16 units and height must be 9 units. The image must be wider than it is tall. This is a landscape orientation image. Aspect ratio: 16:9 (width:height). The image format must be horizontal/landscape. Output dimensions: 1024x576 pixels. `;
+    prompt += `CRITICAL REQUIREMENT - DO NOT CREATE A SQUARE IMAGE: The output image MUST be in 16:9 landscape aspect ratio (horizontal/wide format). The width must be 16 units and height must be 9 units. The image must be wider than it is tall. This is a landscape orientation image, NOT a square image. Aspect ratio: 16:9 (width:height). The image format must be horizontal/landscape. NEVER create a square image (1:1 ratio). The image must be wider than it is tall. Width: 16, Height: 9. `;
     
     // Add user prompt if provided
     if (userPrompt && userPrompt.trim()) {
@@ -3230,7 +3230,7 @@ window.addEventListener('DOMContentLoaded', () => {
     prompt += `Lighting: ${template.lighting?.mode || 'soft diffused studio'}, ${template.lighting?.source || 'top-front or top-right'}. ${shadowText}. `;
     prompt += `Camera: isometric view, static. `;
     prompt += `Composition: single main subject, centered, fully visible inside the frame with clean margins around all edges. No cropping, no extra decorations. `;
-    prompt += `REMINDER: The image aspect ratio must be 16:9 landscape (horizontal/wide format). `;
+    prompt += `FINAL REMINDER: The image aspect ratio MUST be 16:9 landscape (horizontal/wide format). DO NOT create a square image (1:1 ratio). The image must be wider than it is tall. Width: 16, Height: 9. `;
     
     // Add negative prompt
     if (template.negative_prompt) {
