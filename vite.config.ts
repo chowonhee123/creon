@@ -24,7 +24,17 @@ const homeImagesPlugin = () => {
         return 'image/png';
       };
       
-      const homeImages = files.map((filename, index) => ({
+      // Sort files: videos first, then images
+      const sortedFiles = files.sort((a, b) => {
+        const aIsVideo = /\.(mp4|webm)$/i.test(a);
+        const bIsVideo = /\.(mp4|webm)$/i.test(b);
+        
+        if (aIsVideo && !bIsVideo) return -1; // video comes first
+        if (!aIsVideo && bIsVideo) return 1;   // image comes after
+        return a.localeCompare(b); // same type, sort alphabetically
+      });
+      
+      const homeImages = sortedFiles.map((filename, index) => ({
         id: `home_${index + 1}`,
         name: filename,
         type: getMimeType(filename),
