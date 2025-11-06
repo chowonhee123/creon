@@ -1448,42 +1448,51 @@ window.addEventListener('DOMContentLoaded', () => {
             img.src = dataUrl;
           });
           
-          // Check if image needs resizing to 16:9 ratio
+          // Resize to 1024x576 (16:9) without cropping (letterboxing)
+          const targetWidth = 1024;
+          const targetHeight = 576;
+          const targetRatio = targetWidth / targetHeight;
           const currentRatio = img.width / img.height;
-          const targetRatio = 16 / 9;
           
-          if (Math.abs(currentRatio - targetRatio) > 0.01) { // Allow small tolerance
-            console.log(`Resizing image from ${img.width}x${img.height} (ratio: ${currentRatio.toFixed(2)}) to 16:9 ratio`);
+          // Always resize to 1024x576, using letterboxing to avoid cropping
+          console.log(`Resizing image from ${img.width}x${img.height} to ${targetWidth}x${targetHeight} (16:9 ratio)`);
+          
+          const canvas = document.createElement('canvas');
+          canvas.width = targetWidth;
+          canvas.height = targetHeight;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            // Fill background with white (or use image background color)
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, targetWidth, targetHeight);
             
-            // Calculate target dimensions maintaining 16:9 ratio
-            let targetWidth: number;
-            let targetHeight: number;
+            // Calculate scaling to fit entire image without cropping
+            let drawWidth: number;
+            let drawHeight: number;
+            let drawX: number;
+            let drawY: number;
             
             if (currentRatio > targetRatio) {
-              // Image is wider than 16:9, use height as base
-              targetHeight = img.height;
-              targetWidth = Math.round(targetHeight * targetRatio);
+              // Image is wider than 16:9, fit to height
+              drawHeight = targetHeight;
+              drawWidth = img.width * (drawHeight / img.height);
+              drawX = (targetWidth - drawWidth) / 2;
+              drawY = 0;
             } else {
-              // Image is taller than 16:9, use width as base
-              targetWidth = img.width;
-              targetHeight = Math.round(targetWidth / targetRatio);
+              // Image is taller than 16:9, fit to width
+              drawWidth = targetWidth;
+              drawHeight = img.height * (drawWidth / img.width);
+              drawX = 0;
+              drawY = (targetHeight - drawHeight) / 2;
             }
             
-            const canvas = document.createElement('canvas');
-            canvas.width = targetWidth;
-            canvas.height = targetHeight;
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-              // Draw image centered and cropped to 16:9
-              const sourceX = Math.max(0, (img.width - targetWidth) / 2);
-              const sourceY = Math.max(0, (img.height - targetHeight) / 2);
-              ctx.drawImage(img, sourceX, sourceY, targetWidth, targetHeight, 0, 0, targetWidth, targetHeight);
-              const resizedDataUrl = canvas.toDataURL(imageData.mimeType);
-              const base64Match = resizedDataUrl.match(/^data:[^;]+;base64,(.+)$/);
-              if (base64Match) {
-                finalData = base64Match[1];
-                console.log(`Image resized to ${targetWidth}x${targetHeight} (16:9 ratio)`);
-              }
+            // Draw image centered with letterboxing
+            ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+            const resizedDataUrl = canvas.toDataURL(imageData.mimeType);
+            const base64Match = resizedDataUrl.match(/^data:[^;]+;base64,(.+)$/);
+            if (base64Match) {
+              finalData = base64Match[1];
+              console.log(`Image resized to ${targetWidth}x${targetHeight} without cropping (letterboxing)`);
             }
           }
         } catch (resizeError) {
@@ -3192,7 +3201,7 @@ window.addEventListener('DOMContentLoaded', () => {
     let prompt = `Generate an isometric 3D ${subject}. `;
     
     // Add aspect ratio specification - 16:9 landscape (strong emphasis)
-    prompt += `CRITICAL REQUIREMENT: The output image MUST be in 16:9 landscape aspect ratio (horizontal/wide format). The width must be 16 units and height must be 9 units. The image must be wider than it is tall. This is a landscape orientation image. Aspect ratio: 16:9 (width:height). The image format must be horizontal/landscape. `;
+    prompt += `CRITICAL REQUIREMENT: The output image MUST be in 16:9 landscape aspect ratio (horizontal/wide format). Generate the image at exactly 1024 pixels wide by 576 pixels tall (1024x576 resolution). The width must be 16 units and height must be 9 units. The image must be wider than it is tall. This is a landscape orientation image. Aspect ratio: 16:9 (width:height). The image format must be horizontal/landscape. Output dimensions: 1024x576 pixels. `;
     
     // Add user prompt if provided
     if (userPrompt && userPrompt.trim()) {
