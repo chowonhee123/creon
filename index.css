@@ -2409,12 +2409,14 @@ a.secondary-btn[disabled] {
     height: 270px;
     flex-grow: 0;
     flex-shrink: 0;
+    background-color: #FFFFFF;
 }
 
 #motion-video-player {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
+    background-color: #FFFFFF;
 }
 
 .video-result-container.loading {
