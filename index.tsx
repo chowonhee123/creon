@@ -5126,9 +5126,15 @@ Return the 5 suggestions as a JSON array.`;
     }
   };
   
+  const sanitizeFilename = (name: string): string => {
+    // Replace spaces and special characters with underscores
+    // Keep only alphanumeric, underscore, and hyphen
+    return name.replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') || 'icon';
+  };
+
   const downloadCanvas = (canvas: HTMLCanvasElement, filename: string) => {
     const link = document.createElement('a');
-    link.download = filename;
+    link.download = sanitizeFilename(filename);
     link.href = canvas.toDataURL('image/png');
     link.click();
   };
@@ -5137,7 +5143,7 @@ Return the 5 suggestions as a JSON array.`;
     const blob = new Blob([content], { type });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.download = filename;
+    link.download = sanitizeFilename(filename);
     link.href = url;
     link.click();
     URL.revokeObjectURL(url);
@@ -5185,36 +5191,75 @@ Return the 5 suggestions as a JSON array.`;
   
     const { name, style, size, color, fontVariationSettings } = styles;
   
-    const tempIcon = document.createElement('span');
-    tempIcon.textContent = name;
-    tempIcon.className = `material-symbols-${style.toLowerCase()}`;
-    tempIcon.style.fontVariationSettings = fontVariationSettings;
-    tempIcon.style.position = 'absolute';
-    tempIcon.style.left = '-9999px';
-    tempIcon.style.visibility = 'hidden';
-    tempIcon.style.fontSize = `${size}px`;
-    document.body.appendChild(tempIcon);
+    // Show a loader while preparing PNG
+    imageGenerationLoaderModal?.classList.remove('hidden');
   
-    await document.fonts.ready;
-    await new Promise(resolve => setTimeout(resolve, 50));
-  
-    const canvas = document.createElement('canvas');
-    const padding = size * 0.1;
-    canvas.width = size + padding * 2;
-    canvas.height = size + padding * 2;
-    const ctx = canvas.getContext('2d');
-  
-    if (ctx) {
-      const computedStyle = window.getComputedStyle(tempIcon);
-      ctx.font = computedStyle.font;
-      ctx.fillStyle = color;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(name, canvas.width / 2, canvas.height / 2);
-      downloadCanvas(canvas, `${name}.png`);
+    try {
+      // Create a temporary container with the actual icon element
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.top = '0';
+      tempContainer.style.visibility = 'hidden';
+      tempContainer.style.width = `${size}px`;
+      tempContainer.style.height = `${size}px`;
+      tempContainer.style.display = 'flex';
+      tempContainer.style.alignItems = 'center';
+      tempContainer.style.justifyContent = 'center';
+      tempContainer.style.backgroundColor = '#FFFFFF';
+      
+      const tempIcon = document.createElement('span');
+      tempIcon.textContent = name;
+      tempIcon.className = `material-symbols-${style.toLowerCase()}`;
+      tempIcon.style.fontVariationSettings = fontVariationSettings;
+      tempIcon.style.fontSize = `${size}px`;
+      tempIcon.style.color = color;
+      tempIcon.style.lineHeight = '1';
+      tempIcon.style.fontFamily = `'Material Symbols ${style}'`;
+      
+      tempContainer.appendChild(tempIcon);
+      document.body.appendChild(tempContainer);
+    
+      // Wait for fonts to load
+      await document.fonts.ready;
+      // Additional wait to ensure font is fully loaded
+      await new Promise(resolve => setTimeout(resolve, 200));
+    
+      const padding = Math.max(size * 0.1, 4);
+      const canvas = document.createElement('canvas');
+      canvas.width = size + padding * 2;
+      canvas.height = size + padding * 2;
+      const ctx = canvas.getContext('2d', { willReadFrequently: false });
+    
+      if (ctx) {
+        // Fill white background
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Get computed style from the actual element
+        const computedStyle = window.getComputedStyle(tempIcon);
+        const fontFamily = computedStyle.fontFamily;
+        const fontSize = computedStyle.fontSize;
+        
+        // Set font with explicit Material Symbols font family
+        ctx.font = `${fontSize} ${fontFamily}`;
+        ctx.fillStyle = color;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        // Render the icon character
+        ctx.fillText(name, canvas.width / 2, canvas.height / 2);
+        
+        downloadCanvas(canvas, `${name}.png`);
+      }
+    
+      document.body.removeChild(tempContainer);
+    } catch (error) {
+      console.error('Error generating PNG:', error);
+      showToast({ type: 'error', title: 'Download Failed', body: 'Failed to generate PNG. Please try again.' });
+    } finally {
+      imageGenerationLoaderModal?.classList.add('hidden');
     }
-  
-    document.body.removeChild(tempIcon);
   };
   
   const handleCopyCode = async (code: string, type: string) => {
