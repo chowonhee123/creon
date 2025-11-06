@@ -3418,7 +3418,7 @@ a.secondary-btn[disabled] {
     display: flex;
     align-items: flex-start;
     gap: var(--spacing-3);
-    background-color: var(--bg-color);
+    background-color: #FFFFFF;
     padding: var(--spacing-3);
     border-radius: var(--border-radius-md);
     border: 1px solid var(--border-color);
@@ -3429,7 +3429,7 @@ a.secondary-btn[disabled] {
     border-radius: var(--border-radius-sm);
     object-fit: cover;
     flex-shrink: 0;
-    background-color: var(--surface-color);
+    background-color: #FFFFFF;
 }
 #motion-thumbnail-image-image {
     width: 272px;
@@ -3437,7 +3437,7 @@ a.secondary-btn[disabled] {
     border-radius: var(--border-radius-sm);
     object-fit: cover;
     flex-shrink: 0;
-    background-color: var(--surface-color);
+    background-color: #FFFFFF;
 }
 .motion-thumbnail-info {
     display: flex;
