@@ -1435,12 +1435,68 @@ window.addEventListener('DOMContentLoaded', () => {
         console.log('Image data extracted successfully, mimeType:', inlineData.mimeType);
         const imageData = inlineData;
         const dataUrl = `data:${imageData.mimeType};base64,${imageData.data}`;
+        
+        // Resize to 16:9 aspect ratio if needed (for 3D Studio)
+        let finalData = imageData.data;
+        let finalMimeType = imageData.mimeType;
+        
+        try {
+          const img = new Image();
+          await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+            img.src = dataUrl;
+          });
+          
+          // Check if image needs resizing to 16:9 ratio
+          const currentRatio = img.width / img.height;
+          const targetRatio = 16 / 9;
+          
+          if (Math.abs(currentRatio - targetRatio) > 0.01) { // Allow small tolerance
+            console.log(`Resizing image from ${img.width}x${img.height} (ratio: ${currentRatio.toFixed(2)}) to 16:9 ratio`);
+            
+            // Calculate target dimensions maintaining 16:9 ratio
+            let targetWidth: number;
+            let targetHeight: number;
+            
+            if (currentRatio > targetRatio) {
+              // Image is wider than 16:9, use height as base
+              targetHeight = img.height;
+              targetWidth = Math.round(targetHeight * targetRatio);
+            } else {
+              // Image is taller than 16:9, use width as base
+              targetWidth = img.width;
+              targetHeight = Math.round(targetWidth / targetRatio);
+            }
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              // Draw image centered and cropped to 16:9
+              const sourceX = Math.max(0, (img.width - targetWidth) / 2);
+              const sourceY = Math.max(0, (img.height - targetHeight) / 2);
+              ctx.drawImage(img, sourceX, sourceY, targetWidth, targetHeight, 0, 0, targetWidth, targetHeight);
+              const resizedDataUrl = canvas.toDataURL(imageData.mimeType);
+              const base64Match = resizedDataUrl.match(/^data:[^;]+;base64,(.+)$/);
+              if (base64Match) {
+                finalData = base64Match[1];
+                console.log(`Image resized to ${targetWidth}x${targetHeight} (16:9 ratio)`);
+              }
+            }
+          }
+        } catch (resizeError) {
+          console.warn('Failed to resize image, using original:', resizeError);
+        }
+        
+        const finalDataUrl = `data:${finalMimeType};base64,${finalData}`;
         if (resultImgElement) {
-        resultImgElement.src = dataUrl;
+        resultImgElement.src = finalDataUrl;
         resultImgElement.classList.remove('hidden');
         setTimeout(() => resultImgElement.classList.add('visible'), 50); // For transition
         }
-        return { data: imageData.data, mimeType: imageData.mimeType };
+        return { data: finalData, mimeType: finalMimeType };
       } else {
         console.error('Invalid API response structure:', {
           hasCandidates: !!response.candidates,
