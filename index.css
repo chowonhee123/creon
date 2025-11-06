@@ -2337,6 +2337,7 @@ a.secondary-btn[disabled] {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-4);
+    background-color: var(--surface-color);
 }
 
 .motion-scroll-content.has-video #motion-video-container {
