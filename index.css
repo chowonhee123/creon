@@ -2074,6 +2074,7 @@ a.secondary-btn[disabled] {
 
 #explore-details-panel .details-panel-body {
     padding: var(--spacing-5);
+    padding-bottom: var(--spacing-4);
     gap: var(--spacing-4);
 }
 
@@ -2287,6 +2288,8 @@ a.secondary-btn[disabled] {
 /* Home page details panel - download button full width */
 #explore-details-panel .details-actions {
     flex-direction: column;
+    margin-bottom: 0;
+    padding-bottom: 0;
 }
 
 #explore-details-panel .details-actions #explore-details-download-btn {
