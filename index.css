@@ -2393,7 +2393,7 @@ a.secondary-btn[disabled] {
 .video-result-container {
     position: relative;
     width: 100%;
-    background-color: var(--input-bg);
+    background-color: #FFFFFF;
     border-radius: var(--border-radius-lg);
     display: flex;
     align-items: center;
