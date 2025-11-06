@@ -1436,47 +1436,12 @@ window.addEventListener('DOMContentLoaded', () => {
         console.log('Image data extracted successfully, mimeType:', inlineData.mimeType);
         const imageData = inlineData;
         const dataUrl = `data:${imageData.mimeType};base64,${imageData.data}`;
-        
-        // Resize image to 1920x1088 if needed (for 3D Studio)
-        let finalData = imageData.data;
-        let finalMimeType = imageData.mimeType;
-        
-        try {
-          const img = new Image();
-          await new Promise((resolve, reject) => {
-            img.onload = resolve;
-            img.onerror = reject;
-            img.src = dataUrl;
-          });
-          
-          // Check if image needs resizing to 1920x1088
-          if (img.width !== 1920 || img.height !== 1088) {
-            console.log(`Resizing image from ${img.width}x${img.height} to 1920x1088`);
-            const canvas = document.createElement('canvas');
-            canvas.width = 1920;
-            canvas.height = 1088;
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-              ctx.drawImage(img, 0, 0, 1920, 1088);
-              const resizedDataUrl = canvas.toDataURL(imageData.mimeType);
-              const base64Match = resizedDataUrl.match(/^data:[^;]+;base64,(.+)$/);
-              if (base64Match) {
-                finalData = base64Match[1];
-                console.log('Image resized to 1920x1088');
-              }
-            }
-          }
-        } catch (resizeError) {
-          console.warn('Failed to resize image, using original:', resizeError);
-        }
-        
-        const finalDataUrl = `data:${finalMimeType};base64,${finalData}`;
         if (resultImgElement) {
-        resultImgElement.src = finalDataUrl;
+        resultImgElement.src = dataUrl;
         resultImgElement.classList.remove('hidden');
         setTimeout(() => resultImgElement.classList.add('visible'), 50); // For transition
         }
-        return { data: finalData, mimeType: finalMimeType };
+        return { data: imageData.data, mimeType: imageData.mimeType };
       } else {
         console.error('Invalid API response structure:', {
           hasCandidates: !!response.candidates,
@@ -3171,8 +3136,8 @@ window.addEventListener('DOMContentLoaded', () => {
     // Create a natural language prompt from the template
     let prompt = `Generate an isometric 3D ${subject}. `;
     
-    // Add size specification - 1920x1088 (strong emphasis)
-    prompt += `CRITICAL REQUIREMENT: The output image MUST be exactly 1920 pixels wide by 1088 pixels tall (1920x1088 resolution). This is NOT optional. The image dimensions must be precisely 1920x1088 pixels. Use 16:9 aspect ratio. Output resolution: 1920x1088. Image width: 1920px. Image height: 1088px. `;
+    // Add aspect ratio specification - 16:9 only (no pixel dimensions)
+    prompt += `CRITICAL: The image MUST use 16:9 aspect ratio. The width to height ratio must be exactly 16:9. `;
     
     // Add user prompt if provided
     if (userPrompt && userPrompt.trim()) {
