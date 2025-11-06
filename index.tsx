@@ -3135,8 +3135,8 @@ window.addEventListener('DOMContentLoaded', () => {
     // Create a natural language prompt from the template
     let prompt = `Generate an isometric 3D ${subject}. `;
     
-    // Add aspect ratio specification - 16:9 only (no pixel dimensions)
-    prompt += `CRITICAL: The image MUST use 16:9 aspect ratio. The width to height ratio must be exactly 16:9. `;
+    // Add aspect ratio specification - 16:9 landscape (strong emphasis)
+    prompt += `CRITICAL REQUIREMENT: The output image MUST be in 16:9 landscape aspect ratio (horizontal/wide format). The width must be 16 units and height must be 9 units. The image must be wider than it is tall. This is a landscape orientation image. Aspect ratio: 16:9 (width:height). The image format must be horizontal/landscape. `;
     
     // Add user prompt if provided
     if (userPrompt && userPrompt.trim()) {
@@ -3165,6 +3165,7 @@ window.addEventListener('DOMContentLoaded', () => {
     prompt += `Lighting: ${template.lighting?.mode || 'soft diffused studio'}, ${template.lighting?.source || 'top-front or top-right'}. ${shadowText}. `;
     prompt += `Camera: isometric view, static. `;
     prompt += `Composition: single main subject, centered, fully visible inside the frame with clean margins around all edges. No cropping, no extra decorations. `;
+    prompt += `REMINDER: The image aspect ratio must be 16:9 landscape (horizontal/wide format). `;
     
     // Add negative prompt
     if (template.negative_prompt) {
