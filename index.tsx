@@ -5159,27 +5159,42 @@ Return the 5 suggestions as a JSON array.`;
     imageGenerationLoaderModal?.classList.remove('hidden');
 
     try {
-      const fontUrl = `https://fonts.googleapis.com/css2?family=Material+Symbols+${style}:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200`;
-
       // Yield to the UI thread so the modal can render before heavy work
       await new Promise(requestAnimationFrame);
 
-      const svgContent = `
-  <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
-    <style>
-      @import url('${fontUrl}');
-      .icon {
-        font-family: 'Material Symbols ${style}';
-        font-size: ${size}px;
-        fill: ${color};
-        font-variation-settings: ${fontVariationSettings.replace(/'/g, '')};
-      }
+      // Create a more robust SVG with proper font loading
+      // Use @font-face instead of @import for better compatibility
+      const fontFamilyName = `Material Symbols ${style}`;
+      const fontUrl = `https://fonts.googleapis.com/css2?family=Material+Symbols+${style}:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200`;
+      
+      // Escape the font variation settings for SVG
+      const escapedFontVariationSettings = fontVariationSettings.replace(/'/g, '');
+
+      const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <style type="text/css">
+      <![CDATA[
+        @import url('${fontUrl}');
+      ]]>
     </style>
-    <text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" class="icon">${name}</text>
-  </svg>
-      `.trim();
+  </defs>
+  <text 
+    x="50%" 
+    y="50%" 
+    dominant-baseline="central" 
+    text-anchor="middle" 
+    font-family="${fontFamilyName}, sans-serif"
+    font-size="${size}px"
+    fill="${color}"
+    font-variation-settings="${escapedFontVariationSettings}"
+  >${name}</text>
+</svg>`.trim();
 
       downloadText(svgContent, `${name}.svg`, 'image/svg+xml');
+    } catch (error) {
+      console.error('Error generating SVG:', error);
+      showToast({ type: 'error', title: 'Download Failed', body: 'Failed to generate SVG. Please try again.' });
     } finally {
       imageGenerationLoaderModal?.classList.add('hidden');
     }
