@@ -1376,7 +1376,8 @@ window.addEventListener('DOMContentLoaded', () => {
     resultErrorElement: HTMLElement | null,
     idlePlaceholderElement: HTMLElement | null,
     generateBtn: HTMLElement,
-    referenceImages: ({ file: File; dataUrl: string } | null)[] = []
+    referenceImages: ({ file: File; dataUrl: string } | null)[] = [],
+    aspectRatio?: string
   ) => {
     updateButtonLoadingState(generateBtn, true);
     // Keep idle placeholder visible, don't show skeleton loading bar
@@ -1423,12 +1424,20 @@ window.addEventListener('DOMContentLoaded', () => {
       parts.push(...validImageParts);
 
       console.log('Calling AI API with parts:', parts);
+      const config: any = {
+        responseModalities: [Modality.IMAGE],
+      };
+      
+      // Add aspectRatio for 3D Studio (16:9 landscape)
+      if (aspectRatio) {
+        config.aspectRatio = aspectRatio;
+        console.log('Setting aspectRatio to:', aspectRatio);
+      }
+      
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash-image',
         contents: { parts },
-        config: {
-          responseModalities: [Modality.IMAGE],
-        },
+        config,
       });
 
       console.log('API response received:', response);
@@ -3271,7 +3280,8 @@ window.addEventListener('DOMContentLoaded', () => {
             resultError,
             resultIdlePlaceholder,
             imageGenerateBtn,
-            referenceImagesFor3d
+            referenceImagesFor3d,
+            '16:9' // Force 16:9 aspect ratio for 3D Studio
         );
 
         if (imageData) {
@@ -3470,7 +3480,8 @@ window.addEventListener('DOMContentLoaded', () => {
         null, // No error element
         null, // No idle placeholder
         generateBtn as HTMLButtonElement,
-        mainReferenceImage ? [{ dataUrl: mainReferenceImage, file: null as any }] : []
+        mainReferenceImage ? [{ dataUrl: mainReferenceImage, file: null as any }] : [],
+        selectedStudio === '3d' ? '16:9' : undefined // Force 16:9 for 3D Studio
       );
 
       console.log('Image generation result:', imageData);
