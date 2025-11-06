@@ -2046,8 +2046,21 @@ a.secondary-btn[disabled] {
     align-items: center;
     padding: var(--spacing-4) var(--spacing-5);
     flex-shrink: 0;
+    gap: var(--spacing-2);
+    min-width: 0;
 }
-.details-panel-header h2 { font-size: 18px; font-weight: 700; }
+.details-panel-header h2 { 
+    font-size: 18px; 
+    font-weight: 700;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.details-panel-header .icon-button {
+    flex-shrink: 0;
+}
 .details-panel-body {
     display: flex;
     flex-direction: column;
