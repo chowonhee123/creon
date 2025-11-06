@@ -2282,9 +2282,16 @@ a.secondary-btn[disabled] {
     padding-bottom: 0;
     flex-shrink: 0;
     background: var(--surface-color);
-    z-index: 10;
-    position: relative;
-    margin-bottom: var(--spacing-4);
+}
+
+/* Home page details panel - download button full width */
+#explore-details-panel .details-actions {
+    flex-direction: column;
+}
+
+#explore-details-panel .details-actions #explore-details-download-btn {
+    width: 100%;
+    justify-content: center;
 }
 
 /* 2D Studio: Bottom actions with fixed position and bottom margin */
