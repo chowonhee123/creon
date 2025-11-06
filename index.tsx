@@ -3229,8 +3229,8 @@ window.addEventListener('DOMContentLoaded', () => {
     prompt += `Materials: high-gloss plastic look. `;
     prompt += `Lighting: ${template.lighting?.mode || 'soft diffused studio'}, ${template.lighting?.source || 'top-front or top-right'}. ${shadowText}. `;
     prompt += `Camera: isometric view, static. `;
-    prompt += `Composition: single main subject, centered, fully visible inside the frame with clean margins around all edges. No cropping, no extra decorations. `;
-    prompt += `FINAL REMINDER: The image aspect ratio MUST be 16:9 landscape (horizontal/wide format). DO NOT create a square image (1:1 ratio). The image must be wider than it is tall. Width: 16, Height: 9. `;
+    prompt += `Composition: single main subject, centered, fully visible inside the frame with clean margins around all edges. CRITICAL: The entire subject must be completely contained within the frame boundaries. No part of the subject should extend beyond the frame edges. Ensure all elements are fully visible and contained within the image frame. Leave sufficient padding and margins on all sides. The subject must stay within the frame - do not let any part extend outside the frame boundaries. No cropping, no extra decorations, no elements cut off at the edges, no overflow beyond frame borders. `;
+    prompt += `FINAL REMINDER: The image aspect ratio MUST be 16:9 landscape (horizontal/wide format). DO NOT create a square image (1:1 ratio). The image must be wider than it is tall. Width: 16, Height: 9. Ensure all content stays within the frame boundaries. `;
     
     // Add negative prompt
     if (template.negative_prompt) {
