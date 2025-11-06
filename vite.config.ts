@@ -50,10 +50,9 @@ const homeImagesPlugin = () => {
       if (fs.existsSync(homeDir)) {
         fs.watch(homeDir, { recursive: false }, (eventType, filename) => {
           if (filename && /\.(png|jpg|jpeg|webp|mp4|webm)$/i.test(filename)) {
-            console.log(`📁 Home images changed: ${filename}`);
+            console.log(`📁 Home images changed: ${filename}, regenerating home_images.json...`);
             generateHomeImages();
-            // Notify the client to reload
-            server.ws.send({ type: 'full-reload' });
+            console.log(`✅ Please refresh the browser to see the updated images.`);
           }
         });
       }
