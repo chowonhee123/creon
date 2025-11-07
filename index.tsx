@@ -7195,6 +7195,8 @@ Return the 5 suggestions as a JSON array.`;
   $('#object-color-picker-3d')?.addEventListener('input', update3dPromptDisplay);
   posePrompt3d?.addEventListener('input', update3dPromptDisplay);
   userPrompt3d?.addEventListener('input', update3dPromptDisplay);
+  posePrompt3d?.addEventListener('input', update3dPromptDisplay);
+  userPrompt3d?.addEventListener('input', update3dPromptDisplay);
   
   // Image Studio Generate button
   $('#image-generate-btn-image')?.addEventListener('click', handleGenerateImageStudio);
