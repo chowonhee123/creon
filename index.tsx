@@ -1593,27 +1593,13 @@ window.addEventListener('DOMContentLoaded', () => {
             ctx.fillStyle = '#FFFFFF';
             ctx.fillRect(0, 0, targetWidth, targetHeight);
             
-            // Calculate scaling to fit entire image without cropping
-            let drawWidth: number;
-            let drawHeight: number;
-            let drawX: number;
-            let drawY: number;
-            
-            if (currentRatio > targetRatio) {
-              // Image is wider than 16:9, fit to height
-              drawHeight = targetHeight;
-              drawWidth = img.width * (drawHeight / img.height);
-              drawX = (targetWidth - drawWidth) / 2;
-              drawY = 0;
-            } else {
-              // Image is taller than 16:9, fit to width
-              drawWidth = targetWidth;
-              drawHeight = img.height * (drawWidth / img.width);
-              drawX = 0;
-              drawY = (targetHeight - drawHeight) / 2;
-            }
-            
-            // Draw image centered with letterboxing
+            // Calculate scaling to fit entire image without cropping (letterbox)
+            const scale = Math.min(targetWidth / img.width, targetHeight / img.height);
+            const drawWidth = img.width * scale;
+            const drawHeight = img.height * scale;
+            const drawX = (targetWidth - drawWidth) / 2;
+            const drawY = (targetHeight - drawHeight) / 2;
+
             ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
             const resizedDataUrl = canvas.toDataURL(imageData.mimeType);
             const base64Match = resizedDataUrl.match(/^data:[^;]+;base64,(.+)$/);
