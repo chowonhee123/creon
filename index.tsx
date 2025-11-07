@@ -636,7 +636,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const imagePromptSubjectInput = $('#image-prompt-subject-input') as HTMLInputElement;
   const imagePoseInput = $('#image-pose-input') as HTMLInputElement;
   const imageAccentInput = $('#image-accent-input') as HTMLInputElement;
-  const imageTemperatureInput = $('#image-temperature-input') as HTMLInputElement;
   const imagePromptDisplay = $('#image-prompt-display') as HTMLTextAreaElement;
   const resultIdlePlaceholder = $('#result-idle-placeholder');
   const resultPlaceholder = $('#page-id-3d .result-placeholder');
@@ -3538,13 +3537,6 @@ window.addEventListener('DOMContentLoaded', () => {
         // Parse the template and create a natural language prompt
         const template = JSON.parse(imagePromptDisplay.value);
         const userPrompt = imageAccentInput?.value || '';
-        let temperature = 1;
-        if (imageTemperatureInput) {
-          const parsed = parseFloat(imageTemperatureInput.value);
-          if (!Number.isNaN(parsed)) {
-            temperature = Math.min(1, Math.max(0.1, parsed));
-          }
-        }
         const imagePromptText = createImagePromptFromTemplate(template, userPrompt);
         
         const imageData = await generateImage(
@@ -3555,8 +3547,7 @@ window.addEventListener('DOMContentLoaded', () => {
             resultIdlePlaceholder,
             imageGenerateBtn,
             referenceImagesFor3d,
-            '16:9', // Force 16:9 aspect ratio for 3D Studio
-            temperature
+            '16:9' // Force 16:9 aspect ratio for 3D Studio
         );
 
         if (imageData) {
@@ -4163,6 +4154,17 @@ window.addEventListener('DOMContentLoaded', () => {
   const handleGenerateImageStudio = async () => {
     const promptInput = $('#image-prompt-subject-input-image') as HTMLInputElement;
     const promptText = promptInput?.value?.trim() || '';
+    const temperatureInput = $('#image-temperature-input-image') as HTMLInputElement;
+    const parseTemperature = () => {
+      let value = parseFloat(temperatureInput?.value || '');
+      if (Number.isNaN(value)) value = 1;
+      value = Math.min(1, Math.max(0.1, value));
+      if (temperatureInput) {
+        temperatureInput.value = value.toFixed(1);
+      }
+      return value;
+    };
+    const temperature = parseTemperature();
 
     const loaderModal = $('#image-generation-loader-modal');
     const generateBtn = $('#image-generate-btn-image');
@@ -4233,6 +4235,7 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
           contents: { parts },
           config: {
             responseModalities: [Modality.IMAGE],
+            temperature,
           },
         });
         
@@ -4339,6 +4342,7 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
           contents: { parts },
           config: {
             responseModalities: [Modality.IMAGE],
+            temperature,
           },
         });
 
