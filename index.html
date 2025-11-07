@@ -791,7 +791,17 @@
                         <div class="prompt-card-header">
                             <h3>Prompt</h3>
                         </div>
-                        <input type="text" id="image-prompt-subject-input" placeholder="e.g., A cute cat wearing a wizard hat">
+                        <input type="text" id="image-prompt-subject-input" class="form-input-sm" placeholder="e.g., A cute cat wearing a wizard hat">
+
+                        <div class="filter-group" style="margin-top: var(--spacing-3);">
+                          <label for="pose-prompt-3d">Pose / Action (Optional)</label>
+                          <input type="text" id="pose-prompt-3d" class="form-input-sm" placeholder="e.g., Sparring stance throwing a punch">
+                        </div>
+
+                        <div class="filter-group" style="margin-top: var(--spacing-2);">
+                          <label for="user-prompt-3d">Accent / Props (Optional)</label>
+                          <input type="text" id="user-prompt-3d" class="form-input-sm" placeholder="e.g., Wearing red gloves, floating sweat particles">
+                        </div>
                         
                         <!-- Generate Button -->
                         <button id="image-generate-btn" class="primary-btn">

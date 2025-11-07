@@ -305,21 +305,6 @@ body:has(#page-usages:not(.hidden))::before { content: none; }
   font-size: 15px;
   color: var(--text-primary);
 }
-#user-prompt-3d {
-    background: var(--input-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-md);
-    padding: var(--spacing-2) var(--spacing-3);
-    resize: vertical;
-    min-height: 60px;
-    font-family: var(--font-family);
-    font-size: 14px;
-    color: var(--text-primary);
-}
-#user-prompt-3d:focus {
-    outline: none;
-    border-color: var(--accent-color);
-}
 .segmented-control {
   display: flex;
   width: 100%;
@@ -2988,9 +2973,6 @@ a.secondary-btn[disabled] {
     overflow: hidden;
     background: var(--bg-color);
 }
-.explore-container.panel-open {
-    /* No padding change, panel is part of flex flow */
-}
 .explore-main {
   flex-grow: 1;
   display: flex;
@@ -3873,7 +3855,7 @@ a.secondary-btn[disabled] {
 }
 
 .changelog-item:hover {
-  /* No background change on hover */
+  background: rgba(59, 130, 246, 0.08);
 }
 
 .changelog-dot {
@@ -4520,5 +4502,26 @@ a.secondary-btn[disabled] {
 .header-action-btn .material-symbols-outlined {
   font-size: 24px;
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.form-input-sm {
+  width: 100%;
+  height: 40px;
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--input-bg);
+  padding: 0 var(--spacing-3);
+  font-size: 14px;
+  line-height: 40px;
+  color: var(--text-primary);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.form-input-sm:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(41, 98, 255, 0.12);
+}
+.form-input-sm::placeholder {
+  color: var(--text-muted);
 }
 
