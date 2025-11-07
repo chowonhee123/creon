@@ -983,11 +983,11 @@ window.addEventListener('DOMContentLoaded', () => {
   const regenerateMotionPromptBtnStudio = $('#regenerate-motion-prompt-btn-image');
   const generateVideoBtnStudio = $('#generate-video-btn-image');
   const regenerateVideoBtnStudio = $('#regenerate-video-btn-image');
-  const downloadVideoBtnStudio = $('#download-video-btn-image') as HTMLAnchorElement;
-  const motionMoreMenuBtnStudio = $('#motion-more-menu-btn-image');
-  const motionMoreMenuStudio = $('#motion-more-menu-image');
-  const motionMoreRegeneratePromptStudio = $('#motion-more-regenerate-prompt-image');
-  const motionMoreRegenerateVideoStudio = $('#motion-more-regenerate-video-image');
+  const downloadVideoBtnImage = $('#download-video-btn-image') as HTMLAnchorElement;
+  const motionMoreMenuBtnImage = $('#motion-more-menu-btn-image');
+  const motionMoreMenuImage = $('#motion-more-menu-image');
+  const motionMoreRegeneratePromptImage = $('#motion-more-regenerate-prompt-image');
+  const motionMoreRegenerateVideoImage = $('#motion-more-regenerate-video-image');
   const detailsPanelImageStudio = $('#image-details-panel-image');
   const detailsTabBtnDetailImageStudio = $('#image-details-panel-image .tab-item[data-tab="detail"]');
   const detailsTabBtnMotionImageStudio = $('#image-details-panel-image .tab-item[data-tab="motion"]');
@@ -4733,36 +4733,39 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
     }
     
     // Update download button link
-    if (downloadVideoBtnStudio) {
+    if (downloadVideoBtnImage) {
       if (hasVideo) {
-        downloadVideoBtnStudio.href = currentGeneratedImageStudio.videoDataUrl!;
-        downloadVideoBtnStudio.download = `${currentGeneratedImageStudio.subject.replace(/\s+/g, '_')}_motion.mp4`;
+        downloadVideoBtnImage.href = currentGeneratedImageStudio.videoDataUrl!;
+        downloadVideoBtnImage.download = `${currentGeneratedImageStudio.subject.replace(/\s+/g, '_')}_motion.mp4`;
       }
     }
 
     // Update action buttons visibility
-    if (generateMotionPromptBtnStudio && regenerateMotionPromptBtnStudio && generateVideoBtnStudio && regenerateVideoBtnStudio && downloadVideoBtnStudio) {
+    if (generateMotionPromptBtnStudio && regenerateMotionPromptBtnStudio && generateVideoBtnStudio && regenerateVideoBtnStudio && downloadVideoBtnImage) {
         if (hasVideo) {
             generateMotionPromptBtnStudio.classList.add('hidden');
             generateVideoBtnStudio.classList.add('hidden');
             regenerateMotionPromptBtnStudio.classList.remove('hidden');
             regenerateVideoBtnStudio.classList.remove('hidden');
-            downloadVideoBtnStudio.classList.remove('hidden');
-            if (motionMoreMenuBtnStudio) motionMoreMenuBtnStudio.classList.remove('hidden');
+            downloadVideoBtnImage.classList.remove('hidden');
+            if (motionMoreMenuBtnImage) motionMoreMenuBtnImage.classList.remove('hidden');
+            motionMoreMenuImage?.classList.add('hidden');
         } else if (hasMotionPrompt) {
             generateMotionPromptBtnStudio.classList.add('hidden');
             generateVideoBtnStudio.classList.remove('hidden');
             regenerateMotionPromptBtnStudio.classList.remove('hidden');
             regenerateVideoBtnStudio.classList.add('hidden');
-            downloadVideoBtnStudio.classList.add('hidden');
-            if (motionMoreMenuBtnStudio) motionMoreMenuBtnStudio.classList.add('hidden');
+            downloadVideoBtnImage.classList.add('hidden');
+            if (motionMoreMenuBtnImage) motionMoreMenuBtnImage.classList.add('hidden');
+            motionMoreMenuImage?.classList.add('hidden');
         } else {
             generateMotionPromptBtnStudio.classList.remove('hidden');
             generateVideoBtnStudio.classList.add('hidden');
             regenerateMotionPromptBtnStudio.classList.add('hidden');
             regenerateVideoBtnStudio.classList.add('hidden');
-            downloadVideoBtnStudio.classList.add('hidden');
-            if (motionMoreMenuBtnStudio) motionMoreMenuBtnStudio.classList.add('hidden');
+            downloadVideoBtnImage.classList.add('hidden');
+            if (motionMoreMenuBtnImage) motionMoreMenuBtnImage.classList.add('hidden');
+            motionMoreMenuImage?.classList.add('hidden');
         }
     }
     
@@ -8183,20 +8186,19 @@ Return the 5 suggestions as a JSON array.`;
     regenerateVideoBtn?.dispatchEvent(new Event('click'));
   });
 
-  const closeMotionMoreMenuStudio = () => motionMoreMenuStudio?.classList.add('hidden');
-  motionMoreMenuBtnStudio?.addEventListener('click', (e) => {
+  const closeMotionMoreMenuImagePanel = () => motionMoreMenuImage?.classList.add('hidden');
+  motionMoreMenuBtnImage?.addEventListener('click', (e) => {
     e.stopPropagation();
-    motionMoreMenuStudio?.classList.toggle('hidden');
+    motionMoreMenuImage?.classList.toggle('hidden');
   });
-  document.addEventListener('click', () => closeMotionMoreMenuStudio());
-  detailsPanel?.addEventListener('click', (e) => e.stopPropagation());
-  motionMoreMenuStudio?.addEventListener('click', (e) => e.stopPropagation());
-  motionMoreRegeneratePromptStudio?.addEventListener('click', () => {
-    closeMotionMoreMenuStudio();
+  document.addEventListener('click', () => closeMotionMoreMenuImagePanel());
+  motionMoreMenuImage?.addEventListener('click', (e) => e.stopPropagation());
+  motionMoreRegeneratePromptImage?.addEventListener('click', () => {
+    closeMotionMoreMenuImagePanel();
     regenerateMotionPromptBtnStudio?.dispatchEvent(new Event('click'));
   });
-  motionMoreRegenerateVideoStudio?.addEventListener('click', () => {
-    closeMotionMoreMenuStudio();
+  motionMoreRegenerateVideoImage?.addEventListener('click', () => {
+    closeMotionMoreMenuImagePanel();
     regenerateVideoBtnStudio?.dispatchEvent(new Event('click'));
   });
   detailsMoreCopy?.addEventListener('click', async () => {
