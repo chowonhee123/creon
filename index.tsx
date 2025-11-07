@@ -4437,6 +4437,55 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
     }
   };
 
+  const motionCinematicKeywordsRegex = /cinematic|movie|film look|film-style|film style/gi;
+  const DEFAULT_MOTION_MOVEMENT = 'Keep the existing subject gently looping while preserving its original pose and design.';
+
+  const sanitizeMotionPromptText = (input: string): string => {
+    if (!input) {
+      return DEFAULT_MOTION_MOVEMENT;
+    }
+
+    let text = input.replace(motionCinematicKeywordsRegex, ' ');
+    text = text.replace(/\s+/g, ' ').trim();
+
+    if (!text) {
+      return DEFAULT_MOTION_MOVEMENT;
+    }
+
+    const forbiddenPatterns = [
+      /\badd(?:ing)?\b.*\bnew\b/i,
+      /\bintroduce(?:s|d|ing)?\b/i,
+      /\btransform(?:s|ed|ing)?\b/i,
+      /\bturn(?:s|ed)? into\b/i,
+      /\bmorph(?:s|ed|ing)?\b/i,
+      /\breplace(?:s|d|ing)?\b/i,
+      /\bswap(?:s|ped|ping)?\b/i,
+      /\bchange(?:s|d|ing)?\b.*\binto\b/i,
+      /\bcompletely\b.*\bchange\b/i,
+      /\bbrand new\b/i
+    ];
+
+    const sentences = text.split(/(?<=[.!?])\s+/);
+    const filtered = sentences
+      .map(sentence => sentence.trim())
+      .filter(sentence => sentence.length > 0 && !forbiddenPatterns.some(pattern => pattern.test(sentence)));
+
+    let sanitized = filtered.join(' ');
+    if (!sanitized) {
+      sanitized = DEFAULT_MOTION_MOVEMENT;
+    }
+
+    if (!/keep the subject fully visible/i.test(sanitized)) {
+      sanitized += ' Keep the subject fully visible within the frame.';
+    }
+
+    if (!/maintain the original/i.test(sanitized) && !/preserve the original/i.test(sanitized)) {
+      sanitized += ' Maintain the original proportions, accessories, and style.';
+    }
+
+    return sanitized.trim();
+  };
+
   const handleGenerateVideo = async () => {
     if (!currentGeneratedImage || !currentGeneratedImage.motionPrompt || !motionFirstFrameImage) {
         showToast({ type: 'error', title: 'Missing Data', body: 'Cannot generate video without an image and motion prompt.' });
@@ -4460,16 +4509,13 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
     
     try {
         const userPrompt = (document.getElementById('motion-prompt-final-english') as HTMLTextAreaElement).value;
-        
-        // Remove cinematic keywords as requested.
-        const cinematicKeywordsRegex = /cinematic|movie|film look/gi;
-        const sanitizedUserPrompt = userPrompt.replace(cinematicKeywordsRegex, '').replace(/\s+/g, ' ').trim();
+        const motionInstruction = sanitizeMotionPromptText(userPrompt);
 
         // Force 16:9 aspect ratio for video generation
         const aspectRatio = '16:9';
 
         // Add specific prompts to avoid letterboxing and maintain background
-        const finalPrompt = `CRITICAL: Do NOT create new content. Only animate the existing content from the source image. Keep the exact same subject, colors, style, and composition. Only add movement to the existing elements. Do not add new objects, characters, or elements. Do not change the appearance, colors, or design of existing elements. Preserve the exact background from the source image. Maintain the exact same visual style and design. ${sanitizedUserPrompt}. no black bars, no letterboxing, full-frame composition, fill the entire frame. Maintain full frame coverage with no black bars, borders, or letterboxing. Keep the entire image visible. Preserve the exact background from the source image without any cropping or black bars. CRITICAL NEGATIVE PROMPT: black bars, letterboxing, black borders, black edges, cinematic crop, pillarbox, narrow frame, cropped edges, missing background, new objects, new characters, new elements, changing appearance, changing colors. Use 16:9 aspect ratio.`;
+        const finalPrompt = `CRITICAL: Do NOT create new content. Only animate the existing content from the source image. Keep the exact same subject, colors, style, and composition. Only add movement to the existing elements. Movement Instructions: ${motionInstruction}. Do not add new objects, characters, or elements. Do not change the appearance, colors, proportions, or design of existing elements. Preserve the exact background from the source image. Maintain the exact same visual style and design. no black bars, no letterboxing, full-frame composition, fill the entire frame. Maintain full frame coverage with no black bars, borders, or letterboxing. Keep the entire image visible. Preserve the exact background from the source image without any cropping or black bars. CRITICAL NEGATIVE PROMPT: black bars, letterboxing, black borders, black edges, cinematic crop, pillarbox, narrow frame, cropped edges, missing background, new objects, new characters, new elements, changing appearance, changing colors. Use 16:9 aspect ratio.`;
 
         const config: any = {
             numberOfVideos: 1,
@@ -4585,16 +4631,13 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
     
     try {
         const userPrompt = (document.getElementById('motion-prompt-final-english-image') as HTMLTextAreaElement).value;
-        
-        // Remove cinematic keywords as requested.
-        const cinematicKeywordsRegex = /cinematic|movie|film look/gi;
-        const sanitizedUserPrompt = userPrompt.replace(cinematicKeywordsRegex, '').replace(/\s+/g, ' ').trim();
+        const motionInstruction = sanitizeMotionPromptText(userPrompt);
 
         // Force 16:9 aspect ratio for video generation
         const aspectRatio = '16:9';
 
         // Add specific prompts to avoid letterboxing and maintain background
-        const finalPrompt = `CRITICAL: Do NOT create new content. Only animate the existing content from the source image. Keep the exact same subject, colors, style, and composition. Only add movement to the existing elements. Do not add new objects, characters, or elements. Do not change the appearance, colors, or design of existing elements. Preserve the exact background from the source image. Maintain the exact same visual style and design. ${sanitizedUserPrompt}. no black bars, no letterboxing, full-frame composition, fill the entire frame. Maintain full frame coverage with no black bars, borders, or letterboxing. Keep the entire image visible. Preserve the exact background from the source image without any cropping or black bars. CRITICAL NEGATIVE PROMPT: black bars, letterboxing, black borders, black edges, cinematic crop, pillarbox, narrow frame, cropped edges, missing background, new objects, new characters, new elements, changing appearance, changing colors. Use 16:9 aspect ratio.`;
+        const finalPrompt = `CRITICAL: Do NOT create new content. Only animate the existing content from the source image. Keep the exact same subject, colors, style, and composition. Only add movement to the existing elements. Movement Instructions: ${motionInstruction}. Do not add new objects, characters, or elements. Do not change the appearance, colors, proportions, or design of existing elements. Preserve the exact background from the source image. Maintain the exact same visual style and design. no black bars, no letterboxing, full-frame composition, fill the entire frame. Maintain full frame coverage with no black bars, borders, or letterboxing. Keep the entire image visible. Preserve the exact background from the source image without any cropping or black bars. CRITICAL NEGATIVE PROMPT: black bars, letterboxing, black borders, black edges, cinematic crop, pillarbox, narrow frame, cropped edges, missing background, new objects, new characters, new elements, changing appearance, changing colors. Use 16:9 aspect ratio.`;
 
         const config: any = {
             numberOfVideos: 1,
@@ -4873,9 +4916,11 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
 
             motionCategoryModal?.classList.add('hidden');
             
+            const sanitizedEnglish = sanitizeMotionPromptText(category.english || '');
+            const sanitizedCategory = { ...category, english: sanitizedEnglish };
             const motionData = {
-                json: category,
-                english: category.english,
+                json: sanitizedCategory,
+                english: sanitizedEnglish,
                 korean: category.korean
             };
 
@@ -4884,6 +4929,11 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
             const historyItem = imageHistory.find(item => item.id === currentGeneratedImage!.id);
             if (historyItem) {
                 historyItem.motionPrompt = motionData;
+            }
+
+            const finalEnglishPromptEl = $('#motion-prompt-final-english') as HTMLTextAreaElement;
+            if (finalEnglishPromptEl) {
+                finalEnglishPromptEl.value = sanitizedEnglish;
             }
 
             updateMotionUI();
@@ -4907,11 +4957,17 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
         const subject = currentGeneratedImageStudio.subject;
         const dataUrl = `data:${currentGeneratedImageStudio.mimeType};base64,${currentGeneratedImageStudio.data}`;
         const textPrompt = `Analyze the provided image of a '${subject}'. Based on its appearance, create 5 unique and creative motion style suggestions for a short, looping video.
+Hard rules for every suggestion:
+- Absolutely preserve the subject's existing proportions, facial features, accessories, outfit, colors, lighting, background, and camera framing.
+- Do NOT introduce, add, or remove any props, characters, wardrobe pieces, particles, or environmental elements.
+- Describe only motions using the existing subject or existing environmental elements (e.g., gentle limb movement, breathing, water ripples, sunlight shifts) or subtle camera motion that keeps the subject fully visible.
+- Avoid any wording about transforming, morphing, changing shapes, swapping outfits, or replacing parts of the subject.
+- Motions must be seamless, looping, and subtle so that the source frame can be used as both the start and end without visible jumps.
 For each suggestion, provide:
 1. 'name': A short, catchy category name in Korean (e.g., '부드러운 루핑').
 2. 'description': A brief, engaging description in Korean of the motion style. You can use <b> tags for emphasis (e.g., '<b>자연스럽게 반복되는 움직임.</b> 시작과 끝이 매끄럽게 연결됩니다.').
-3. 'english': A concise, direct text-to-video prompt in English that embodies the motion style. Crucially, the prompt must ensure the animation creates a perfect loop, starting and ending with the provided image. The subject must remain fully visible within the frame throughout the animation. Start the prompt with the subject.
-4. 'korean': A lively, descriptive version of the prompt in Korean for the user to read, mentioning that it's a looping animation.
+3. 'english': A concise, direct text-to-video prompt in English that embodies the motion style. The prompt must explicitly state that no new props or subjects appear, that the original design stays intact, and that the subject remains fully visible within the frame.
+4. 'korean': A lively, descriptive version of the prompt in Korean for the user to read, mentioning that it's a looping animation while also stating that 새로운 요소가 추가되지 않음을 강조하세요.
 Return the 5 suggestions as a JSON array.`;
         
         const imagePart = {
@@ -4983,9 +5039,11 @@ Return the 5 suggestions as a JSON array.`;
 
             motionCategoryModal?.classList.add('hidden');
             
+            const sanitizedEnglish = sanitizeMotionPromptText(category.english || '');
+            const sanitizedCategory = { ...category, english: sanitizedEnglish };
             const motionData = {
-                json: category,
-                english: category.english,
+                json: sanitizedCategory,
+                english: sanitizedEnglish,
                 korean: category.korean
             };
 
@@ -4994,6 +5052,11 @@ Return the 5 suggestions as a JSON array.`;
             const historyItem = imageStudioHistory.find(item => item.id === currentGeneratedImageStudio!.id);
             if (historyItem) {
                 historyItem.motionPrompt = motionData;
+            }
+
+            const finalEnglishPromptElStudio = $('#motion-prompt-final-english-image') as HTMLTextAreaElement;
+            if (finalEnglishPromptElStudio) {
+                finalEnglishPromptElStudio.value = sanitizedEnglish;
             }
 
             lastFocusedElement?.focus();
@@ -5020,11 +5083,17 @@ Return the 5 suggestions as a JSON array.`;
     try {
         const subject = currentGeneratedImage.subject;
         const textPrompt = `Analyze the provided image of a '${subject}'. Based on its appearance, create 5 unique and creative motion style suggestions for a short, looping video.
+Hard rules for every suggestion:
+- Absolutely preserve the subject's existing proportions, facial features, accessories, outfit, colors, lighting, background, and camera framing.
+- Do NOT introduce, add, or remove any props, characters, wardrobe pieces, particles, or environmental elements.
+- Describe only motions using the existing subject or existing environmental elements (e.g., gentle limb movement, breathing, water ripples, sunlight shifts) or subtle camera motion that keeps the subject fully visible.
+- Avoid any wording about transforming, morphing, changing shapes, swapping outfits, or replacing parts of the subject.
+- Motions must be seamless, looping, and subtle so that the source frame can be used as both the start and end without visible jumps.
 For each suggestion, provide:
 1. 'name': A short, catchy category name in Korean (e.g., '부드러운 루핑').
 2. 'description': A brief, engaging description in Korean of the motion style. You can use <b> tags for emphasis (e.g., '<b>자연스럽게 반복되는 움직임.</b> 시작과 끝이 매끄럽게 연결됩니다.').
-3. 'english': A concise, direct text-to-video prompt in English that embodies the motion style. Crucially, the prompt must ensure the animation creates a perfect loop, starting and ending with the provided image. The subject must remain fully visible within the frame throughout the animation. Start the prompt with the subject.
-4. 'korean': A lively, descriptive version of the prompt in Korean for the user to read, mentioning that it's a looping animation.
+3. 'english': A concise, direct text-to-video prompt in English that embodies the motion style. The prompt must explicitly state that no new props or subjects appear, that the original design stays intact, and that the subject remains fully visible within the frame.
+4. 'korean': A lively, descriptive version of the prompt in Korean for the user to read, mentioning that it's a looping animation while also stating that 새로운 요소가 추가되지 않음을 강조하세요.
 Return the 5 suggestions as a JSON array.`;
         
         const imagePart = {
