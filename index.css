@@ -4546,3 +4546,20 @@ a.secondary-btn[disabled] {
   color: var(--text-secondary);
 }
 
+.temperature-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.temperature-header .temperature-range {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.temperature-header .temperature-value {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--text-primary);
+}
+
