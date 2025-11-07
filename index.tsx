@@ -109,98 +109,191 @@ window.addEventListener('DOMContentLoaded', () => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const ICON_STUDIO_3D_PROMPT_TEMPLATE = JSON.stringify({
     "task": "generate isometric 3D icon",
-    "subject": "{ICON_SUBJECT}",
     "style_lock": true,
-    "output": { "format": "png", "size": "2048x2048" },
-    "negative_prompt": "vignette, dark corners, shadow artifacts, patterns, gradients, ground/drop shadows, stroke/outline, textures, scratches, dirt, noise, bevel/emboss, text, watermark, photographic background, fabric/leather realism, grunge, low-res, aliasing",
+    "subject": "{ICON_SUBJECT}",
+    "pose_instruction": "",
+    "accent_detail": "",
+    "guidance": {
+      "aspect_ratio": "1:1",
+      "instruction_strength": "strict",
+      "priority_order": [
+        "subject",
+        "pose_instruction",
+        "style_consistency",
+        "color_palette",
+        "material_spec"
+      ],
+      "consistency_reference": "Match Creon 3D icon sheet: smooth glossy plastic, floating subject, uniform lighting."
+    },
+    "output": {
+      "format": "png",
+      "size": "2048x2048",
+      "background": "#FFFFFF",
+      "alpha": true,
+      "safety_settings": {
+        "allowed_content": ["stylized_character"],
+        "disallowed_content": ["photographic_realism", "text"]
+      }
+    },
+    "negative_prompt": "photographic realism, fabric texture, gritty, noise, grain, metallic reflections, subsurface scattering, wood grain, glass refraction, text, watermark, drop shadow, vignette, cinematic lighting, background gradients, extra props, multiple subjects, poorly defined limbs, messy geometry, outline, harsh contrast, oversaturated colors",
     "brand_tone": "vibrant, modern, friendly, premium",
     "system": { "scalable": true, "interchangeable": true },
     "background": { "type": "solid", "color": "#FFFFFF", "alpha": true },
     "render": {
+      "engine": "flash-3d",
       "quality": "ultra-high",
       "resolution": 2048,
+      "postprocess": "clean",
       "separation": "by color/lighting/depth only"
     },
     "colors": {
-      "dominant_blue": "#2962FF",
-      "white": "#FFFFFF",
-      "accent_light_blue": "#4FC3F7",
-      "inherent_colors": "when object has a universal color identity (e.g. sun=yellow, carrot=orange/green, leaf=green), preserve it. Otherwise default to blue/white palette."
+      "palette_name": "Creon Blue System",
+      "dominant_blue": "#2E6BFF",
+      "secondary_blue": "#4FC3F7",
+      "neutral_white": "#FFFFFF",
+      "warm_accent": "#FFD45A",
+      "inherent_colors": "Only if essential for the subject (low saturation pastel skin/hair). No new hues."
     },
     "materials": {
-      "primary": "high-gloss blue plastic",
-      "secondary": "clean matte white plastic",
-      "accents": "minimal silver/chrome details only"
+      "primary": "smooth high-gloss plastic",
+      "secondary": "matte pastel plastic",
+      "accents": "translucent frosted plastic",
+      "surface_detail": "no noise, no texture, no scratches"
     },
     "lighting": {
-      "mode": "soft diffused studio",
-      "source": "top-front or top-right",
-      "highlights": "clean specular on glossy areas",
-      "shadows": "internal only; no ground/drop shadow"
+      "mode": "soft global illumination",
+      "source": "dual top-front softboxes with faint rim light",
+      "highlights": "broad glossy bloom, no hard speculars",
+      "shadows": "internal occlusion only, no ground shadow",
+      "exposure": "balanced, no high contrast"
     },
     "form": {
-      "shapes": "rounded, smooth, bubbly",
-      "edges": "crisp, no outlines"
+      "shapes": "pillowy, inflated, soft-volume forms",
+      "edges": "rounded with 85% fillet, zero sharp corners",
+      "proportions": "chibi/stylized, simplified anatomy",
+      "deformation": "squash-and-stretch for friendliness",
+      "surface_finish": "clean, seamless"
     },
     "composition": {
-      "elements": "single main subject, centered, no extra decorations",
+      "elements": "single hero subject floating; only props essential to subject",
       "depth": "distinct layering, slight elevation",
       "density": "minimal, focused center",
-      "framing": "The entire subject must be fully visible and centered inside the frame. Leave a small, clean margin around all edges. Do not crop any part of the subject."
+      "framing": "Subject fully visible and centered with clean margins"
     },
-    "camera": { "type": "isometric", "static": true },
-    "canvas": { "ratio": "1:1", "safe_margins": true }
+    "camera": {
+      "type": "isometric",
+      "lens": "orthographic",
+      "tilt": "35deg",
+      "pan": "35deg",
+      "distance": "medium shot",
+      "focus": "global sharp",
+      "motion": "static"
+    },
+    "canvas": { "ratio": "1:1", "safe_margins": true },
+    "background_guidance": "Keep background white, no gradients or props"
   }, null, 2);
   const DEFAULT_3D_STYLE_PROMPT_TEMPLATE = JSON.stringify({
     "task": "generate isometric 3D icon",
-    "subject": "{ICON_SUBJECT|backpack}",
     "style_lock": true,
-    "output": { 
+    "subject": "{ICON_SUBJECT|backpack}",
+    "pose_instruction": "",
+    "accent_detail": "",
+    "guidance": {
+      "aspect_ratio": "16:9",
+      "instruction_strength": "strict",
+      "priority_order": [
+        "subject",
+        "pose_instruction",
+        "style_consistency",
+        "color_palette",
+        "material_spec"
+      ],
+      "consistency_reference": "Match Creon 3D icon sheet: smooth glossy plastic, floating subject, uniform lighting."
+    },
+    "output": {
       "format": "png",
       "size": "1024x576",
       "width": 1024,
-      "height": 576
+      "height": 576,
+      "background": "#FFFFFF",
+      "alpha": true,
+      "safety_settings": {
+        "allowed_content": ["stylized_character"],
+        "disallowed_content": ["photographic_realism", "text"]
+      }
     },
-    "negative_prompt": "vignette, dark corners, shadow artifacts, patterns, gradients, ground/drop shadows, stroke/outline, textures, scratches, dirt, noise, bevel/emboss, text, watermark, photographic background, fabric/leather realism, grunge, low-res, aliasing",
-    "brand_tone": "vibrant, modern, friendly, premium",
-    "system": { "scalable": true, "interchangeable": true },
-    "background": { "type": "solid", "color": "#FFFFFF", "alpha": true },
     "render": {
+      "engine": "flash-3d",
       "quality": "ultra-high",
       "resolution": 1024,
       "width": 1024,
       "height": 576,
+      "sampling": "deterministic",
+      "postprocess": "clean",
       "separation": "by color/lighting/depth only"
     },
-    "colors": {
-      "dominant_blue": "#2962FF",
-      "white": "#FFFFFF",
-      "accent_light_blue": "#4FC3F7",
-      "inherent_colors": "when object has a universal color identity (e.g. sun=yellow, carrot=orange/green, leaf=green), preserve it. Otherwise default to blue/white palette."
-    },
-    "materials": {
-      "primary": "high-gloss blue plastic",
-      "secondary": "clean matte white plastic",
-      "accents": "minimal silver/chrome details only"
+    "camera": {
+      "type": "isometric",
+      "lens": "orthographic",
+      "tilt": "35deg",
+      "pan": "35deg",
+      "distance": "medium shot",
+      "focus": "global sharp",
+      "motion": "static"
     },
     "lighting": {
-      "mode": "soft diffused studio",
-      "source": "top-front or top-right",
-      "highlights": "clean specular on glossy areas",
-      "shadows": "internal only; no ground/drop shadow"
+      "mode": "soft global illumination",
+      "source": "dual top-front softboxes with faint rim light",
+      "highlights": "broad glossy bloom, no hard speculars",
+      "shadows": "internal occlusion only, no ground shadow",
+      "exposure": "balanced, no high contrast"
+    },
+    "materials": {
+      "primary": "smooth high-gloss plastic",
+      "secondary": "matte pastel plastic",
+      "accents": "translucent frosted plastic",
+      "surface_detail": "no noise, no texture, no scratches"
+    },
+    "colors": {
+      "palette_name": "Creon Blue System",
+      "dominant_blue": "#2E6BFF",
+      "secondary_blue": "#4FC3F7",
+      "neutral_white": "#FFFFFF",
+      "warm_accent": "#FFD45A",
+      "inherent_colors": "Only if essential for the subject (low saturation pastel skin/hair). No new hues."
     },
     "form": {
-      "shapes": "rounded, smooth, bubbly",
-      "edges": "crisp, no outlines"
+      "shapes": "pillowy, inflated, soft-volume forms",
+      "edges": "rounded with 85% fillet, zero sharp corners",
+      "proportions": "chibi/stylized, simplified anatomy",
+      "deformation": "squash-and-stretch for friendliness",
+      "surface_finish": "clean, seamless"
     },
     "composition": {
-      "elements": "single main subject, centered, no extra decorations",
-      "depth": "distinct layering, slight elevation",
-      "density": "minimal, focused center",
-      "framing": "The entire subject must be fully visible and centered inside the frame. Leave a small, clean margin around all edges. Do not crop any part of the subject."
+      "elements": "single hero subject floating; only props essential to subject",
+      "density": "minimal, generous negative space",
+      "framing": "subject centered with equal top/bottom margins, fully contained",
+      "depth": "3-layer depth stack with gentle parallax"
     },
-    "camera": { "type": "isometric", "static": true },
-    "canvas": { "ratio": "16:9", "safe_margins": true }
+    "background": {
+      "type": "solid",
+      "color": "#FFFFFF",
+      "environment": "studio cyclorama",
+      "ground_contact": "none (floating)"
+    },
+    "brand_tone": "vibrant, modern, friendly, premium, tech-forward",
+    "system": {
+      "scalable": true,
+      "interchangeable": true,
+      "documentation": "Follow Gemini 2.5 Flash prompt best practices; short explicit fields, clear priority."
+    },
+    "negative_prompt": "photographic realism, fabric texture, gritty, noise, grain, metallic reflections, subsurface scattering, wood grain, glass refraction, text, watermark, drop shadow, ground/drop shadows, vignette, cinematic lighting, background gradients, extra props, multiple subjects, poorly defined limbs, messy geometry, 1024x1024 output, square aspect ratio, outline, harsh contrast, oversaturated colors",
+    "safety": {
+      "violence": "none",
+      "adult": "none",
+      "medical": "none",
+      "political": "none"
+    }
   }, null, 2);
   
   const DEFAULT_2D_STYLE_PROMPT_TEMPLATE = JSON.stringify({
@@ -526,6 +619,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const generatedImageIcon = $('#generated-image') as HTMLImageElement;
   const loader3d = $('#loader');
   const promptDisplay3d = $('#prompt-display-3d') as HTMLTextAreaElement;
+  const posePrompt3d = $('#pose-prompt-3d') as HTMLInputElement;
   const userPrompt3d = $('#user-prompt-3d') as HTMLInputElement;
   const placeholder3d = $('#id-3d-placeholder');
   const errorPlaceholder3d = $('#id-3d-error-placeholder');
@@ -3274,14 +3368,28 @@ window.addEventListener('DOMContentLoaded', () => {
         const subject = imagePromptSubjectInput.value || 'a friendly robot';
         template.subject = subject;
 
+        if (posePrompt3d) {
+          template.pose_instruction = posePrompt3d.value.trim();
+        }
+
+        if (userPrompt3d) {
+          template.accent_detail = userPrompt3d.value.trim();
+        }
+
         if (shadowToggle3d.checked) {
-            template.negative_prompt = template.negative_prompt.replace(', ground/drop shadows', '');
-            template.lighting.shadows = "soft ground shadow beneath the object";
+            if (typeof template.negative_prompt === 'string') {
+              template.negative_prompt = template.negative_prompt.replace(', ground/drop shadows', '');
+            }
+            if (template.lighting) {
+              template.lighting.shadows = 'soft ground shadow beneath the object';
+            }
         } else {
-            if (!template.negative_prompt.includes('ground/drop shadows')) {
+            if (typeof template.negative_prompt === 'string' && !template.negative_prompt.includes('ground/drop shadows')) {
                  template.negative_prompt += ', ground/drop shadows';
             }
-            template.lighting.shadows = "internal only; no ground/drop shadow";
+            if (template.lighting) {
+              template.lighting.shadows = 'internal occlusion only, no ground shadow';
+            }
         }
 
         // Add background color
@@ -3305,52 +3413,118 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const createImagePromptFromTemplate = (template: any, userPrompt: string = '', isFix: boolean = false): string => {
     const subject = template.subject || 'a friendly robot';
-    const shadowText = template.lighting?.shadows || '';
+    const poseInstruction = template.pose_instruction || '';
+    const accentDetail = template.accent_detail || '';
     const backgroundColor = template.background?.color || '#FFFFFF';
-    const objectColor = template.colors?.dominant_blue || '#2962FF';
-    const inherentColors = template.colors?.inherent_colors || '';
-    
-    // Create a natural language prompt from the template
-    let prompt = `Generate an isometric 3D ${subject}. `;
-    
-    // Add aspect ratio specification - 16:9 landscape (strong emphasis)
-    prompt += `CRITICAL REQUIREMENT - DO NOT CREATE A SQUARE IMAGE: The output image MUST be exactly 1024 pixels wide by 576 pixels tall (1024x576 resolution). This is a 16:9 landscape aspect ratio (horizontal/wide format). The width must be 1024 pixels and height must be 576 pixels. The image must be wider than it is tall. This is a landscape orientation image, NOT a square image. NEVER create a square image (1:1 ratio) or 1024x1024 image. Output dimensions: 1024x576 pixels. Image width: 1024px. Image height: 576px. `;
-    
-    // Add user prompt if provided
-    if (userPrompt && userPrompt.trim()) {
-      prompt += `${userPrompt}. `;
+    const palette = template.colors || {};
+    const materials = template.materials || {};
+    const lighting = template.lighting || {};
+    const form = template.form || {};
+    const composition = template.composition || {};
+    const guidance = template.guidance || {};
+    const camera = template.camera || {};
+    const negativePrompt = template.negative_prompt || '';
+
+    const lines: string[] = [];
+
+    lines.push(`Generate an isometric 3D icon of ${subject}.`);
+    if (poseInstruction) {
+      lines.push(`Pose / action: ${poseInstruction}.`);
     }
-    
-    if (isFix) {
-      // Fix mode: Maintain exact shape and only change colors
-      prompt += `CRITICAL: Maintain the exact same shape, proportions, and form. DO NOT change the subject's structure or design. `;
-      prompt += `Background color: ${backgroundColor}. `;
-      prompt += `Object main color: ${objectColor}. Preserve all sub-elements' inherent colors (e.g., if there's food, keep it realistic; if there are decorative elements, maintain their natural appearance). `;
+    if (accentDetail) {
+      lines.push(`Include accent details: ${accentDetail}.`);
+    }
+    if (userPrompt && userPrompt.trim() && userPrompt.trim() !== accentDetail) {
+      lines.push(`${userPrompt.trim()}.`);
+    }
+
+    // Aspect ratio and output requirements
+    const aspectRatio = guidance.aspect_ratio || '16:9';
+    if (aspectRatio === '16:9') {
+      lines.push('CRITICAL REQUIREMENT: Output must be exactly 1024x576 pixels (16:9 landscape). Never return a square or 1024x1024 image. Maintain landscape orientation with width greater than height.');
     } else {
-      // Normal generation mode
-      prompt += `Background: solid color ${backgroundColor}. `;
-      
-      // Color palette instructions
-      if (inherentColors) {
-        prompt += `Colors: ${inherentColors}. When natural colors are needed, use them. Otherwise, use the blue/white palette (${objectColor}). `;
-      } else {
-        prompt += `Color palette: Use natural colors where the object has a universal color identity (e.g., sun=yellow, carrot=orange/green, leaf=green). For other elements, use ${objectColor} and white. `;
+      lines.push(`CRITICAL REQUIREMENT: Output must follow ${aspectRatio} aspect ratio and provided width/height.`);
+    }
+
+    if (isFix) {
+      lines.push('CRITICAL: Maintain the existing model, proportions, silhouette, and camera. Only adjust colors as specified.');
+      lines.push(`Background color: ${backgroundColor}. Main palette: ${palette.dominant_blue || '#2E6BFF'} and ${palette.neutral_white || '#FFFFFF'}.`);
+    } else {
+      lines.push(`Background: solid ${backgroundColor}.`);
+      const paletteParts: string[] = [];
+      if (palette.dominant_blue) paletteParts.push(`dominant blue ${palette.dominant_blue}`);
+      if (palette.secondary_blue) paletteParts.push(`secondary blue ${palette.secondary_blue}`);
+      if (palette.neutral_white) paletteParts.push(`neutral white ${palette.neutral_white}`);
+      if (palette.warm_accent) paletteParts.push(`warm accent ${palette.warm_accent} used sparingly`);
+      if (paletteParts.length) {
+        lines.push(`Color palette: ${paletteParts.join(', ')}.`);
+      }
+      if (palette.inherent_colors) {
+        lines.push(`Inherent colors: ${palette.inherent_colors}.`);
       }
     }
-    
-    prompt += `Style: rounded, smooth, bubbly shapes with crisp edges and no outlines. `;
-    prompt += `Materials: high-gloss plastic look. `;
-    prompt += `Lighting: ${template.lighting?.mode || 'soft diffused studio'}, ${template.lighting?.source || 'top-front or top-right'}. ${shadowText}. `;
-    prompt += `Camera: isometric view, static. `;
-    prompt += `Composition: single main subject, centered, fully visible inside the frame with clean margins around all edges. CRITICAL: The entire subject must be completely contained within the frame boundaries. No part of the subject should extend beyond the frame edges. Ensure all elements are fully visible and contained within the image frame. Leave sufficient padding and margins on all sides. The subject must stay within the frame - do not let any part extend outside the frame boundaries. No cropping, no extra decorations, no elements cut off at the edges, no overflow beyond frame borders. `;
-    prompt += `FINAL REMINDER: The image MUST be exactly 1024x576 pixels (16:9 landscape). DO NOT create a square image (1:1 ratio) or 1024x1024 image. The image must be wider than it is tall. Output dimensions: 1024 pixels wide by 576 pixels tall. Ensure all content stays within the frame boundaries. `;
-    
-    // Add negative prompt
-    if (template.negative_prompt) {
-      prompt += `Negative: ${template.negative_prompt}`;
+
+    const materialParts: string[] = [];
+    if (materials.primary) materialParts.push(`primary material ${materials.primary}`);
+    if (materials.secondary) materialParts.push(`secondary material ${materials.secondary}`);
+    if (materials.accents) materialParts.push(`accents ${materials.accents}`);
+    if (materials.surface_detail) materialParts.push(`surface detail ${materials.surface_detail}`);
+    if (materialParts.length) {
+      lines.push(`Materials: ${materialParts.join(', ')}.`);
     }
-    
-    return prompt;
+
+    const formParts: string[] = [];
+    if (form.shapes) formParts.push(form.shapes);
+    if (form.edges) formParts.push(form.edges);
+    if (form.proportions) formParts.push(form.proportions);
+    if (form.deformation) formParts.push(form.deformation);
+    if (form.surface_finish) formParts.push(form.surface_finish);
+    if (formParts.length) {
+      lines.push(`Form: ${formParts.join(', ')}.`);
+    }
+
+    const lightingParts: string[] = [];
+    if (lighting.mode) lightingParts.push(lighting.mode);
+    if (lighting.source) lightingParts.push(lighting.source);
+    if (lighting.highlights) lightingParts.push(`highlights ${lighting.highlights}`);
+    if (lighting.shadows) lightingParts.push(`shadows ${lighting.shadows}`);
+    if (lighting.exposure) lightingParts.push(`exposure ${lighting.exposure}`);
+    if (lightingParts.length) {
+      lines.push(`Lighting: ${lightingParts.join(', ')}.`);
+    }
+
+    const cameraParts: string[] = [];
+    if (camera.type) cameraParts.push(camera.type);
+    if (camera.lens) cameraParts.push(`${camera.lens} lens`);
+    if (camera.tilt) cameraParts.push(`tilt ${camera.tilt}`);
+    if (camera.pan) cameraParts.push(`pan ${camera.pan}`);
+    if (camera.distance) cameraParts.push(camera.distance);
+    if (camera.focus) cameraParts.push(`focus ${camera.focus}`);
+    if (camera.motion) cameraParts.push(`motion ${camera.motion}`);
+    if (cameraParts.length) {
+      lines.push(`Camera: ${cameraParts.join(', ')}.`);
+    }
+
+    const compositionParts: string[] = [];
+    if (composition.elements) compositionParts.push(composition.elements);
+    if (composition.density) compositionParts.push(composition.density);
+    if (composition.framing) compositionParts.push(composition.framing);
+    if (composition.depth) compositionParts.push(composition.depth);
+    if (compositionParts.length) {
+      lines.push(`Composition: ${compositionParts.join(', ')}.`);
+    }
+
+    if (!isFix) {
+      lines.push('Ensure the subject remains centered, floating, and fully contained within the frame with clean margins.');
+    }
+
+    lines.push('Final reminder: maintain the specified aspect ratio and do not introduce additional objects, text, or background elements.');
+
+    if (negativePrompt) {
+      lines.push(`Negative prompt: ${negativePrompt}.`);
+    }
+
+    return lines.join(' ');
   };
 
   const handleGenerateImage3d = async () => {
@@ -5489,15 +5663,23 @@ Return the 5 suggestions as a JSON array.`;
     try {
         const promptObject = JSON.parse(ICON_STUDIO_3D_PROMPT_TEMPLATE);
         promptObject.subject = selectedIcon.name.replace(/_/g, ' ');
+        promptObject.pose_instruction = '';
+        promptObject.accent_detail = '';
 
         if (shadowToggleIcons.checked) {
-            promptObject.negative_prompt = promptObject.negative_prompt.replace(', ground/drop shadows', '');
-            promptObject.lighting.shadows = "internal and soft ground shadow";
+            if (typeof promptObject.negative_prompt === 'string') {
+              promptObject.negative_prompt = promptObject.negative_prompt.replace(', ground/drop shadows', '');
+            }
+            if (promptObject.lighting) {
+              promptObject.lighting.shadows = 'soft ground shadow beneath the object';
+            }
         } else {
-            if (!promptObject.negative_prompt.includes('ground/drop shadows')) {
+            if (typeof promptObject.negative_prompt === 'string' && !promptObject.negative_prompt.includes('ground/drop shadows')) {
                 promptObject.negative_prompt += ', ground/drop shadows';
             }
-            promptObject.lighting.shadows = "internal only; no ground/drop shadow";
+            if (promptObject.lighting) {
+              promptObject.lighting.shadows = 'internal occlusion only, no ground shadow';
+            }
         }
 
         promptDisplay3d.value = JSON.stringify(promptObject, null, 2);
@@ -5548,7 +5730,11 @@ Return the 5 suggestions as a JSON array.`;
         if (userAddition) {
              try {
                 const promptObject = JSON.parse(finalPrompt);
-                promptObject.subject += `, ${userAddition}`;
+                if (promptObject.accent_detail) {
+                  promptObject.accent_detail = `${promptObject.accent_detail}, ${userAddition}`;
+                } else {
+                  promptObject.accent_detail = userAddition;
+                }
                 finalPrompt = JSON.stringify(promptObject, null, 2);
             } catch (e) {
                 finalPrompt += ` Additional details: ${userAddition}.`;
@@ -7007,6 +7193,8 @@ Return the 5 suggestions as a JSON array.`;
   // Color picker event listeners for 3D Studio
   $('#background-color-picker-3d')?.addEventListener('input', update3dPromptDisplay);
   $('#object-color-picker-3d')?.addEventListener('input', update3dPromptDisplay);
+  posePrompt3d?.addEventListener('input', update3dPromptDisplay);
+  userPrompt3d?.addEventListener('input', update3dPromptDisplay);
   
   // Image Studio Generate button
   $('#image-generate-btn-image')?.addEventListener('click', handleGenerateImageStudio);
