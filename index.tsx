@@ -4745,8 +4745,8 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
         if (hasVideo) {
             generateMotionPromptBtnStudio.classList.add('hidden');
             generateVideoBtnStudio.classList.add('hidden');
-            regenerateMotionPromptBtnStudio.classList.remove('hidden');
-            regenerateVideoBtnStudio.classList.remove('hidden');
+            regenerateMotionPromptBtnStudio.classList.add('hidden');
+            regenerateVideoBtnStudio.classList.add('hidden');
             downloadVideoBtnImage.classList.remove('hidden');
             if (motionMoreMenuBtnImage) motionMoreMenuBtnImage.classList.remove('hidden');
             motionMoreMenuImage?.classList.add('hidden');
