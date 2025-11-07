@@ -3442,8 +3442,8 @@ a.secondary-btn[disabled] {
     background-color: #FFFFFF;
 }
 #motion-thumbnail-image-image {
-    width: 272px;
-    height: 272px;
+    width: 48px;
+    height: 48px;
     border-radius: var(--border-radius-sm);
     object-fit: cover;
     flex-shrink: 0;
