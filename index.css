@@ -3777,6 +3777,15 @@ a.secondary-btn[disabled] {
     padding: var(--spacing-5);
 }
 
+#motion-prompt-output-image {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-4);
+    background-color: var(--input-bg);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-5);
+}
+
 /* --- Motion Prompt Output Customization --- */
 
 /* Reset inner cards since the container now provides the background */
@@ -3787,8 +3796,21 @@ a.secondary-btn[disabled] {
     gap: var(--spacing-2);
 }
 
+#motion-prompt-output-image .control-card {
+    background-color: transparent;
+    padding: 0;
+    border: none;
+    gap: var(--spacing-2);
+}
+
 /* Style labels within the motion prompt block */
 #motion-prompt-output .control-card > label {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+#motion-prompt-output-image .control-card > label {
     font-size: 15px;
     font-weight: 700;
     color: var(--text-primary);
@@ -3810,13 +3832,39 @@ a.secondary-btn[disabled] {
     word-break: break-word; /* Fix for long unbroken text */
 }
 
+#motion-prompt-final-english-image {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-3);
+    font-family: var(--font-family);
+    font-size: 13px;
+    color: var(--text-primary);
+    width: 100%;
+    resize: vertical;
+    line-height: 1.6;
+    min-height: 100px;
+    word-break: break-word;
+}
+
 #motion-prompt-final-english:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+#motion-prompt-final-english-image:focus {
   outline: none;
   border-color: var(--accent-color);
 }
 
 /* Move inline styles for the Korean description to the stylesheet */
 #motion-prompt-korean {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+#motion-prompt-korean-image {
     font-size: 13px;
     line-height: 1.6;
     color: var(--text-secondary);
