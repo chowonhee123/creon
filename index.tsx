@@ -636,6 +636,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const imagePromptSubjectInput = $('#image-prompt-subject-input') as HTMLInputElement;
   const imagePoseInput = $('#image-pose-input') as HTMLInputElement;
   const imageAccentInput = $('#image-accent-input') as HTMLInputElement;
+  const imageTemperatureInput = $('#image-temperature-input') as HTMLInputElement;
   const imagePromptDisplay = $('#image-prompt-display') as HTMLTextAreaElement;
   const resultIdlePlaceholder = $('#result-idle-placeholder');
   const resultPlaceholder = $('#page-id-3d .result-placeholder');
@@ -1580,7 +1581,8 @@ window.addEventListener('DOMContentLoaded', () => {
     idlePlaceholderElement: HTMLElement | null,
     generateBtn: HTMLElement,
     referenceImages: ({ file: File; dataUrl: string } | null)[] = [],
-    aspectRatio?: string
+    aspectRatio?: string,
+    temperature: number = 1
   ) => {
     updateButtonLoadingState(generateBtn, true);
     // Keep idle placeholder visible, don't show skeleton loading bar
@@ -1629,6 +1631,7 @@ window.addEventListener('DOMContentLoaded', () => {
       console.log('Calling AI API with parts:', parts);
       const config: any = {
         responseModalities: [Modality.IMAGE],
+        temperature,
       };
       
       // Add aspectRatio for 3D Studio (16:9 landscape)
@@ -3535,6 +3538,13 @@ window.addEventListener('DOMContentLoaded', () => {
         // Parse the template and create a natural language prompt
         const template = JSON.parse(imagePromptDisplay.value);
         const userPrompt = imageAccentInput?.value || '';
+        let temperature = 1;
+        if (imageTemperatureInput) {
+          const parsed = parseFloat(imageTemperatureInput.value);
+          if (!Number.isNaN(parsed)) {
+            temperature = Math.min(1, Math.max(0.1, parsed));
+          }
+        }
         const imagePromptText = createImagePromptFromTemplate(template, userPrompt);
         
         const imageData = await generateImage(
@@ -3545,7 +3555,8 @@ window.addEventListener('DOMContentLoaded', () => {
             resultIdlePlaceholder,
             imageGenerateBtn,
             referenceImagesFor3d,
-            '16:9' // Force 16:9 aspect ratio for 3D Studio
+            '16:9', // Force 16:9 aspect ratio for 3D Studio
+            temperature
         );
 
         if (imageData) {
@@ -3744,7 +3755,8 @@ window.addEventListener('DOMContentLoaded', () => {
         null, // No idle placeholder
         generateBtn as HTMLButtonElement,
         mainReferenceImage ? [{ dataUrl: mainReferenceImage, file: null as any }] : [],
-        selectedStudio === '3d' ? '16:9' : undefined // Force 16:9 for 3D Studio
+        selectedStudio === '3d' ? '16:9' : undefined, // Force 16:9 for 3D Studio
+        1 // Default temperature
       );
 
       console.log('Image generation result:', imageData);
@@ -8570,7 +8582,6 @@ Return the 5 suggestions as a JSON array.`;
             imageGenerationLoaderModal?.classList.add('hidden');
         }
     });
-
     resultImage?.addEventListener('click', () => {
 
         if (!currentGeneratedImage) return;
