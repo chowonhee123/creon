@@ -619,8 +619,8 @@ window.addEventListener('DOMContentLoaded', () => {
   const generatedImageIcon = $('#generated-image') as HTMLImageElement;
   const loader3d = $('#loader');
   const promptDisplay3d = $('#prompt-display-3d') as HTMLTextAreaElement;
-  const posePrompt3d = $('#pose-prompt-3d') as HTMLInputElement;
-  const userPrompt3d = $('#user-prompt-3d') as HTMLInputElement;
+  const iconPoseInput3d = $('#icon-pose-input') as HTMLInputElement;
+  const iconAccentInput3d = $('#icon-accent-input') as HTMLInputElement;
   const placeholder3d = $('#id-3d-placeholder');
   const errorPlaceholder3d = $('#id-3d-error-placeholder');
   const download3DBtn = $('#download-3d-btn') as HTMLAnchorElement;
@@ -634,6 +634,8 @@ window.addEventListener('DOMContentLoaded', () => {
   // Main 3D page elements
   const imageGenerateBtn = $('#image-generate-btn');
   const imagePromptSubjectInput = $('#image-prompt-subject-input') as HTMLInputElement;
+  const imagePoseInput = $('#image-pose-input') as HTMLInputElement;
+  const imageAccentInput = $('#image-accent-input') as HTMLInputElement;
   const imagePromptDisplay = $('#image-prompt-display') as HTMLTextAreaElement;
   const resultIdlePlaceholder = $('#result-idle-placeholder');
   const resultPlaceholder = $('#page-id-3d .result-placeholder');
@@ -782,14 +784,12 @@ window.addEventListener('DOMContentLoaded', () => {
   const previewSwitcherImageBtn = $('.preview-switcher .preview-tab-item[data-tab="image"]');
   const previewSwitcherVideoBtn = $('.preview-switcher .preview-tab-item[data-tab="video"]');
   const motionPromptPlaceholder = $('#motion-prompt-placeholder');
-
   // 3D Details: More menu (Upscale / Copy Prompt / Delete)
   const detailsMoreMenuBtn = $('#details-more-menu-btn');
   const detailsMoreMenu = $('#details-more-menu');
   const detailsMoreUpscale = $('#details-more-upscale');
   const detailsMoreCopy = $('#details-more-copy');
   const detailsMoreDelete = $('#details-more-delete');
-  
   // 2D Page Elements
   const imageGenerateBtn2d = $('#p2d-image-generate-btn');
   const imagePromptSubjectInput2d = $('#p2d-image-prompt-subject-input') as HTMLInputElement;
@@ -1572,7 +1572,6 @@ window.addEventListener('DOMContentLoaded', () => {
       }, durationMs);
     }
   };
-
   const generateImage = async (
     prompt: string,
     resultImgElement: HTMLImageElement | null,
@@ -2061,7 +2060,6 @@ window.addEventListener('DOMContentLoaded', () => {
       updateDetailsPanelHistory3d();
     }, 0);
   };
-  
   const updateDetailsPanelHistory2d = () => {
     const detailsHistoryList = $('#p2d-details-history-list');
     if (!detailsHistoryList) {
@@ -2638,7 +2636,6 @@ window.addEventListener('DOMContentLoaded', () => {
       });
     });
   };
-
   // 3D Studio: Update details panel history (similar to 2D Studio)
   const updateDetailsPanelHistory3d = () => {
     const detailsHistoryList = document.getElementById('3d-details-history-list');
@@ -3368,12 +3365,12 @@ window.addEventListener('DOMContentLoaded', () => {
         const subject = imagePromptSubjectInput.value || 'a friendly robot';
         template.subject = subject;
 
-        if (posePrompt3d) {
-          template.pose_instruction = posePrompt3d.value.trim();
+        if (imagePoseInput) {
+          template.pose_instruction = imagePoseInput.value.trim();
         }
 
-        if (userPrompt3d) {
-          template.accent_detail = userPrompt3d.value.trim();
+        if (imageAccentInput) {
+          template.accent_detail = imageAccentInput.value.trim();
         }
 
         if (shadowToggle3d.checked) {
@@ -3410,7 +3407,6 @@ window.addEventListener('DOMContentLoaded', () => {
         imagePromptDisplay.value = DEFAULT_3D_STYLE_PROMPT_TEMPLATE.replace("{ICON_SUBJECT|backpack}", imagePromptSubjectInput.value || 'a friendly robot');
     }
   };
-
   const createImagePromptFromTemplate = (template: any, userPrompt: string = '', isFix: boolean = false): string => {
     const subject = template.subject || 'a friendly robot';
     const poseInstruction = template.pose_instruction || '';
@@ -3540,7 +3536,7 @@ window.addEventListener('DOMContentLoaded', () => {
     try {
         // Parse the template and create a natural language prompt
         const template = JSON.parse(imagePromptDisplay.value);
-        const userPrompt = userPrompt3d?.value || '';
+        const userPrompt = imageAccentInput?.value || '';
         const imagePromptText = createImagePromptFromTemplate(template, userPrompt);
         
         const imageData = await generateImage(
@@ -4193,15 +4189,12 @@ window.addEventListener('DOMContentLoaded', () => {
         // Build the composition prompt with clearer instructions for image blending
         const imageCountStr = imageCount === 2 ? 'two' : 'three';
         const compositionPrompt = `You are creating a composed image based on the user's description and ${imageCountStr} reference images.
-
 User's request: "${promptText}"
-
 Instructions:
 1. Analyze all reference images
 2. Integrate the elements from the reference images according to the user's description
 3. The final image should look natural and cohesive, not a weird hybrid
 4. Maintain the style and quality of the reference images
-
 Make sure the result is photorealistic and aesthetically pleasing.`;
         
         console.log('[Image Studio] Composition prompt:', compositionPrompt);
@@ -4883,13 +4876,11 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
         const subject = currentGeneratedImageStudio.subject;
         const dataUrl = `data:${currentGeneratedImageStudio.mimeType};base64,${currentGeneratedImageStudio.data}`;
         const textPrompt = `Analyze the provided image of a '${subject}'. Based on its appearance, create 5 unique and creative motion style suggestions for a short, looping video.
-
 For each suggestion, provide:
 1. 'name': A short, catchy category name in Korean (e.g., '부드러운 루핑').
 2. 'description': A brief, engaging description in Korean of the motion style. You can use <b> tags for emphasis (e.g., '<b>자연스럽게 반복되는 움직임.</b> 시작과 끝이 매끄럽게 연결됩니다.').
 3. 'english': A concise, direct text-to-video prompt in English that embodies the motion style. Crucially, the prompt must ensure the animation creates a perfect loop, starting and ending with the provided image. The subject must remain fully visible within the frame throughout the animation. Start the prompt with the subject.
 4. 'korean': A lively, descriptive version of the prompt in Korean for the user to read, mentioning that it's a looping animation.
-
 Return the 5 suggestions as a JSON array.`;
         
         const imagePart = {
@@ -4998,13 +4989,11 @@ Return the 5 suggestions as a JSON array.`;
     try {
         const subject = currentGeneratedImage.subject;
         const textPrompt = `Analyze the provided image of a '${subject}'. Based on its appearance, create 5 unique and creative motion style suggestions for a short, looping video.
-
 For each suggestion, provide:
 1. 'name': A short, catchy category name in Korean (e.g., '부드러운 루핑').
 2. 'description': A brief, engaging description in Korean of the motion style. You can use <b> tags for emphasis (e.g., '<b>자연스럽게 반복되는 움직임.</b> 시작과 끝이 매끄럽게 연결됩니다.').
 3. 'english': A concise, direct text-to-video prompt in English that embodies the motion style. Crucially, the prompt must ensure the animation creates a perfect loop, starting and ending with the provided image. The subject must remain fully visible within the frame throughout the animation. Start the prompt with the subject.
 4. 'korean': A lively, descriptive version of the prompt in Korean for the user to read, mentioning that it's a looping animation.
-
 Return the 5 suggestions as a JSON array.`;
         
         const imagePart = {
@@ -5726,7 +5715,7 @@ Return the 5 suggestions as a JSON array.`;
 
     try {
         let finalPrompt = promptDisplay3d.value;
-        const userAddition = userPrompt3d.value.trim();
+        const userAddition = iconAccentInput3d?.value.trim() || '';
         if (userAddition) {
              try {
                 const promptObject = JSON.parse(finalPrompt);
@@ -6249,7 +6238,6 @@ Return the 5 suggestions as a JSON array.`;
       }
     });
   };
-  
   // Setup event listeners for a single image zone
   const setupSingleImageZone = (index: number) => {
     const zone = document.querySelector(`.image-studio-drop-zone[data-index="${index}"]`) as HTMLElement;
@@ -7047,10 +7035,8 @@ Return the 5 suggestions as a JSON array.`;
       updatePreviewStyles();
       updateCodeSnippetDisplay();
   });
-
   motionPlayBtn?.addEventListener('click', handlePlayMotion);
   searchInput?.addEventListener('input', () => populateIconGrid(searchInput.value));
-  
   // Studio Selector - Custom dropdown (Toss Invest style)
   const studioSelector = $('#studio-selector') as HTMLSelectElement;
   const customDropdown = $('#custom-studio-selector');
@@ -7162,7 +7148,7 @@ Return the 5 suggestions as a JSON array.`;
   convertTo3DBtn?.addEventListener('click', handleConvertTo3D);
   regenerate3DBtn?.addEventListener('click', () => {
       if(currentGeneratedIcon3d) {
-          userPrompt3d.value = currentGeneratedIcon3d.userPrompt;
+          if (iconAccentInput3d) iconAccentInput3d.value = currentGeneratedIcon3d.userPrompt;
           handleConvertTo3D();
       }
   });
@@ -7193,10 +7179,8 @@ Return the 5 suggestions as a JSON array.`;
   // Color picker event listeners for 3D Studio
   $('#background-color-picker-3d')?.addEventListener('input', update3dPromptDisplay);
   $('#object-color-picker-3d')?.addEventListener('input', update3dPromptDisplay);
-  posePrompt3d?.addEventListener('input', update3dPromptDisplay);
-  userPrompt3d?.addEventListener('input', update3dPromptDisplay);
-  posePrompt3d?.addEventListener('input', update3dPromptDisplay);
-  userPrompt3d?.addEventListener('input', update3dPromptDisplay);
+  imagePoseInput?.addEventListener('input', update3dPromptDisplay);
+  imageAccentInput?.addEventListener('input', update3dPromptDisplay);
   
   // Image Studio Generate button
   $('#image-generate-btn-image')?.addEventListener('click', handleGenerateImageStudio);
@@ -7786,7 +7770,6 @@ Return the 5 suggestions as a JSON array.`;
         
         showToast({ type: 'success', title: 'Reverted to original ↩️', body: 'Background restoration completed.' });
     });
-
     // 2D Studio: Convert to SVG
     const convertToSvgBtn2d = $('#p2d-convert-to-svg-btn');
     convertToSvgBtn2d?.addEventListener('click', async () => {
@@ -8182,7 +8165,7 @@ Return the 5 suggestions as a JSON array.`;
   detailsMoreCopy?.addEventListener('click', async () => {
     close3dMoreMenu();
     const basePrompt = (imagePromptDisplay as HTMLTextAreaElement)?.value || '';
-    const userExtra = (userPrompt3d as HTMLInputElement)?.value || '';
+    const userExtra = imageAccentInput?.value || '';
     const text = [basePrompt, userExtra].filter(Boolean).join('\n');
     try {
       await navigator.clipboard.writeText(text);
@@ -8216,7 +8199,6 @@ Return the 5 suggestions as a JSON array.`;
     renderHistory();
     showToast({ type: 'success', title: 'Deleted', body: 'Item removed from history.' });
   });
-
     detailsCloseBtn?.addEventListener('click', () => {
         detailsPanel?.classList.add('hidden');
         detailsPanel?.classList.remove('is-open');
