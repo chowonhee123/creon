@@ -1253,6 +1253,118 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   };
 
+  const loadImageDimensions = (dataUrl: string): Promise<{ width: number; height: number }> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const width = img.naturalWidth || img.width;
+        const height = img.naturalHeight || img.height;
+        if (!width || !height) {
+          reject(new Error('Invalid image dimensions'));
+          return;
+        }
+        resolve({ width, height });
+      };
+      img.onerror = () => reject(new Error('Failed to load image dimensions'));
+      img.src = dataUrl;
+    });
+  };
+
+  const simplifyAspectRatio = (width: number, height: number): string | null => {
+    if (!width || !height) return null;
+    const gcd = (a: number, b: number): number => {
+      return b === 0 ? a : gcd(b, a % b);
+    };
+    const roundedWidth = Math.round(width);
+    const roundedHeight = Math.round(height);
+    if (roundedWidth <= 0 || roundedHeight <= 0) return null;
+    const divisor = gcd(roundedWidth, roundedHeight);
+    if (!divisor) return null;
+    return `${Math.round(roundedWidth / divisor)}:${Math.round(roundedHeight / divisor)}`;
+  };
+
+  const cloneImageStudioSnapshot = (source: GeneratedImageData, modificationType: string): GeneratedImageData => {
+    return {
+      id: source.id,
+      data: source.data,
+      mimeType: source.mimeType,
+      subject: source.subject,
+      styleConstraints: source.styleConstraints,
+      timestamp: source.timestamp,
+      modificationType,
+    };
+  };
+
+  const ensureImageStudioRightHistoryInitialized = () => {
+    if (!currentGeneratedImageStudio) return;
+    if (!currentGeneratedImageStudio.rightPanelHistory || currentGeneratedImageStudio.rightPanelHistory.length === 0) {
+      currentGeneratedImageStudio.rightPanelHistory = [
+        cloneImageStudioSnapshot(currentGeneratedImageStudio, 'Original'),
+      ];
+    } else {
+      const firstEntry = currentGeneratedImageStudio.rightPanelHistory[0];
+      if (firstEntry) {
+        firstEntry.modificationType = 'Original';
+        firstEntry.id = currentGeneratedImageStudio.id;
+      }
+    }
+  };
+
+  const applyImageStudioModification = (newEntry: GeneratedImageData) => {
+    if (!currentGeneratedImageStudio) return;
+
+    ensureImageStudioRightHistoryInitialized();
+
+    if (!currentGeneratedImageStudio.rightPanelHistory) {
+      currentGeneratedImageStudio.rightPanelHistory = [];
+    }
+
+    currentGeneratedImageStudio.rightPanelHistory.push(newEntry);
+
+    currentGeneratedImageStudio.data = newEntry.data;
+    currentGeneratedImageStudio.mimeType = newEntry.mimeType;
+    currentGeneratedImageStudio.timestamp = newEntry.timestamp;
+    currentGeneratedImageStudio.modificationType = 'Original';
+
+    if (imageStudioHistoryIndex !== -1 && imageStudioHistory[imageStudioHistoryIndex]) {
+      imageStudioHistory[imageStudioHistoryIndex] = currentGeneratedImageStudio;
+    } else {
+      const matchingIndex = imageStudioHistory.findIndex(item => item.id === currentGeneratedImageStudio!.id);
+      if (matchingIndex !== -1) {
+        imageStudioHistory[matchingIndex] = currentGeneratedImageStudio;
+        imageStudioHistoryIndex = matchingIndex;
+      }
+    }
+  };
+
+  const removeNonOriginalImageStudioHistoryEntries = (): boolean => {
+    let removed = false;
+
+    for (let i = imageStudioHistory.length - 1; i >= 0; i--) {
+      const item = imageStudioHistory[i];
+      if (item && item.modificationType && item.modificationType !== 'Original') {
+        imageStudioHistory.splice(i, 1);
+        removed = true;
+
+        if (imageStudioHistoryIndex > i) {
+          imageStudioHistoryIndex--;
+        } else if (imageStudioHistoryIndex === i) {
+          imageStudioHistoryIndex = Math.max(0, imageStudioHistoryIndex - 1);
+        }
+      }
+    }
+
+    if (imageStudioHistory.length === 0) {
+      currentGeneratedImageStudio = null;
+      imageStudioHistoryIndex = -1;
+    } else if (imageStudioHistoryIndex >= imageStudioHistory.length) {
+      imageStudioHistoryIndex = imageStudioHistory.length - 1;
+    }
+
+    return removed;
+  };
+
+
   // --- NAVIGATION AND THEME ---
   const handleNavClick = (e: MouseEvent) => {
     e.preventDefault();
@@ -3986,6 +4098,7 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
             subject: imageStudioReferenceImages[0]?.file.name || '',
             styleConstraints: imageStudioReferenceImages[1]?.file.name || '',
             timestamp,
+            modificationType: 'Original',
             rightPanelHistory: [{
               id: `img_${timestamp}`,
               data,
@@ -4089,6 +4202,7 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
             subject: imageStudioReferenceImages[0]?.file.name || promptText || '',
             styleConstraints: promptText || '',
             timestamp,
+            modificationType: 'Original',
             rightPanelHistory: [{
               id: `img_${timestamp}`,
               data,
@@ -6399,7 +6513,7 @@ Return the 5 suggestions as a JSON array.`;
   
   const handleZoomOut = async (scale: number) => {
     if (!currentGeneratedImageStudio) return;
-    
+
     const btn = zoomOut1_5xBtnImage;
     const loaderModal = $('#image-generation-loader-modal');
     loaderModal?.classList.remove('hidden');
@@ -6411,19 +6525,55 @@ Return the 5 suggestions as a JSON array.`;
       const blob = await response.blob();
       const file = new File([blob], 'image.png', { type: currentGeneratedImageStudio.mimeType });
       const base64Data = await blobToBase64(file);
+
+      let originalWidth: number | null = null;
+      let originalHeight: number | null = null;
+      let aspectRatioString: string | null = null;
+
+      try {
+        const dimensions = await loadImageDimensions(dataUrl);
+        originalWidth = dimensions.width;
+        originalHeight = dimensions.height;
+        aspectRatioString = simplifyAspectRatio(dimensions.width, dimensions.height);
+      } catch (dimensionError) {
+        console.warn('Unable to determine image dimensions for zoom-out operation:', dimensionError);
+      }
+
+      const scaleLabel = Number.isInteger(scale) ? String(scale) : scale.toFixed(2).replace(/\.?0+$/, '');
+      const shrinkPercent = Math.round((1 - (1 / scale)) * 100);
+      const shrinkText = Number.isFinite(shrinkPercent) ? ` (approximately ${Math.max(shrinkPercent, 0)}% smaller)` : '';
+
+      let promptText = `IMPORTANT: You are editing the provided image. Produce a zoomed-out version where the main subject appears ${scaleLabel}x smaller${shrinkText} so significantly more of the surrounding background is visible. Expand the canvas view/field of view while keeping the subject perfectly centered and fully visible. Preserve the exact lighting, color palette, materials, camera angle, and rendering style from the original image.`;
+
+      if (aspectRatioString && originalWidth && originalHeight) {
+        promptText += ` Maintain the exact original aspect ratio (${aspectRatioString}) and output resolution (${originalWidth}x${originalHeight} pixels).`;
+      } else {
+        promptText += ' Maintain the original aspect ratio and resolution.';
+      }
+
+      promptText += ' Reveal substantially more background context than the original: increase the visible environment by at least fifty percent on every side in this single result, keep the subject smaller in frame, and make the extra negative space obvious. Fill any newly revealed area with background elements that match the existing environment. Do not add new unrelated objects, text, borders, or black bars. Do not crop the subject or change its design. Ensure the result looks like the same scene viewed from farther away.';
+
+      const negativePrompt = 'Avoid: keeping the original framing, keeping the subject the same size, zooming in, requiring multiple iterations, partial zoom-outs, cropping, square proportions, warped geometry, empty borders, letterboxing, new objects, text overlays, or lighting/style changes.';
       
       const parts = [
         { inlineData: { data: base64Data, mimeType: currentGeneratedImageStudio.mimeType } },
-        { text: `IMPORTANT: Take the original image and make the main subject 1.5 times SMALLER (reduce its size by 1.5x). Then expand the frame/canvas to show MORE background area around the subject. The subject should appear smaller in the center, with significantly more surrounding background visible. The overall image dimensions should remain the same, but the subject takes up less space, revealing more background context. Keep the same style, colors, and quality. This is a zoom-out effect - the subject shrinks, the background expands.` }
+        { text: promptText },
+        { text: negativePrompt }
       ];
-      
+
+      const config: any = {
+        responseModalities: [Modality.IMAGE],
+        temperature: 0.1,
+      };
+
+      if (aspectRatioString) {
+        config.aspectRatio = aspectRatioString;
+      }
+
       const zoomOutResponse = await ai.models.generateContent({
         model: 'gemini-2.5-flash-image',
         contents: { parts },
-        config: {
-          responseModalities: [Modality.IMAGE],
-          temperature: 0.1,
-        },
+        config,
       });
       
       const zoomOutPart = zoomOutResponse.candidates?.[0]?.content?.parts?.[0];
@@ -6439,17 +6589,11 @@ Return the 5 suggestions as a JSON array.`;
           subject: currentGeneratedImageStudio.subject,
           styleConstraints: currentGeneratedImageStudio.styleConstraints,
           timestamp,
-          modificationType: `Zoom Out ${scale}x`
+          modificationType: `Zoom Out ${scaleLabel}x`
         };
         
-        // Only add to right panel history, not left panel history
-        if (!currentGeneratedImageStudio.rightPanelHistory) {
-          currentGeneratedImageStudio.rightPanelHistory = [{
-            ...currentGeneratedImageStudio,
-            modificationType: 'Original'
-          }];
-        }
-        currentGeneratedImageStudio.rightPanelHistory.push(newImage);
+        applyImageStudioModification(newImage);
+        removeNonOriginalImageStudioHistoryEntries();
         
         // Update preview with new image
         const resultImage = $('#result-image-image') as HTMLImageElement;
@@ -6458,17 +6602,20 @@ Return the 5 suggestions as a JSON array.`;
         }
         if (detailsPreviewImageImage) {
           detailsPreviewImageImage.src = zoomedOutDataUrl;
+          detailsPreviewImageImage.style.transform = 'scale(1)';
         }
         
         const detailsDownload = $('#details-download-btn-image') as HTMLAnchorElement;
         if (detailsDownload) {
           detailsDownload.href = zoomedOutDataUrl;
         }
+
+        renderImageStudioHistory();
         
         // Update right panel history display
         updateImageStudioDetailsHistory();
         
-        showToast({ type: 'success', title: `Zoomed Out ${scale}x!`, body: `Frame has been expanded by ${scale} times.` });
+        showToast({ type: 'success', title: `Zoomed Out ${scaleLabel}x!`, body: `Frame has been expanded by ${scaleLabel}x.` });
       }
     } catch (error) {
       console.error('Error zooming out image:', error);
@@ -6479,7 +6626,7 @@ Return the 5 suggestions as a JSON array.`;
     }
   };
   
-  zoomOut1_5xBtnImage?.addEventListener('click', () => handleZoomOut(1.5));
+  zoomOut1_5xBtnImage?.addEventListener('click', () => handleZoomOut(2));
   
   // Image Studio: Upscale from Fix section removed - now available in More menu
   
@@ -6552,15 +6699,10 @@ Return the 5 suggestions as a JSON array.`;
           modificationType: 'Modified'
         };
         
-        // Only add to right panel history, not left panel history
-        if (!currentGeneratedImageStudio.rightPanelHistory) {
-          currentGeneratedImageStudio.rightPanelHistory = [{
-            ...currentGeneratedImageStudio,
-            modificationType: 'Original'
-          }];
-        }
-        currentGeneratedImageStudio.rightPanelHistory.push(newImage);
-        
+        applyImageStudioModification(newImage);
+        removeNonOriginalImageStudioHistoryEntries();
+        renderImageStudioHistory();
+
         // Update preview with new image
         const resultImage = $('#result-image-image') as HTMLImageElement;
         if (resultImage) {
@@ -6611,9 +6753,52 @@ Return the 5 suggestions as a JSON array.`;
       currentGeneratedImageStudio.rightPanelHistory = rightPanelHistory;
     }
     
+    const currentDataSignature = currentGeneratedImageStudio.data;
+
+    const selectHistoryItem = (selectedIndex: number) => {
+      const selectedItem = rightPanelHistory[selectedIndex];
+      if (!selectedItem) return;
+
+      const dataUrl = `data:${selectedItem.mimeType};base64,${selectedItem.data}`;
+
+      const resultImage = $('#result-image-image') as HTMLImageElement;
+      if (resultImage) {
+        resultImage.src = dataUrl;
+        resultImage.classList.remove('hidden');
+      }
+
+      const detailsPreviewImage = $('#details-preview-image-image') as HTMLImageElement;
+      if (detailsPreviewImage) {
+        detailsPreviewImage.src = dataUrl;
+        detailsPreviewImage.style.transform = 'scale(1)';
+      }
+
+      const detailsDownload = $('#details-download-btn-image') as HTMLAnchorElement;
+      if (detailsDownload) {
+        detailsDownload.href = dataUrl;
+      }
+
+      // Update current state so subsequent edits use the selected version
+      currentGeneratedImageStudio.data = selectedItem.data;
+      currentGeneratedImageStudio.mimeType = selectedItem.mimeType;
+      currentGeneratedImageStudio.timestamp = selectedItem.timestamp;
+      currentGeneratedImageStudio.modificationType = selectedItem.modificationType;
+      currentGeneratedImageStudio.rightPanelHistory = rightPanelHistory;
+
+      if (imageStudioHistoryIndex !== -1 && imageStudioHistory[imageStudioHistoryIndex]) {
+        imageStudioHistory[imageStudioHistoryIndex] = currentGeneratedImageStudio;
+      }
+
+      const allHistoryItems = Array.from(historyListEl.children) as HTMLElement[];
+      allHistoryItems.forEach((el, i) => {
+        el.style.border = i === selectedIndex ? '2px solid var(--accent-color)' : '2px solid transparent';
+      });
+    };
+
     rightPanelHistory.forEach((item, index) => {
       const historyItem = document.createElement('div');
-      historyItem.style.cssText = 'position: relative; aspect-ratio: 1; border-radius: var(--border-radius-md); overflow: hidden; cursor: pointer; border: 2px solid transparent;';
+      historyItem.style.cssText = 'position: relative; aspect-ratio: 1; border-radius: var(--border-radius-md); overflow: hidden; cursor: pointer; border: 2px solid transparent; background: var(--surface-color);';
+      historyItem.dataset.index = String(index);
       
       const thumbnailContainer = document.createElement('div');
       thumbnailContainer.style.cssText = 'width: 100%; height: 100%; position: relative; display: flex; align-items: center; justify-content: center;';
@@ -6625,47 +6810,27 @@ Return the 5 suggestions as a JSON array.`;
         img.style.cssText = 'width: 100%; height: 100%; object-fit: contain; pointer-events: none;';
         thumbnailContainer.appendChild(img);
       }
-      
+
+      const badge = document.createElement('div');
+      const badgeLabel = item.modificationType || 'Original';
+      badge.textContent = badgeLabel;
+      badge.style.cssText = 'position: absolute; left: 4px; bottom: 4px; padding: 2px 6px; border-radius: 999px; background: rgba(15,23,42,0.75); color: #FFFFFF; font-size: 10px; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; pointer-events: none;';
+
       historyItem.appendChild(thumbnailContainer);
-      
-      // Add click handler to update preview
+      historyItem.appendChild(badge);
+
       historyItem.addEventListener('click', () => {
-        const selectedItem = rightPanelHistory[index];
-        if (!selectedItem) return;
-        
-        // Update main preview area
-        const resultImage = $('#result-image-image') as HTMLImageElement;
-        if (resultImage && selectedItem) {
-          resultImage.src = `data:${selectedItem.mimeType};base64,${selectedItem.data}`;
-          resultImage.classList.remove('hidden');
-        }
-        
-        // Update details panel preview
-        const detailsPreviewImage = $('#details-preview-image-image') as HTMLImageElement;
-        if (detailsPreviewImage && selectedItem) {
-          detailsPreviewImage.src = `data:${selectedItem.mimeType};base64,${selectedItem.data}`;
-          detailsPreviewImage.style.transform = 'scale(1)';
-        }
-        
-        // Update download button
-        const detailsDownload = $('#details-download-btn-image') as HTMLAnchorElement;
-        if (detailsDownload && selectedItem) {
-          detailsDownload.href = `data:${selectedItem.mimeType};base64,${selectedItem.data}`;
-        }
-        
-        // Update visual selection
-        const allHistoryItems = historyListEl.querySelectorAll('div');
-        allHistoryItems.forEach((el, i) => {
-          if (i === index) {
-            el.style.border = '2px solid var(--accent-color)';
-          } else {
-            el.style.border = '2px solid transparent';
-          }
-        });
+        selectHistoryItem(index);
       });
-      
+
       historyListEl.appendChild(historyItem);
     });
+
+    const initialIndex = rightPanelHistory.findIndex(item => item.data === currentDataSignature);
+    const defaultIndex = initialIndex !== -1 ? initialIndex : rightPanelHistory.length - 1;
+    if (defaultIndex >= 0) {
+      selectHistoryItem(defaultIndex);
+    }
   };
   
   // Update history when History tab is clicked
