@@ -4525,3 +4525,24 @@ a.secondary-btn[disabled] {
   color: rgba(15, 23, 42, 0.35);
 }
 
+.slider-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.slider-group input[type="range"] {
+  width: 100%;
+}
+
+.slider-group input[type="range"]:focus {
+  outline: none;
+}
+
+.slider-group .slider-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+

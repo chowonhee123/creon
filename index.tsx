@@ -4151,20 +4151,33 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  const temperatureInputImage = $('#image-temperature-input-image') as HTMLInputElement;
+  const temperatureLabelImage = $('#image-temperature-label');
+
+  const getImageStudioTemperature = (): number => {
+    let value = 1;
+    if (temperatureInputImage) {
+      value = parseFloat(temperatureInputImage.value || '');
+      if (Number.isNaN(value)) {
+        value = 1;
+      }
+      value = Math.min(1, Math.max(0.1, value));
+      temperatureInputImage.value = value.toFixed(1);
+      if (temperatureLabelImage) {
+        temperatureLabelImage.textContent = value.toFixed(1);
+      }
+    }
+    return value;
+  };
+
+  temperatureInputImage?.addEventListener('input', () => {
+    getImageStudioTemperature();
+  });
+
   const handleGenerateImageStudio = async () => {
     const promptInput = $('#image-prompt-subject-input-image') as HTMLInputElement;
     const promptText = promptInput?.value?.trim() || '';
-    const temperatureInput = $('#image-temperature-input-image') as HTMLInputElement;
-    const parseTemperature = () => {
-      let value = parseFloat(temperatureInput?.value || '');
-      if (Number.isNaN(value)) value = 1;
-      value = Math.min(1, Math.max(0.1, value));
-      if (temperatureInput) {
-        temperatureInput.value = value.toFixed(1);
-      }
-      return value;
-    };
-    const temperature = parseTemperature();
+    const temperature = getImageStudioTemperature();
 
     const loaderModal = $('#image-generation-loader-modal');
     const generateBtn = $('#image-generate-btn-image');
