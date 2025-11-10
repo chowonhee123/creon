@@ -1562,20 +1562,16 @@
                 
                 <!-- Code Tab -->
                 <div class="details-tab-content hidden" data-tab-content="code">
-                    <label style="display: block; font-weight: 500; margin-bottom: var(--spacing-2);">SVG Code</label>
                     <textarea id="p2d-svg-code-view" readonly style="width: 100%; height: 500px; padding: var(--spacing-3); border-radius: var(--border-radius-md); border: 1px solid var(--border-color); font-family: 'Courier New', monospace; font-size: 12px; background-color: var(--bg-color); color: var(--text-primary); resize: none;"></textarea>
-                    <div style="display: flex; gap: var(--spacing-2); margin-top: var(--spacing-2);">
-                        <button id="p2d-copy-svg-code-btn" class="secondary-btn" style="flex: 1;">
+                    <div class="svg-code-actions">
+                        <button id="p2d-copy-svg-code-btn" class="secondary-btn">
                             <span class="material-symbols-outlined">content_copy</span> Copy SVG
+                        </button>
+                        <button id="p2d-download-svg-btn" class="secondary-btn">
+                            <span class="material-symbols-outlined">download</span> Download .svg
                         </button>
                     </div>
                 </div>
-            </div>
-            
-            <div style="display: flex; justify-content: flex-end; margin-top: var(--spacing-4);">
-                <button id="p2d-download-svg-btn" class="secondary-btn" style="min-width: 150px; justify-content: center;">
-                    <span class="material-symbols-outlined">download</span> Download .svg
-                </button>
             </div>
         </div>
       </div>
