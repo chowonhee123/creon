@@ -42,7 +42,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // --- STATE ---
   let selectedIcon: IconData | null = null;
   let currentAnimationTimeout: number | null = null;
-  let currentGeneratedIcon3d: { data: string, prompt: string, userPrompt: string } | null = null;
+let currentGeneratedIcon3d: { data: string; prompt: string } | null = null;
   
   // 3D Page State
   let currentGeneratedImage: GeneratedImageData | null = null;
@@ -113,7 +113,6 @@ window.addEventListener('DOMContentLoaded', () => {
     "style_lock": true,
     "subject": "{ICON_SUBJECT}",
     "pose_instruction": "",
-    "accent_detail": "",
     "guidance": {
       "aspect_ratio": "1:1",
       "instruction_strength": "strict",
@@ -198,7 +197,6 @@ window.addEventListener('DOMContentLoaded', () => {
     "style_lock": true,
     "subject": "{ICON_SUBJECT|backpack}",
     "pose_instruction": "",
-    "accent_detail": "",
     "guidance": {
       "aspect_ratio": "16:9",
       "instruction_strength": "strict",
@@ -620,8 +618,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const generatedImageIcon = $('#generated-image') as HTMLImageElement;
   const loader3d = $('#loader');
   const promptDisplay3d = $('#prompt-display-3d') as HTMLTextAreaElement;
-  const iconPoseInput3d = $('#icon-pose-input') as HTMLInputElement;
-  const iconAccentInput3d = $('#icon-accent-input') as HTMLInputElement;
+const iconPoseInput3d = $('#icon-pose-input') as HTMLInputElement;
   const placeholder3d = $('#id-3d-placeholder');
   const errorPlaceholder3d = $('#id-3d-error-placeholder');
   const download3DBtn = $('#download-3d-btn') as HTMLAnchorElement;
@@ -634,9 +631,8 @@ window.addEventListener('DOMContentLoaded', () => {
   // Main 3D page elements
   const imageGenerateBtn = $('#image-generate-btn');
   const imagePromptSubjectInput = $('#image-prompt-subject-input') as HTMLInputElement;
-  const imagePoseInput = $('#image-pose-input') as HTMLInputElement;
-  const imageAccentInput = $('#image-accent-input') as HTMLInputElement;
-  const imagePromptDisplay = $('#image-prompt-display') as HTMLTextAreaElement;
+const imagePoseInput = $('#image-pose-input') as HTMLInputElement;
+const imagePromptDisplay = $('#image-prompt-display') as HTMLTextAreaElement;
   const resultIdlePlaceholder = $('#result-idle-placeholder');
   const resultPlaceholder = $('#page-id-3d .result-placeholder');
   const resultImage = $('#page-id-3d .result-image') as HTMLImageElement;
@@ -1775,7 +1771,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // --- PAGE-SPECIFIC LOGIC: 2D Studio ---
 
   const update2dWeightValue = () => {
-    const weightSlider = $('#p2d-weight-slider') as HTMLInputElement;
+    const weightSlider = $('#p2d-weight-slider') as HTMLInputElement | null;
     const weightValue = $('#p2d-weight-value');
     if (weightSlider && weightValue) {
         weightValue.textContent = `Value: ${weightSlider.value}`;
@@ -1790,7 +1786,8 @@ window.addEventListener('DOMContentLoaded', () => {
       
       const style = 'outlined'; // Style selector removed, default to outlined
       const fill = (document.querySelector('#p2d-fill-toggle') as HTMLInputElement).checked;
-      const weight = parseInt((document.querySelector('#p2d-weight-slider') as HTMLInputElement).value);
+      const weightSlider = document.querySelector('#p2d-weight-slider') as HTMLInputElement | null;
+      const weight = weightSlider ? parseInt(weightSlider.value, 10) : 400;
       const color = (document.querySelector('#p2d-color-picker') as HTMLInputElement).value;
 
       template.subject = subject;
@@ -1823,7 +1820,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
     try {
     const fill = (document.querySelector('#p2d-fill-toggle') as HTMLInputElement).checked;
-    const weight = parseInt((document.querySelector('#p2d-weight-slider') as HTMLInputElement).value);
+    const weightSlider = document.querySelector('#p2d-weight-slider') as HTMLInputElement | null;
+    const weight = weightSlider ? parseInt(weightSlider.value, 10) : 400;
 
     const selectedReferences = new Set<({ file: File; dataUrl: string } | null)>();
 
@@ -3394,59 +3392,69 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const update3dPromptDisplay = () => {
-    if (!imagePromptDisplay) return;
-    try {
-        const template = JSON.parse(DEFAULT_3D_STYLE_PROMPT_TEMPLATE);
-        const subject = imagePromptSubjectInput.value || 'a friendly robot';
-        template.subject = subject;
+  const build3dPromptTemplate = (): any => {
+  try {
+      const template = JSON.parse(DEFAULT_3D_STYLE_PROMPT_TEMPLATE);
+      const subject = imagePromptSubjectInput.value || 'a friendly robot';
+      template.subject = subject;
 
-        if (imagePoseInput) {
-          template.pose_instruction = imagePoseInput.value.trim();
-        }
+      if (imagePoseInput) {
+        template.pose_instruction = imagePoseInput.value.trim();
+      }
 
-        if (imageAccentInput) {
-          template.accent_detail = imageAccentInput.value.trim();
-        }
+      if (shadowToggle3d?.checked) {
+          if (typeof template.negative_prompt === 'string') {
+          template.negative_prompt = template.negative_prompt.replace(', ground/drop shadows', '');
+          }
+          if (template.lighting) {
+            template.lighting.shadows = 'soft ground shadow beneath the object';
+          }
+      } else {
+          if (typeof template.negative_prompt === 'string' && !template.negative_prompt.includes('ground/drop shadows')) {
+               template.negative_prompt += ', ground/drop shadows';
+          }
+          if (template.lighting) {
+            template.lighting.shadows = 'internal occlusion only, no ground shadow';
+          }
+      }
 
-        if (shadowToggle3d.checked) {
-            if (typeof template.negative_prompt === 'string') {
-            template.negative_prompt = template.negative_prompt.replace(', ground/drop shadows', '');
-            }
-            if (template.lighting) {
-              template.lighting.shadows = 'soft ground shadow beneath the object';
-            }
-        } else {
-            if (typeof template.negative_prompt === 'string' && !template.negative_prompt.includes('ground/drop shadows')) {
-                 template.negative_prompt += ', ground/drop shadows';
-            }
-            if (template.lighting) {
-              template.lighting.shadows = 'internal occlusion only, no ground shadow';
-            }
-        }
+      // Add background color
+      const backgroundColorPicker = $('#background-color-picker-3d') as HTMLInputElement;
+      if (backgroundColorPicker && template.background) {
+          template.background.color = backgroundColorPicker.value;
+      }
 
-        // Add background color
-        const backgroundColorPicker = $('#background-color-picker-3d') as HTMLInputElement;
-        if (backgroundColorPicker && template.background) {
-            template.background.color = backgroundColorPicker.value;
-        }
+      // Add object color
+      const objectColorPicker = $('#object-color-picker-3d') as HTMLInputElement;
+      if (objectColorPicker && template.colors) {
+          template.colors.dominant_blue = objectColorPicker.value;
+      }
 
-        // Add object color
-        const objectColorPicker = $('#object-color-picker-3d') as HTMLInputElement;
-        if (objectColorPicker && template.colors) {
-            template.colors.dominant_blue = objectColorPicker.value;
-        }
-
+      if (imagePromptDisplay) {
         imagePromptDisplay.value = JSON.stringify(template, null, 2);
-    } catch(e) {
-        console.error("Failed to update 3D prompt", e);
-        imagePromptDisplay.value = DEFAULT_3D_STYLE_PROMPT_TEMPLATE.replace("{ICON_SUBJECT|backpack}", imagePromptSubjectInput.value || 'a friendly robot');
-    }
+      }
+
+      return template;
+  } catch(e) {
+      console.error("Failed to build 3D prompt template", e);
+      try {
+        const fallbackTemplate = JSON.parse(DEFAULT_3D_STYLE_PROMPT_TEMPLATE);
+        if (imagePromptDisplay) {
+          imagePromptDisplay.value = JSON.stringify(fallbackTemplate, null, 2);
+        }
+        return fallbackTemplate;
+      } catch (fallbackError) {
+        console.error("Failed to parse default 3D prompt template", fallbackError);
+        if (imagePromptDisplay) {
+          imagePromptDisplay.value = '';
+        }
+        return {};
+      }
+  }
   };
   const createImagePromptFromTemplate = (template: any, userPrompt: string = '', isFix: boolean = false): string => {
     const subject = template.subject || 'a friendly robot';
-    const poseInstruction = template.pose_instruction || '';
-    const accentDetail = template.accent_detail || '';
+  const poseInstruction = template.pose_instruction || '';
     const backgroundColor = template.background?.color || '#FFFFFF';
     const palette = template.colors || {};
     const materials = template.materials || {};
@@ -3463,10 +3471,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (poseInstruction) {
       lines.push(`Pose / action: ${poseInstruction}.`);
     }
-    if (accentDetail) {
-      lines.push(`Include accent details: ${accentDetail}.`);
-    }
-    if (userPrompt && userPrompt.trim() && userPrompt.trim() !== accentDetail) {
+  if (userPrompt && userPrompt.trim()) {
       lines.push(`${userPrompt.trim()}.`);
     }
 
@@ -3566,14 +3571,13 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    update3dPromptDisplay();
     imageGenerationLoaderModal?.classList.remove('hidden');
 
     try {
         // Parse the template and create a natural language prompt
-        const template = JSON.parse(imagePromptDisplay.value);
-        const userPrompt = imageAccentInput?.value || '';
-        const imagePromptText = createImagePromptFromTemplate(template, userPrompt);
+      const template = build3dPromptTemplate();
+      const templateJson = JSON.stringify(template, null, 2);
+      const imagePromptText = createImagePromptFromTemplate(template);
         
         const imageData = await generateImage(
             imagePromptText,
@@ -3592,7 +3596,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 data: imageData.data,
                 mimeType: imageData.mimeType,
                 subject: imagePromptSubjectInput.value,
-                styleConstraints: imagePromptDisplay.value,
+                styleConstraints: templateJson,
                 timestamp: Date.now(),
                 videoDataUrl: undefined,
                 motionPrompt: null,
@@ -5794,7 +5798,6 @@ Return the 5 suggestions as a JSON array.`;
         const promptObject = JSON.parse(ICON_STUDIO_3D_PROMPT_TEMPLATE);
         promptObject.subject = selectedIcon.name.replace(/_/g, ' ');
         promptObject.pose_instruction = '';
-        promptObject.accent_detail = '';
 
         if (shadowToggleIcons.checked) {
             if (typeof promptObject.negative_prompt === 'string') {
@@ -5855,21 +5858,7 @@ Return the 5 suggestions as a JSON array.`;
     imageGenerationLoaderModal?.classList.remove('hidden');
 
     try {
-        let finalPrompt = promptDisplay3d.value;
-        const userAddition = iconAccentInput3d?.value.trim() || '';
-        if (userAddition) {
-             try {
-                const promptObject = JSON.parse(finalPrompt);
-                if (promptObject.accent_detail) {
-                  promptObject.accent_detail = `${promptObject.accent_detail}, ${userAddition}`;
-                } else {
-                  promptObject.accent_detail = userAddition;
-                }
-                finalPrompt = JSON.stringify(promptObject, null, 2);
-            } catch (e) {
-                finalPrompt += ` Additional details: ${userAddition}.`;
-            }
-        }
+        const finalPrompt = promptDisplay3d.value;
 
         const parts: any[] = [{text: finalPrompt}];
         const imageParts = await Promise.all(referenceImagesForIconStudio3d.filter(img => img).map(async refImg => {
@@ -5900,7 +5889,7 @@ Return the 5 suggestions as a JSON array.`;
             download3DBtn.classList.remove('hidden');
             regenerate3DBtn.classList.remove('hidden');
             viewLargerBtn.classList.remove('hidden');
-            currentGeneratedIcon3d = { data, prompt: finalPrompt, userPrompt: userAddition };
+            currentGeneratedIcon3d = { data, prompt: finalPrompt };
         } else {
             throw new Error("No image data returned.");
         }
@@ -7286,12 +7275,11 @@ Return the 5 suggestions as a JSON array.`;
     }
   }
   convertTo3DBtn?.addEventListener('click', handleConvertTo3D);
-  regenerate3DBtn?.addEventListener('click', () => {
-      if(currentGeneratedIcon3d) {
-          if (iconAccentInput3d) iconAccentInput3d.value = currentGeneratedIcon3d.userPrompt;
-          handleConvertTo3D();
-      }
-  });
+regenerate3DBtn?.addEventListener('click', () => {
+    if(currentGeneratedIcon3d) {
+        handleConvertTo3D();
+    }
+});
   settingsCloseBtn?.addEventListener('click', () => settingsPanel?.classList.remove('is-open'));
   toggleFiltersBtn?.addEventListener('click', () => {
     iconsPage?.classList.toggle('filters-collapsed');
@@ -7313,14 +7301,35 @@ Return the 5 suggestions as a JSON array.`;
   });
 
   imageGenerateBtn?.addEventListener('click', handleGenerateImage3d);
-  imagePromptSubjectInput?.addEventListener('input', update3dPromptDisplay);
-  shadowToggle3d?.addEventListener('change', update3dPromptDisplay);
+
+  const sync3dTemplate = () => {
+    build3dPromptTemplate();
+  };
+
+  imagePromptSubjectInput?.addEventListener('input', sync3dTemplate);
+  shadowToggle3d?.addEventListener('change', sync3dTemplate);
   
   // Color picker event listeners for 3D Studio
-  $('#background-color-picker-3d')?.addEventListener('input', update3dPromptDisplay);
-  $('#object-color-picker-3d')?.addEventListener('input', update3dPromptDisplay);
-  imagePoseInput?.addEventListener('input', update3dPromptDisplay);
-  imageAccentInput?.addEventListener('input', update3dPromptDisplay);
+  const backgroundColorPicker3d = $('#background-color-picker-3d') as HTMLInputElement | null;
+  const objectColorPicker3d = $('#object-color-picker-3d') as HTMLInputElement | null;
+
+  backgroundColorPicker3d?.addEventListener('input', () => {
+    updateColorDisplay(backgroundColorPicker3d);
+    sync3dTemplate();
+  });
+  backgroundColorPicker3d?.addEventListener('change', () => {
+    updateColorDisplay(backgroundColorPicker3d);
+    sync3dTemplate();
+  });
+  objectColorPicker3d?.addEventListener('input', () => {
+    updateColorDisplay(objectColorPicker3d);
+    sync3dTemplate();
+  });
+  objectColorPicker3d?.addEventListener('change', () => {
+    updateColorDisplay(objectColorPicker3d);
+    sync3dTemplate();
+  });
+  imagePoseInput?.addEventListener('input', sync3dTemplate);
   
   // Image Studio Generate button
   $('#image-generate-btn-image')?.addEventListener('click', handleGenerateImageStudio);
@@ -7465,7 +7474,7 @@ Return the 5 suggestions as a JSON array.`;
     update2dWeightValue();
     renderImageLibrary();
     update2dPromptDisplay();
-    update3dPromptDisplay();
+    build3dPromptTemplate();
     
     setupDropZoneListeners('#edit-reference-image-container-3d', '#edit-reference-image-input-3d', referenceImagesFor3d);
     setupDropZoneListeners('#reference-image-container-3d', '#reference-image-input-3d', referenceImagesForIconStudio3d);
@@ -8318,11 +8327,10 @@ Return the 5 suggestions as a JSON array.`;
     closeMotionMoreMenuImagePanel();
     regenerateVideoBtnStudio?.dispatchEvent(new Event('click'));
   });
-  detailsMoreCopy?.addEventListener('click', async () => {
-    close3dMoreMenu();
-    const basePrompt = (imagePromptDisplay as HTMLTextAreaElement)?.value || '';
-    const userExtra = imageAccentInput?.value || '';
-    const text = [basePrompt, userExtra].filter(Boolean).join('\n');
+detailsMoreCopy?.addEventListener('click', async () => {
+  close3dMoreMenu();
+  const basePrompt = currentGeneratedImage?.styleConstraints || JSON.stringify(build3dPromptTemplate(), null, 2);
+  const text = basePrompt;
     try {
       await navigator.clipboard.writeText(text);
       showToast({ type: 'success', title: 'Copied', body: 'Prompt copied to clipboard.' });
