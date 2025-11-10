@@ -8129,6 +8129,7 @@ regenerate3DBtn?.addEventListener('click', () => {
     const svgPreviewCloseBtn = $('#p2d-svg-preview-close-btn');
     const copySvgCodeBtn = $('#p2d-copy-svg-code-btn');
     const p2dDownloadSvgBtn = $('#p2d-download-svg-btn');
+    const p2dDownloadSvgBtnPreview = $('#p2d-download-svg-btn-preview');
     
     svgPreviewCloseBtn?.addEventListener('click', () => {
         if (p2dSvgPreviewModal) p2dSvgPreviewModal.classList.add('hidden');
@@ -8143,7 +8144,7 @@ regenerate3DBtn?.addEventListener('click', () => {
         }
     });
     
-    p2dDownloadSvgBtn?.addEventListener('click', () => {
+    const handleSvgDownload = () => {
         if (!currentGeneratedImage2d || !(currentGeneratedImage2d as any).svgString) {
             showToast({ type: 'error', title: 'Error', body: 'SVG not found.' });
             return;
@@ -8161,7 +8162,10 @@ regenerate3DBtn?.addEventListener('click', () => {
         URL.revokeObjectURL(url);
         
         showToast({ type: 'success', title: 'Downloaded', body: 'SVG file downloaded.' });
-    });
+    };
+    
+    p2dDownloadSvgBtn?.addEventListener('click', handleSvgDownload);
+    p2dDownloadSvgBtnPreview?.addEventListener('click', handleSvgDownload);
 
     // 2D Studio: Preview Result
     p2dPreviewResultBtn?.addEventListener('click', () => {

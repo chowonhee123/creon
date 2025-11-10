@@ -1548,28 +1548,37 @@
             </div>
             
             <!-- Tab Content -->
-            <div style="margin-top: var(--spacing-4);">
+            <div class="svg-tabs-body">
                 <!-- Preview Tab -->
                 <div class="details-tab-content" data-tab-content="preview">
-                    <div id="p2d-svg-preview-container" style="position: relative; width: 100%; height: 500px; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); display: flex; align-items: center; justify-content: center; background-image: repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0); background-position: 0 0, 8px 8px; background-size: 16px 16px; overflow: auto;">
-                        <label class="checkerboard-toggle svg-checkerboard-toggle" id="p2d-svg-preview-toggle">
-                            <input type="checkbox" id="p2d-svg-bg-toggle" checked>
-                            <span>Checkerboard</span>
-                        </label>
-                        <div id="p2d-svg-preview-content"></div>
+                    <div class="svg-tab-content">
+                        <div id="p2d-svg-preview-container" class="svg-preview-area">
+                            <label class="checkerboard-toggle svg-checkerboard-toggle" id="p2d-svg-preview-toggle">
+                                <input type="checkbox" id="p2d-svg-bg-toggle" checked>
+                                <span>Checkerboard</span>
+                            </label>
+                            <div id="p2d-svg-preview-content"></div>
+                        </div>
+                        <div class="svg-modal-actions">
+                            <button id="p2d-download-svg-btn-preview" class="secondary-btn">
+                                <span class="material-symbols-outlined">download</span> Download .svg
+                            </button>
+                        </div>
                     </div>
                 </div>
                 
                 <!-- Code Tab -->
                 <div class="details-tab-content hidden" data-tab-content="code">
-                    <textarea id="p2d-svg-code-view" readonly style="width: 100%; height: 500px; padding: var(--spacing-3); border-radius: var(--border-radius-md); border: 1px solid var(--border-color); font-family: 'Courier New', monospace; font-size: 12px; background-color: var(--bg-color); color: var(--text-primary); resize: none;"></textarea>
-                    <div class="svg-code-actions">
-                        <button id="p2d-copy-svg-code-btn" class="secondary-btn">
-                            <span class="material-symbols-outlined">content_copy</span> Copy SVG
-                        </button>
-                        <button id="p2d-download-svg-btn" class="secondary-btn">
-                            <span class="material-symbols-outlined">download</span> Download .svg
-                        </button>
+                    <div class="svg-tab-content">
+                        <textarea id="p2d-svg-code-view" class="svg-code-textarea" readonly></textarea>
+                        <div class="svg-modal-actions">
+                            <button id="p2d-copy-svg-code-btn" class="secondary-btn">
+                                <span class="material-symbols-outlined">content_copy</span> Copy SVG
+                            </button>
+                            <button id="p2d-download-svg-btn" class="secondary-btn">
+                                <span class="material-symbols-outlined">download</span> Download .svg
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
