@@ -7,6 +7,8 @@
 import { GoogleGenAI, GenerateContentResponse, Modality, Chat, Type } from '@google/genai';
 import {marked} from 'https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js';
 import ImageTracer from 'imagetracerjs';
+import { FFmpeg } from '@ffmpeg/ffmpeg';
+import { fetchFile } from '@ffmpeg/util';
 
 // --- TYPE DEFINITIONS ---
 interface IconData {
@@ -29,6 +31,7 @@ type GeneratedImageData = {
   styleConstraints: string;
   timestamp: number;
   videoDataUrl?: string;
+  gifDataUrl?: string;
   motionPrompt?: { json: any, korean: string, english:string } | null;
   originalData?: string; // Original image data before fix
   originalMimeType?: string; // Original image mimeType before fix
@@ -76,6 +79,8 @@ let motionLastFrameImage2d: { file: File; dataUrl: string; } | null = null;
   let isGeneratingVideo = false;
   let currentVideoGenerationOperation: any = null;
   let lastFocusedElement: HTMLElement | null = null;
+  let ffmpegInstance: FFmpeg | null = null;
+  let isFFmpegLoaded = false;
   
   // Explore page state
   let exploreMedia: any[] = [];
@@ -961,6 +966,8 @@ const p2dMotionMoreMenu = $('#p2d-motion-more-menu');
 const p2dMotionMoreRegeneratePrompt = $('#p2d-motion-more-regenerate-prompt');
 const p2dMotionMoreRegenerateVideo = $('#p2d-motion-more-regenerate-video');
 const p2dDownloadVideoBtn = $('#p2d-download-video-btn') as HTMLAnchorElement;
+const p2dDownloadGifBtn = $('#p2d-download-gif-btn') as HTMLAnchorElement;
+const p2dConvertToGifBtn = $('#p2d-convert-to-gif-btn');
 const p2dMotionReferenceInput = $('#p2d-motion-reference-image-input') as HTMLInputElement;
 const p2dMotionReferenceContainer = $('#p2d-motion-reference-image-container');
 
@@ -2004,6 +2011,8 @@ const motionTabContent = $('#image-details-panel .details-tab-content[data-tab-c
         }
     }
 
+    const hasGif = !!currentGeneratedImage2d.gifDataUrl;
+
     if (p2dDownloadVideoBtn) {
         if (hasVideo) {
             const downloadUrl = currentGeneratedImage2d.videoDataUrl!;
@@ -2013,6 +2022,26 @@ const motionTabContent = $('#image-details-panel .details-tab-content[data-tab-c
         } else {
             p2dDownloadVideoBtn.classList.add('hidden');
             p2dDownloadVideoBtn.removeAttribute('href');
+        }
+    }
+
+    if (p2dDownloadGifBtn) {
+        if (hasGif) {
+            const gifUrl = currentGeneratedImage2d.gifDataUrl!;
+            p2dDownloadGifBtn.href = gifUrl;
+            p2dDownloadGifBtn.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}_motion.gif`;
+            p2dDownloadGifBtn.classList.remove('hidden');
+        } else {
+            p2dDownloadGifBtn.classList.add('hidden');
+            p2dDownloadGifBtn.removeAttribute('href');
+        }
+    }
+
+    if (p2dConvertToGifBtn) {
+        if (hasVideo && !hasGif) {
+            p2dConvertToGifBtn.classList.remove('hidden');
+        } else {
+            p2dConvertToGifBtn.classList.add('hidden');
         }
     }
 
@@ -4977,6 +5006,92 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
             clearInterval(videoMessageInterval);
             videoMessageInterval = null;
         }
+    }
+  };
+
+  // FFmpeg initialization and GIF conversion functions
+  const loadFFmpeg = async () => {
+    if (isFFmpegLoaded && ffmpegInstance) return ffmpegInstance;
+    
+    try {
+      showToast({ type: 'success', title: 'Loading FFmpeg...', body: 'Initializing video converter. This may take a moment.' });
+      
+      ffmpegInstance = new FFmpeg();
+      await ffmpegInstance.load({
+        coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.js',
+        wasmURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm',
+      });
+      
+      isFFmpegLoaded = true;
+      console.log('[FFmpeg] Loaded successfully');
+      return ffmpegInstance;
+    } catch (error) {
+      console.error('[FFmpeg] Failed to load:', error);
+      showToast({ type: 'error', title: 'FFmpeg Error', body: 'Failed to load video converter.' });
+      throw error;
+    }
+  };
+
+  const convertVideoToGif = async (videoUrl: string) => {
+    try {
+      console.log('[GIF Conversion] Starting...');
+      updateButtonLoadingState(p2dConvertToGifBtn, true);
+      
+      const ffmpeg = await loadFFmpeg();
+      
+      // Fetch video file
+      const videoData = await fetchFile(videoUrl);
+      await ffmpeg.writeFile('input.mp4', videoData);
+      
+      console.log('[GIF Conversion] Converting to GIF...');
+      
+      // Convert to GIF with optimized settings for icons
+      // fps=10: 10 frames per second for smooth animation
+      // scale=512:-1: width 512px, height auto-calculated to maintain aspect ratio
+      // split, palettegen, paletteuse: creates optimized color palette for better quality
+      await ffmpeg.exec([
+        '-i', 'input.mp4',
+        '-vf', 'fps=10,scale=512:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse',
+        '-loop', '0',
+        'output.gif'
+      ]);
+      
+      console.log('[GIF Conversion] Reading output...');
+      const gifData = await ffmpeg.readFile('output.gif');
+      const gifBlob = new Blob([gifData], { type: 'image/gif' });
+      const gifUrl = URL.createObjectURL(gifBlob);
+      
+      console.log('[GIF Conversion] Complete!');
+      showToast({ type: 'success', title: 'GIF Created!', body: 'Your animated GIF is ready.' });
+      
+      return gifUrl;
+    } catch (error) {
+      console.error('[GIF Conversion] Failed:', error);
+      showToast({ type: 'error', title: 'Conversion Failed', body: 'Could not convert video to GIF.' });
+      throw error;
+    } finally {
+      updateButtonLoadingState(p2dConvertToGifBtn, false);
+    }
+  };
+
+  const handleConvertToGif2d = async () => {
+    if (!currentGeneratedImage2d || !currentGeneratedImage2d.videoDataUrl) {
+      showToast({ type: 'error', title: 'No Video', body: 'Generate a video first.' });
+      return;
+    }
+    
+    try {
+      const gifUrl = await convertVideoToGif(currentGeneratedImage2d.videoDataUrl);
+      
+      currentGeneratedImage2d.gifDataUrl = gifUrl;
+      const historyItem = imageHistory2d.find(item => item.id === currentGeneratedImage2d!.id);
+      if (historyItem) {
+        historyItem.gifDataUrl = gifUrl;
+      }
+      
+      updateMotionUI2d();
+    } catch (error) {
+      console.error('[2D GIF] Conversion failed:', error);
     }
   };
 
@@ -9358,6 +9473,7 @@ detailsMoreCopy?.addEventListener('click', async () => {
     });
     p2dGenerateVideoBtn?.addEventListener('click', handleGenerateVideo2d);
     p2dRegenerateVideoBtn?.addEventListener('click', handleGenerateVideo2d);
+    p2dConvertToGifBtn?.addEventListener('click', handleConvertToGif2d);
     const closeMotionMoreMenu2d = () => p2dMotionMoreMenu?.classList.add('hidden');
     p2dMotionMoreMenuBtn?.addEventListener('click', (e) => {
         e.stopPropagation();

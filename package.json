@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ffmpeg/ffmpeg": "^0.12.15",
+    "@ffmpeg/util": "^0.12.2",
     "@google/genai": "latest",
     "@imgly/background-removal": "^1.7.0",
     "imagetracerjs": "^1.2.6",
