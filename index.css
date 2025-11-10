@@ -2604,6 +2604,12 @@ a.secondary-btn[disabled] {
     gap: var(--spacing-2);
 }
 
+/* Override for 2D Studio motion actions - vertical layout */
+.details-tab-content[data-tab-content="motion"] .p2d-motion-actions {
+    flex-direction: column;
+    align-items: stretch;
+}
+
 /* Prompt Chip Styles */
 .prompt-chip-group {
     display: flex;
