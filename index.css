@@ -248,22 +248,38 @@ input:where(:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
   gap: var(--spacing-2);
 }
 .nav-item {
+  position: relative;
   padding: var(--spacing-2) var(--spacing-4);
   text-decoration: none;
   color: var(--text-secondary);
   font-size: 15px;
   border-radius: var(--border-radius-md);
-  transition: background-color 0.2s, color 0.2s;
+  transition: color 0.2s;
   font-weight: 600;
   cursor: pointer;
 }
+.nav-item::after {
+  content: '';
+  position: absolute;
+  left: var(--spacing-4);
+  right: var(--spacing-4);
+  bottom: var(--spacing-1);
+  height: 2px;
+  border-radius: 999px;
+  background-color: transparent;
+  transition: background-color 0.2s;
+}
 .nav-item:hover {
-  background-color: var(--input-bg);
   color: var(--text-primary);
 }
+.nav-item:hover::after {
+  background-color: var(--input-bg);
+}
 .nav-item.active {
+  color: var(--accent-color);
+}
+.nav-item.active::after {
   background-color: var(--accent-color);
-  color: var(--accent-text-color);
 }
 .header-actions {
   display: flex;
@@ -2200,7 +2216,7 @@ a.secondary-btn[disabled] {
 
 #p2d-image-details-panel .details-tab-content[data-tab-content="detail"],
 #p2d-svg-preview-modal .details-tab-content[data-tab-content="preview"] {
-    padding: 0;
+    padding: var(--spacing-5);
 }
 
 #image-details-panel-image .details-tab-content[data-tab-content="detail"] {
