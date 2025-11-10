@@ -2236,6 +2236,7 @@ a.secondary-btn[disabled] {
     aspect-ratio: 1 / 1;
     flex-shrink: 0;
     padding: 0;
+    position: relative;
 }
 .details-preview img, .details-preview video {
     width: 100%;
