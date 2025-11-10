@@ -607,6 +607,7 @@ let currentGeneratedIcon3d: { data: string; prompt: string } | null = null;
   const navItems = $$('.nav-item');
   const pageContainers = $$('.page-container');
   const themeToggleButton = $('.theme-toggle-btn');
+  const appHeader = $('.app-header');
   const iconGrid = $('#icon-grid');
   const iconGridPanel = $('.icon-grid-panel');
   const searchInput = $('#search-input') as HTMLInputElement;
@@ -628,6 +629,14 @@ const iconPoseInput3d = $('#icon-pose-input') as HTMLInputElement;
   const iconsPage = $('#page-icons');
   const filtersCloseBtn = $('#filters-close-btn');
   const filtersPanel = $('.filters-panel');
+  const transparentHeaderPages = new Set(['page-usages', 'page-icons']);
+
+  const updateHeaderTransparency = () => {
+    if (!appHeader) return;
+    const shouldBeTransparent = transparentHeaderPages.has(currentPage);
+    appHeader.classList.toggle('header-transparent', shouldBeTransparent);
+  };
+  updateHeaderTransparency();
   // Main 3D page elements
   const imageGenerateBtn = $('#image-generate-btn');
   const imagePromptSubjectInput = $('#image-prompt-subject-input') as HTMLInputElement;
@@ -1496,6 +1505,7 @@ const imagePromptDisplay = $('#image-prompt-display') as HTMLTextAreaElement;
     });
     
     currentPage = pageId;
+    updateHeaderTransparency();
   };
 
   const applyTheme = (theme: 'light' | 'dark') => {
@@ -3908,6 +3918,9 @@ const imagePromptDisplay = $('#image-prompt-display') as HTMLTextAreaElement;
         targetNavItem.classList.add('active');
       }
 
+      currentPage = 'page-id-2d';
+      updateHeaderTransparency();
+
       // Set the generated image as current in 2D Studio
       currentGeneratedImage2d = imageData;
       imageHistory2d.splice(historyIndex2d + 1);
@@ -3946,6 +3959,9 @@ const imagePromptDisplay = $('#image-prompt-display') as HTMLTextAreaElement;
       if (targetNavItem) {
         targetNavItem.classList.add('active');
       }
+
+      currentPage = 'page-id-3d';
+      updateHeaderTransparency();
 
       // Set the generated image as current in 3D Studio
       currentGeneratedImage = imageData;
@@ -7459,6 +7475,7 @@ regenerate3DBtn?.addEventListener('click', () => {
 
     const activeNavItem = document.querySelector<HTMLElement>('.nav-item.active');
     currentPage = activeNavItem?.dataset.page || 'page-usages';
+    updateHeaderTransparency();
     
     // Load home page images
     await loadHomePageImages();
@@ -8989,6 +9006,7 @@ detailsMoreCopy?.addEventListener('click', async () => {
       
       // Show home page
       currentPage = 'page-usages';
+      updateHeaderTransparency();
       pageContainers.forEach(container => {
         container.classList.add('hidden');
       });

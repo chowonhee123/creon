@@ -187,9 +187,9 @@ input:where(:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
   height: var(--header-height);
   padding: 0 var(--spacing-6);
   border-bottom: 1px solid var(--border-color);
-  background: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: white;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   flex-shrink: 0;
   z-index: 10;
   position: fixed;
@@ -200,10 +200,22 @@ input:where(:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
 }
 
 .app-header.scrolled {
+  background: white;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.app-header.header-transparent {
   background: rgba(255, 255, 255, 0.4);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border-color);
+}
+
+.app-header.header-transparent.scrolled {
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 .logo {
