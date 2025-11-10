@@ -1542,7 +1542,7 @@
             </header>
             
             <!-- Tabs -->
-            <div class="details-panel-tabs" style="margin-top: var(--spacing-4);">
+            <div class="details-panel-tabs">
                 <button class="tab-item active" data-tab="preview">Preview</button>
                 <button class="tab-item" data-tab="code">Code</button>
             </div>
@@ -1551,14 +1551,12 @@
             <div style="margin-top: var(--spacing-4);">
                 <!-- Preview Tab -->
                 <div class="details-tab-content" data-tab-content="preview">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-2);">
-                        <label style="font-weight: 500;">Preview</label>
-                        <label style="display: flex; align-items: center; gap: var(--spacing-2); cursor: pointer;">
+                    <p style="font-weight: 500; margin-bottom: var(--spacing-2);">Preview</p>
+                    <div id="p2d-svg-preview-container" style="position: relative; width: 100%; height: 500px; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); display: flex; align-items: center; justify-content: center; background-image: repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0); background-position: 0 0, 8px 8px; background-size: 16px 16px; overflow: auto;">
+                        <label class="checkerboard-toggle svg-checkerboard-toggle" id="p2d-svg-preview-toggle">
                             <input type="checkbox" id="p2d-svg-bg-toggle" checked>
-                            <span style="font-size: 13px;">Checkerboard</span>
+                            <span>Checkerboard</span>
                         </label>
-                    </div>
-                    <div id="p2d-svg-preview-container" style="width: 100%; height: 500px; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); display: flex; align-items: center; justify-content: center; background-image: repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0); background-position: 0 0, 8px 8px; background-size: 16px 16px; overflow: auto;">
                         <div id="p2d-svg-preview-content"></div>
                     </div>
                 </div>
@@ -1575,11 +1573,10 @@
                 </div>
             </div>
             
-            <div style="display: flex; justify-content: flex-end; gap: var(--spacing-2); margin-top: var(--spacing-4);">
-                <button id="p2d-download-svg-btn" class="secondary-btn">
+            <div style="display: flex; justify-content: flex-end; margin-top: var(--spacing-4);">
+                <button id="p2d-download-svg-btn" class="secondary-btn" style="min-width: 150px; justify-content: center;">
                     <span class="material-symbols-outlined">download</span> Download .svg
                 </button>
-                <button id="p2d-svg-modal-close-btn" class="secondary-btn">Close</button>
             </div>
         </div>
       </div>

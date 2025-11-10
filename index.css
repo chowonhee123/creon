@@ -2270,6 +2270,13 @@ a.secondary-btn[disabled] {
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
 }
 
+.svg-checkerboard-toggle {
+    top: var(--spacing-3);
+    right: var(--spacing-3);
+    bottom: auto;
+    left: auto;
+}
+
 .checkerboard-toggle input[type="checkbox"] {
     margin: 0;
     cursor: pointer;

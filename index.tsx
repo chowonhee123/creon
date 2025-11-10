@@ -8127,16 +8127,10 @@ regenerate3DBtn?.addEventListener('click', () => {
 
     // 2D Studio: SVG Modal Handlers
     const svgPreviewCloseBtn = $('#p2d-svg-preview-close-btn');
-    const svgModalCloseBtn = $('#p2d-svg-modal-close-btn');
     const copySvgCodeBtn = $('#p2d-copy-svg-code-btn');
     const p2dDownloadSvgBtn = $('#p2d-download-svg-btn');
     
     svgPreviewCloseBtn?.addEventListener('click', () => {
-        if (p2dSvgPreviewModal) p2dSvgPreviewModal.classList.add('hidden');
-        showToast({ type: 'success', title: 'SVG conversion completed ✅', body: 'SVG ready for use.' });
-    });
-    
-    svgModalCloseBtn?.addEventListener('click', () => {
         if (p2dSvgPreviewModal) p2dSvgPreviewModal.classList.add('hidden');
         showToast({ type: 'success', title: 'SVG conversion completed ✅', body: 'SVG ready for use.' });
     });
