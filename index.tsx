@@ -5018,7 +5018,7 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
         const config: any = {
             numberOfVideos: 1,
             resolution: '1080p',
-            aspectRatio: '9:16',
+            aspectRatio: '16:9',
         };
 
         const selectedModel = (document.querySelector('input[name="p2d-motion-model"]:checked') as HTMLInputElement)?.value || 'veo-3.1-fast-generate-preview';
