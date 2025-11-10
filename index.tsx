@@ -5442,18 +5442,23 @@ Return the 5 suggestions as a JSON array.`;
 
     try {
         const subject = currentGeneratedImage2d.subject;
-        const textPrompt = `Analyze the provided vector-style icon of '${subject}'. Create 5 subtle motion ideas that can turn this static icon into a looping animation while keeping the original design untouched.
-Hard rules for every suggestion:
-- Absolutely keep the original shape, line weight, color palette, background, and composition identical to the source icon.
-- Do NOT introduce new shapes, gradients, glow, particles, or props beyond what already exists in the icon.
-- Describe only gentle, looping motions applied to existing strokes, fills, or components. Motions must feel natural for a vector icon.
-- Start and end frames must match perfectly to create a seamless loop with no visual jump.
-For each suggestion, provide:
-1. 'name': Short Korean title (예: '은은한 호흡').
-2. 'description': Korean explanation (allow limited <b> tags for emphasis).
-3. 'english': Concise English prompt mentioning it is a looping animation that preserves every original element with zero new additions.
-4. 'korean': Korean description reiterating that no new elements are added and that the loop is 자연스럽게 반복됨.
-Return as a JSON array.`;
+        const textPrompt = `Analyze the provided vector-style icon of '${subject}'. Create 3 micro-interaction motion ideas that can turn this static 2D icon into a delightful looping animation.
+
+Core principles for 2D icon micro-interactions:
+- Focus on MICRO-INTERACTIONS: subtle, delightful movements that enhance the icon's purpose without overwhelming it
+- Preserve the original design completely: shape, line weight, color palette, background, and composition must stay identical
+- Apply gentle, purposeful motions to existing elements only (e.g., slight bounce, float, rotate, scale pulse, breathing effect)
+- Think about how UI icons animate in modern interfaces (hover states, loading indicators, success feedback)
+- Motions should loop seamlessly with matching start/end frames
+- NO new shapes, gradients, glows, particles, or props - work only with what exists in the icon
+
+For each micro-interaction suggestion, provide:
+1. 'name': Short Korean title focusing on the interaction type (예: '부드러운 바운스', '호흡 효과', '회전 루프')
+2. 'description': Korean explanation of the micro-interaction with <b> tags for key motion words
+3. 'english': Concise English prompt describing the micro-interaction as a seamless looping animation
+4. 'korean': Korean description emphasizing this is a 마이크로 인터랙션 that 자연스럽게 반복됨
+
+Return as a JSON array with exactly 3 suggestions.`;
 
         const imagePart = {
           inlineData: {
