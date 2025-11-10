@@ -4127,7 +4127,8 @@ a.secondary-btn[disabled] {
   border: 2px solid var(--accent-color);
 }
 
-#motion-prompt-output {
+#motion-prompt-output,
+#p2d-motion-prompt-output {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-4);
@@ -4148,7 +4149,8 @@ a.secondary-btn[disabled] {
 /* --- Motion Prompt Output Customization --- */
 
 /* Reset inner cards since the container now provides the background */
-#motion-prompt-output .control-card {
+#motion-prompt-output .control-card,
+#p2d-motion-prompt-output .control-card {
     background-color: transparent;
     padding: 0;
     border: none;
@@ -4163,7 +4165,10 @@ a.secondary-btn[disabled] {
 }
 
 /* Style labels within the motion prompt block */
-#motion-prompt-output .control-card > label {
+#motion-prompt-output .control-card > label,
+#p2d-motion-prompt-output .control-card > label,
+#motion-prompt-output .control-card > h3,
+#p2d-motion-prompt-output .control-card > h3 {
     font-size: 15px;
     font-weight: 700;
     color: var(--text-primary);
@@ -4176,7 +4181,8 @@ a.secondary-btn[disabled] {
 }
 
 /* Style the final prompt textarea */
-#motion-prompt-final-english {
+#motion-prompt-final-english,
+#p2d-motion-prompt-final-english {
     background: var(--surface-color);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-md);
@@ -4206,7 +4212,8 @@ a.secondary-btn[disabled] {
     word-break: break-word;
 }
 
-#motion-prompt-final-english:focus {
+#motion-prompt-final-english:focus,
+#p2d-motion-prompt-final-english:focus {
   outline: none;
   border-color: var(--accent-color);
 }
@@ -4217,7 +4224,8 @@ a.secondary-btn[disabled] {
 }
 
 /* Move inline styles for the Korean description to the stylesheet */
-#motion-prompt-korean {
+#motion-prompt-korean,
+#p2d-motion-prompt-korean {
     font-size: 13px;
     line-height: 1.6;
     color: var(--text-secondary);
