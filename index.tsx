@@ -4981,7 +4981,13 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
   };
 
   const handleGenerateVideo2d = async () => {
+    console.log('[2D Video] Starting video generation...');
+    console.log('[2D Video] currentGeneratedImage2d:', currentGeneratedImage2d);
+    console.log('[2D Video] motionPrompt:', currentGeneratedImage2d?.motionPrompt);
+    console.log('[2D Video] motionFirstFrameImage2d:', motionFirstFrameImage2d);
+    
     if (!currentGeneratedImage2d || !currentGeneratedImage2d.motionPrompt || !motionFirstFrameImage2d) {
+        console.error('[2D Video] Missing required data');
         showToast({ type: 'error', title: 'Missing Data', body: 'Generate a motion prompt first.' });
         return;
     }
@@ -5001,10 +5007,13 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
     }
 
     try {
+        console.log('[2D Video] Preparing video generation payload...');
         const userPrompt = p2dMotionPromptFinalEnglish?.value || '';
+        console.log('[2D Video] User prompt:', userPrompt);
         const motionInstruction = sanitizeMotionPromptText(userPrompt);
 
         const finalPrompt = `CRITICAL: Do NOT create new content. Only animate the existing elements from the source icon. Keep identical line weights, shapes, colors, and composition. Movement Instructions: ${motionInstruction}. Do not add or remove any elements, gradients, particles, or lighting. Preserve the exact background. Maintain the same vector style and crisp lines. no black bars, no letterboxing, full-frame composition, fill the entire frame. Maintain full frame coverage with no black bars, borders, or letterboxing. Keep the entire icon visible. Preserve the exact background from the source image without any cropping or black bars.`;
+        console.log('[2D Video] Final prompt:', finalPrompt);
 
         const config: any = {
             numberOfVideos: 1,
@@ -5038,14 +5047,19 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
             };
         }
 
+        console.log('[2D Video] Calling generateVideos API with payload:', payload);
         let operation = await ai.models.generateVideos(payload);
+        console.log('[2D Video] Initial operation response:', operation);
         currentVideoGenerationOperation = operation;
 
         while (!operation.done) {
+            console.log('[2D Video] Waiting for operation to complete...');
             await new Promise(resolve => setTimeout(resolve, 10000));
             operation = await ai.operations.getVideosOperation({ operation });
+            console.log('[2D Video] Operation status:', operation);
             currentVideoGenerationOperation = operation;
         }
+        console.log('[2D Video] Operation completed!');
 
         const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
         if (!downloadLink) {
@@ -5078,7 +5092,8 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
         updateMotionUI2d();
         showToast({ type: 'success', title: 'Motion Ready!', body: 'Your animated icon is ready.' });
     } catch (error) {
-        console.error("2D motion generation failed:", error);
+        console.error("[2D Video] Video generation failed:", error);
+        console.error("[2D Video] Error details:", JSON.stringify(error, null, 2));
         showToast({ type: 'error', title: 'Video Failed', body: 'Something went wrong during video generation.' });
         p2dMotionVideoContainer?.classList.remove('loading');
     } finally {
