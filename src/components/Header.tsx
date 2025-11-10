@@ -19,14 +19,19 @@ export const Header: React.FC = () => {
   };
   
   return (
-    <header className="app-header" style={{ 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'space-between',
-      padding: '16px 24px',
-      borderBottom: '1px solid var(--border-color, #e0e0e0)',
-      backgroundColor: 'var(--surface-color, #ffffff)'
-    }}>
+    <header
+      className="app-header"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '16px 24px',
+        borderBottom: '1px solid var(--border-color, #e0e0e0)',
+        backgroundColor: 'rgba(255, 255, 255, 0.4)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+      }}
+    >
       <div className="logo">
         <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold' }}>Creon</h1>
       </div>
