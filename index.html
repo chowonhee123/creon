@@ -85,7 +85,7 @@
                 <h1 class="hero-title">Build what you imagine.<br>Create beyond boundaries.</h1>
                 <p class="hero-description">From icons to 3D motion, all in one creative pipeline.</p>
                 <!-- Generate Box moved inside hero-section -->
-                <div class="generate-box">
+                <div class="generate-box has-studio-selected">
                   <select id="studio-selector" class="studio-selector hidden">
                     <option value="icon">Icon</option>
                     <option value="3d" selected>3D</option>
@@ -305,20 +305,17 @@
                         <div class="control-row">
                           <label for="color-picker">Color</label>
                         </div>
-                        <div class="input-with-suffix">
-                          <input type="color" id="color-picker" value="#0F172A" class="color-swatch-input" />
+                        <div class="input-with-suffix color-input">
+                          <div class="input-swatch">
+                            <input type="color" id="color-picker" value="#0F172A" class="color-swatch-input" />
+                          </div>
+                          <span id="color-picker-value" class="color-value">#0F172A</span>
                         </div>
                       </div>
 
                       <div id="tags-container" class="tags-container"></div>
                       <p id="keywords-display" class="keywords"></p>
-                      
-                      <div class="settings-actions">
-                        <button class="secondary-btn" id="download-svg-btn" disabled><span class="material-symbols-outlined">download</span> Download SVG</button>
-                        <button class="secondary-btn" id="download-png-btn" disabled><span class="material-symbols-outlined">image</span> Download PNG</button>
-                        <button class="secondary-btn" id="copy-jsx-btn" disabled><span class="material-symbols-outlined">code</span> Copy JSX</button>
-                      </div>
-                      
+
                       <div class="code-snippets">
                         <nav id="snippet-tabs" class="snippet-tabs">
                           <button class="snippet-tab-item active" data-lang="html">HTML</button>
@@ -498,6 +495,18 @@
                 </div>
               </div>
             </div>
+          <footer class="settings-footer" data-visible-tab="details">
+            <div class="settings-actions">
+              <button class="secondary-btn" id="download-svg-btn" disabled>
+                <span class="material-symbols-outlined">download</span>
+                <span>SVG</span>
+              </button>
+              <button class="secondary-btn" id="download-png-btn" disabled>
+                <span class="material-symbols-outlined">download</span>
+                <span>PNG</span>
+              </button>
+            </div>
+          </footer>
           </div>
         </aside>
       </div>
@@ -573,8 +582,11 @@
                               <div class="control-row">
                                 <label for="p2d-color-picker">Color</label>
                               </div>
-                              <div class="input-with-suffix">
-                                <input type="color" id="p2d-color-picker" value="#212121" class="color-swatch-input" />
+                              <div class="input-with-suffix color-input">
+                                <div class="input-swatch">
+                                  <input type="color" id="p2d-color-picker" value="#212121" class="color-swatch-input" />
+                                </div>
+                                <span class="color-value">#212121</span>
                               </div>
                             </div>
                         </div>
@@ -703,8 +715,11 @@
                                     <!-- Stroke Color Input -->
                                     <div class="filter-group">
                                         <label style="font-size: 13px; margin-bottom: var(--spacing-1);">Stroke</label>
-                                        <div class="input-with-suffix">
+                                        <div class="input-with-suffix color-input">
+                                          <div class="input-swatch">
                                             <input type="color" id="p2d-object-color-picker" value="#000000" class="color-swatch-input" />
+                                          </div>
+                                          <span class="color-value">#000000</span>
                                         </div>
                                     </div>
                                     
@@ -828,14 +843,20 @@
                             </div>
                             <div class="filter-group">
                               <label for="background-color-picker-3d">Background Color</label>
-                              <div class="input-with-suffix">
-                                <input type="color" id="background-color-picker-3d" value="#FFFFFF" class="color-swatch-input" />
+                              <div class="input-with-suffix color-input">
+                                <div class="input-swatch">
+                                  <input type="color" id="background-color-picker-3d" value="#FFFFFF" class="color-swatch-input" />
+                                </div>
+                                <span class="color-value">#FFFFFF</span>
                               </div>
                             </div>
                             <div class="filter-group">
                               <label for="object-color-picker-3d">Object Color</label>
-                              <div class="input-with-suffix">
-                                <input type="color" id="object-color-picker-3d" value="#2962FF" class="color-swatch-input" />
+                              <div class="input-with-suffix color-input">
+                                <div class="input-swatch">
+                                  <input type="color" id="object-color-picker-3d" value="#2962FF" class="color-swatch-input" />
+                                </div>
+                                <span class="color-value">#2962FF</span>
                               </div>
                             </div>
                         </div>
@@ -969,16 +990,22 @@
                                     <!-- Background Color Input -->
                                     <div class="filter-group">
                                         <label>Background Color</label>
-                                        <div class="input-with-suffix">
+                                        <div class="input-with-suffix color-input">
+                                          <div class="input-swatch">
                                             <input type="color" id="details-background-color-picker-3d" value="#FFFFFF" class="color-swatch-input" />
+                                          </div>
+                                          <span class="color-value">#FFFFFF</span>
                                         </div>
                                     </div>
                                     
                                     <!-- Object Color Input -->
                                     <div class="filter-group">
                                         <label>Object Color</label>
-                                        <div class="input-with-suffix">
+                                        <div class="input-with-suffix color-input">
+                                          <div class="input-swatch">
                                             <input type="color" id="details-object-color-picker-3d" value="#2962FF" class="color-swatch-input" />
+                                          </div>
+                                          <span class="color-value">#2962FF</span>
                                         </div>
                                     </div>
                                     
@@ -1267,15 +1294,21 @@
                                     <!-- Color Inputs -->
                                     <div class="filter-group">
                                         <label>Background Color</label>
-                                        <div class="input-with-suffix">
+                                        <div class="input-with-suffix color-input">
+                                          <div class="input-swatch">
                                             <input type="color" id="details-background-color-picker-image" value="#FFFFFF" class="color-swatch-input" />
+                                          </div>
+                                          <span class="color-value">#FFFFFF</span>
                                         </div>
                                     </div>
                                     
                                     <div class="filter-group">
                                         <label>Object Color</label>
-                                        <div class="input-with-suffix">
+                                        <div class="input-with-suffix color-input">
+                                          <div class="input-swatch">
                                             <input type="color" id="details-object-color-picker-image" value="#2962FF" class="color-swatch-input" />
+                                          </div>
+                                          <span class="color-value">#2962FF</span>
                                         </div>
                                     </div>
                                     

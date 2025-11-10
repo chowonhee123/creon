@@ -1053,13 +1053,33 @@ window.addEventListener('DOMContentLoaded', () => {
   // Icon Studio Details Panel Elements
   const downloadSvgBtn = $('#download-svg-btn') as HTMLButtonElement;
   const downloadPngBtn = $('#download-png-btn') as HTMLButtonElement;
-  const copyJsxBtn = $('#copy-jsx-btn') as HTMLButtonElement;
+  const iconColorPicker = $('#color-picker') as HTMLInputElement | null;
   const snippetTabsContainer = $('#snippet-tabs');
   const snippetTabs = $$('#snippet-tabs .snippet-tab-item');
   const snippetCode = $('#snippet-code');
   const copySnippetBtn = $('#copy-snippet-btn') as HTMLButtonElement;
+  const settingsFooter = $('.settings-footer') as HTMLElement | null;
 
   // --- HELPER FUNCTIONS ---
+
+  const updateColorDisplay = (input: HTMLInputElement | null) => {
+    if (!input) return;
+    const wrapper = input.closest('.color-input');
+    const valueEl = wrapper?.querySelector<HTMLElement>('.color-value');
+    if (valueEl) {
+      valueEl.textContent = input.value.toUpperCase();
+    }
+  };
+
+  const initializeColorInputs = () => {
+    const colorInputs = document.querySelectorAll<HTMLInputElement>('.color-input input[type="color"]');
+    colorInputs.forEach((input) => {
+      const handleColorChange = () => updateColorDisplay(input);
+      handleColorChange();
+      input.addEventListener('input', handleColorChange);
+      input.addEventListener('change', handleColorChange);
+    });
+  };
 
   const saveImageLibrary = () => {
     try {
@@ -1250,6 +1270,10 @@ window.addEventListener('DOMContentLoaded', () => {
             console.log('[2D Studio] Force update history (500ms)');
             updateDetailsPanelHistory2d();
           }, 500);
+        }
+
+        if (container.id === 'settings-panel' && settingsFooter) {
+          settingsFooter.classList.toggle('hidden', tabName !== 'details');
         }
       });
     });
@@ -1499,6 +1523,17 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  const updateOpticalSliderTrack = () => {
+    const slider = $('#optical-size-slider') as HTMLInputElement;
+    if (!slider) return;
+    const min = Number(slider.min) || 0;
+    const max = Number(slider.max) || 100;
+    const range = max - min;
+    const value = Number(slider.value);
+    const percent = range === 0 ? 0 : ((value - min) / range) * 100;
+    slider.style.background = `linear-gradient(to right, var(--accent-color) 0%, var(--accent-color) ${percent}%, var(--input-bg) ${percent}%, var(--input-bg) 100%)`;
+  };
+
   const applyAllIconStyles = () => {
       const style = (document.querySelector('input[name="icon-family"]:checked') as HTMLInputElement)?.value || 'Outlined';
       const fill = ($('#fill-toggle') as HTMLInputElement)?.checked ? 1 : 0;
@@ -1519,7 +1554,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const updatePreviewStyles = () => {
       const sizeInput = $('#export-size-input') as HTMLInputElement;
-      const colorPicker = $('#color-picker') as HTMLInputElement;
+      const colorPicker = iconColorPicker;
       const previewIcon = $('#settings-preview-icon');
       const motionPreviewIcon = $('#motion-preview-icon');
 
@@ -1532,6 +1567,7 @@ window.addEventListener('DOMContentLoaded', () => {
       previewIcon.style.color = color;
       
       motionPreviewIcon.style.color = color;
+      updateColorDisplay(colorPicker);
   };
 
   const handlePlayMotion = () => {
@@ -4056,10 +4092,12 @@ window.addEventListener('DOMContentLoaded', () => {
         
         if (detailsBackgroundColorPicker && styleData.background?.color) {
           detailsBackgroundColorPicker.value = styleData.background.color;
+          updateColorDisplay(detailsBackgroundColorPicker);
           console.log('Background color updated:', styleData.background.color);
         }
         if (detailsObjectColorPicker && styleData.colors?.dominant_blue) {
           detailsObjectColorPicker.value = styleData.colors.dominant_blue;
+          updateColorDisplay(detailsObjectColorPicker);
           console.log('Object color updated:', styleData.colors.dominant_blue);
         }
       } catch (e) {
@@ -5241,9 +5279,11 @@ Return the 5 suggestions as a JSON array.`;
             const styleData = JSON.parse(currentGeneratedImage.styleConstraints);
             if (detailsBackgroundColorPicker && styleData.background?.color) {
                 detailsBackgroundColorPicker.value = styleData.background.color;
+                updateColorDisplay(detailsBackgroundColorPicker);
             }
             if (detailsObjectColorPicker && styleData.colors?.dominant_blue) {
                 detailsObjectColorPicker.value = styleData.colors.dominant_blue;
+                updateColorDisplay(detailsObjectColorPicker);
             }
         } catch (e) {
             console.error('Failed to parse style constraints:', e);
@@ -5447,7 +5487,7 @@ Return the 5 suggestions as a JSON array.`;
     const opticalSize = ($('#optical-size-slider') as HTMLInputElement)?.value || '24';
     // Fix: Use '$' instead of '$$' to select a single element by ID.
     const exportSize = ($('#export-size-input') as HTMLInputElement)?.value || '48';
-    const color = ($('#color-picker') as HTMLInputElement)?.value || '#0F172A';
+    const color = iconColorPicker?.value || '#0F172A';
 
     return {
       name: selectedIcon.name,
@@ -5481,12 +5521,14 @@ Return the 5 suggestions as a JSON array.`;
   };
   
   const updateCodeSnippetDisplay = () => {
-    if (!selectedIcon) return;
+    if (!snippetCode) return;
+    if (!selectedIcon) {
+      snippetCode.textContent = 'Select an icon to generate code.';
+      return;
+    }
     const activeTab = snippetTabsContainer?.querySelector('.snippet-tab-item.active');
     const lang = (activeTab as HTMLElement)?.dataset.lang || 'html';
-    if (snippetCode) {
-      snippetCode.textContent = generateCodeSnippet(lang);
-    }
+    snippetCode.textContent = generateCodeSnippet(lang);
   };
   
   const sanitizeFilename = (name: string): string => {
@@ -5794,8 +5836,8 @@ Return the 5 suggestions as a JSON array.`;
     
     (downloadSvgBtn as HTMLButtonElement).disabled = false;
     (downloadPngBtn as HTMLButtonElement).disabled = false;
-    (copyJsxBtn as HTMLButtonElement).disabled = false;
     (copySnippetBtn as HTMLButtonElement).disabled = false;
+    updateColorDisplay(iconColorPicker);
     
     updateCodeSnippetDisplay();
     applyAllIconStyles();
@@ -7121,12 +7163,15 @@ Return the 5 suggestions as a JSON array.`;
       });
   });
   $('#weight-slider')?.addEventListener('input', updateWeightValue);
+  $('#optical-size-slider')?.addEventListener('input', updateOpticalSliderTrack);
+  $('#optical-size-slider')?.addEventListener('change', updateOpticalSliderTrack);
+  updateOpticalSliderTrack();
 
   $('#export-size-input')?.addEventListener('input', () => {
       updatePreviewStyles();
       updateCodeSnippetDisplay();
   });
-  $('#color-picker')?.addEventListener('input', () => {
+  iconColorPicker?.addEventListener('input', () => {
       updatePreviewStyles();
       updateCodeSnippetDisplay();
   });
@@ -7414,6 +7459,8 @@ Return the 5 suggestions as a JSON array.`;
     
     loadImageLibrary();
     populateIconGrid();
+    initializeColorInputs();
+    updateCodeSnippetDisplay();
     updateWeightValue();
     update2dWeightValue();
     renderImageLibrary();
@@ -7428,6 +7475,11 @@ Return the 5 suggestions as a JSON array.`;
     setupImageStudioDropZones();
     
     setupTabs($('#settings-panel'));
+    if (settingsFooter) {
+      const activeSettingsTab = document.querySelector('#settings-panel .tab-item.active') as HTMLElement | null;
+      const isDetailsActive = (activeSettingsTab?.dataset.tab || 'details') === 'details';
+      settingsFooter.classList.toggle('hidden', !isDetailsActive);
+    }
     setupTabs($('#image-details-panel'));
     setupTabs($('#image-details-panel-image'));
     setupTabs($('#p2d-image-details-panel'));
@@ -7469,10 +7521,6 @@ Return the 5 suggestions as a JSON array.`;
     downloadPngBtn?.addEventListener('click', handleDownloadPNG);
     shadowToggleIcons?.addEventListener('change', updateIconStudio3dPrompt);
     
-    copyJsxBtn?.addEventListener('click', () => {
-      const jsxCode = generateCodeSnippet('react');
-      handleCopyCode(jsxCode, 'React JSX');
-    });
     copySnippetBtn?.addEventListener('click', () => {
       const activeTab = snippetTabsContainer?.querySelector('.snippet-tab-item.active');
       const lang = (activeTab as HTMLElement)?.dataset.lang || 'html';
@@ -7548,12 +7596,12 @@ Return the 5 suggestions as a JSON array.`;
     });
 
     // 2D Studio: Fix Icon handlers
-    const iconColorPicker = $('#p2d-object-color-picker') as HTMLInputElement;
+    const p2dStrokeColorPicker = $('#p2d-object-color-picker') as HTMLInputElement;
     const p2dRegenerateBtn = $('#p2d-regenerate-btn');
 
     // 2D Studio: Stroke Color picker
-    if (iconColorPicker) {
-        iconColorPicker.addEventListener('input', () => {
+    if (p2dStrokeColorPicker) {
+        p2dStrokeColorPicker.addEventListener('input', () => {
             if (p2dRegenerateBtn) {
                 p2dRegenerateBtn.removeAttribute('disabled');
                 // Change to primary-btn (blue) when enabled
@@ -7570,7 +7618,7 @@ Return the 5 suggestions as a JSON array.`;
             return;
         }
         
-        const iconColor = iconColorPicker?.value || '#000000';
+        const iconColor = p2dStrokeColorPicker?.value || '#000000';
         
         // Parse the original template and update icon color only
         try {

@@ -15,6 +15,9 @@
   --spacing-6: 32px;
   --input-height: 40px;
   --input-placeholder-color: rgba(15, 23, 42, 0.35);
+  --header-height: 60px;
+  --generate-box-offset: 12px;
+  --generate-box-height: 60px;
 
   /* Toss Blue Accent Color */
   --accent-color: #0070F3;
@@ -154,7 +157,7 @@ input:where(:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 60px;
+  height: var(--header-height);
   padding: 0 var(--spacing-6);
   border-bottom: 1px solid var(--border-color);
   background: white;
@@ -386,7 +389,7 @@ input:checked + .toggle-slider { background-color: var(--accent-color); }
 input:checked + .toggle-slider:before { transform: translateX(16px); }
 input[type="color"] {
     width: 100%; 
-    height: 36px; 
+    height: 24px; 
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-md); 
     padding: var(--spacing-1);
@@ -398,7 +401,7 @@ input[type="color"] {
 .input-with-suffix input[type="color"],
 .input-with-suffix .color-swatch-input {
     width: 100%;
-    height: 22px; /* 32px total height (4px padding + 1px border + 22px + 1px border + 4px padding) */
+    height: 32px;
     padding: 0;
     border: none;
     border-radius: var(--border-radius-sm);
@@ -440,7 +443,7 @@ input[type='range']::-moz-range-thumb {
   cursor: pointer; border-radius: 50%;
 }
 #optical-size-slider {
-    background: linear-gradient(to right, var(--accent-color) 0%, var(--accent-color) 50%, var(--input-bg) 50%, var(--input-bg) 100%);
+    background: var(--input-bg);
 }
 
 .optical-size-label {
@@ -464,26 +467,37 @@ input[type='range']::-moz-range-thumb {
 .input-with-suffix {
     display: flex;
     align-items: center;
+    gap: var(--spacing-2);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-md);
     background: var(--input-bg);
-    padding: 4px;
+    padding: 12px;
+    height: var(--input-height);
+}
+.input-with-suffix .input-swatch {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--border-radius-sm);
+    overflow: hidden;
+    flex-shrink: 0;
 }
 .input-with-suffix input {
     border: none;
     background: transparent;
-    padding: var(--spacing-2) var(--spacing-3);
-    font-size: 14px;
+    padding: 0;
+    font-size: 15px;
     color: var(--text-primary);
     width: 100%;
+    height: 100%;
 }
 .input-with-suffix input:focus {
     outline: none;
 }
 .input-with-suffix span {
-    padding-right: var(--spacing-3);
     color: var(--text-secondary);
     font-size: 14px;
+    display: flex;
+    align-items: center;
 }
 .input-with-suffix:focus-within {
     border-color: var(--accent-color);
@@ -492,7 +506,7 @@ input[type='range']::-moz-range-thumb {
 /* Color swatch input - styled like Size input */
 .input-with-suffix .color-swatch-input {
     width: 100%;
-    height: 22px; /* 32px total height (4px padding + 1px border + 22px + 1px border + 4px padding) */
+    height: 100%;
     padding: 0;
     border: none;
     border-radius: var(--border-radius-sm);
@@ -516,6 +530,18 @@ input[type='range']::-moz-range-thumb {
 .input-with-suffix .color-swatch-input::-moz-color-swatch {
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-sm);
+}
+
+.color-input {
+    padding: var(--spacing-2) var(--spacing-3);
+}
+
+.color-input .color-value {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 13px;
+    color: var(--text-secondary);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
 }
 
 
@@ -883,7 +909,37 @@ input[type='range']::-moz-range-thumb {
 }
 .code-box pre { padding: var(--spacing-3); white-space: pre-wrap; word-break: break-all; }
 .code-box code { font-family: 'Roboto Mono', monospace; font-size: 12px; color: var(--text-primary); }
-.copy-button { position: absolute; top: 4px; right: 4px; }
+.copy-button {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.code-box:hover .copy-button {
+  opacity: 1;
+}
+
+.settings-footer {
+  padding: var(--spacing-4) var(--spacing-5);
+  border-top: 1px solid var(--border-color);
+  background: var(--surface-color);
+  flex-shrink: 0;
+}
+
+.settings-footer .settings-actions {
+  flex-direction: row;
+  gap: var(--spacing-3);
+}
+
+.settings-footer .secondary-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+}
 
 /* 3D Generate Tab Styles */
 .settings-body .prompt-display-wrapper {
@@ -3022,10 +3078,13 @@ a.secondary-btn[disabled] {
 
 /* Make sure generate-box can stick properly - same structure as icon-grid-header */
 #page-usages .generate-box {
-  position: sticky;
-  top: 72px; /* GNB (60px) + spacing (12px) */
   z-index: 5;
   flex-shrink: 0;
+}
+
+#page-usages .generate-box.has-studio-selected {
+  position: sticky;
+  top: calc(var(--header-height) + var(--generate-box-offset));
 }
 
 #explore-feed-container {
@@ -3904,7 +3963,7 @@ a.secondary-btn[disabled] {
   max-width: 800px;
   margin: 0 auto;
   padding: 80px var(--spacing-6) 100px var(--spacing-6);
-  padding-top: 132px; /* GNB (60px) + spacing (12px) + generate-box (60px) */
+  padding-top: calc(var(--header-height) + var(--generate-box-offset) + var(--generate-box-height));
 }
 
 /* Hero Section */
@@ -4038,20 +4097,25 @@ a.secondary-btn[disabled] {
 /* Generate Box Styles */
 /* Generate Box Styles */
 .generate-box {
-  position: sticky;
-  top: 72px; /* GNB height (60px) + 12px spacing */
+  position: relative;
+  top: auto;
   max-width: 600px;
   margin: 0 auto;
-  margin-top: 12px; /* Additional spacing from GNB */
+  margin-top: var(--generate-box-offset);
   background: white;
   padding: 0;
   border-radius: 80px;
   box-shadow: 5px 13px 30px 0px rgba(0, 0, 0, 0.07);
-  z-index: 5;
-  height: 60px;
+  height: var(--generate-box-height);
   display: flex;
   align-items: center;
   flex-shrink: 0;
+}
+
+.generate-box.has-studio-selected {
+  position: sticky;
+  top: calc(var(--header-height) + var(--generate-box-offset));
+  z-index: 5;
 }
 
 /* Main Reference Container */
@@ -4340,7 +4404,7 @@ a.secondary-btn[disabled] {
 
 .generate-box input {
   flex: 1;
-  height: 60px;
+  height: var(--generate-box-height);
   padding: 0 var(--spacing-5);
   padding-left: 12px;
   border: none;
@@ -4360,6 +4424,9 @@ a.secondary-btn[disabled] {
 }
 
 .generate-box.has-studio-selected {
+  position: sticky;
+  top: calc(var(--header-height) + var(--generate-box-offset));
+  z-index: 5;
   box-shadow: 5px 13px 30px 0px rgba(0, 0, 0, 0.07);
 }
 
