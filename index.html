@@ -641,7 +641,11 @@
                     <div id="p2d-result-item-main" class="result-item" tabindex="0">
                         <div class="result-item-content">
                             <div class="result-content-header hidden">
-                                <div class="result-actions" style="margin-left: auto;">
+                                <div class="preview-switcher">
+                                    <button id="p2d-preview-tab-image" class="preview-tab-item active" data-tab="image">Image</button>
+                                    <button id="p2d-preview-tab-motion" class="preview-tab-item" data-tab="motion">Motion</button>
+                                </div>
+                                <div class="result-actions">
                                     <button id="p2d-toggle-details-panel-btn" class="icon-button" aria-label="Toggle details panel">
                                         <span class="material-symbols-outlined">info</span>
                                     </button>
@@ -664,6 +668,16 @@
                                         <button id="p2d-retry-generate-btn" class="secondary-btn">Try Again</button>
                                     </div>
                                 </div>
+                                <div id="p2d-motion-prompt-placeholder" class="result-placeholder-content hidden">
+                                    <span class="material-symbols-outlined motion-placeholder-icon">movie</span>
+                                    <p class="motion-placeholder-title">Ready to animate?</p>
+                                    <p>Generate a motion prompt to create a looping animation from this icon.</p>
+                                    <button id="p2d-generate-motion-from-preview-btn" class="secondary-btn motion-generate-btn">
+                                      <span class="material-symbols-outlined">animation</span>
+                                      Generate Motion
+                                    </button>
+                                </div>
+                                <video id="p2d-result-video" class="result-video hidden" controls loop autoplay muted playsinline></video>
                                 <img src="" alt="Generated 2D image" class="result-image hidden" id="p2d-result-image-main">
                                 <label class="checkerboard-toggle" id="p2d-result-checkerboard-toggle" style="display: none;">
                                     <input type="checkbox" id="p2d-result-checkerboard-checkbox" checked>
@@ -684,6 +698,7 @@
                     </header>
                     <div class="details-panel-tabs">
                         <button class="tab-item active" data-tab="detail">Detail</button>
+                        <button class="tab-item" data-tab="motion">Motion</button>
                         <button class="tab-item" data-tab="history">History</button>
                     </div>
                     <div class="details-panel-body">
@@ -747,6 +762,99 @@
                                 <a href="#" id="p2d-details-download-btn" class="secondary-btn" download style="flex: 1;">
                                     <span class="material-symbols-outlined">download</span>
                                     <span class="btn-text">Download</span>
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <!-- Motion Tab Content -->
+                        <div class="details-tab-content hidden" data-tab-content="motion">
+                            <div class="motion-fixed-header">
+                                <div class="motion-thumbnail-container">
+                                    <img id="p2d-motion-thumbnail-image" src="" alt="Motion thumbnail">
+                                    <div class="motion-thumbnail-info">
+                                        <span id="p2d-motion-thumbnail-label"></span>
+                                        <span class="motion-thumbnail-desc">Ready for animation</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="motion-scroll-content">
+                                <div class="video-result-container hidden" id="p2d-motion-video-container">
+                                    <video id="p2d-motion-video-player" controls loop autoplay muted playsinline></video>
+                                    <div id="p2d-motion-video-loader" class="result-loading hidden">
+                                        <div class="loader"></div>
+                                        <span id="p2d-motion-gen-status-text" class="loader-text">Generating video...</span>
+                                    </div>
+                                </div>
+                                <div id="p2d-motion-reference-image-container" class="reference-image-container">
+                                  <div class="image-drop-zone reference-drop-zone" data-index="0">
+                                    <span class="slot-title">First Frame</span>
+                                    <div class="drop-zone-prompt"><p style="font-size:12px">Drop or click</p></div>
+                                    <img class="style-image-preview hidden" alt="First frame reference image">
+                                    <button class="remove-style-image-btn icon-button hidden" aria-label="Remove First Frame"><span class="material-symbols-outlined">delete</span></button>
+                                  </div>
+                                  <div class="image-drop-zone reference-drop-zone" data-index="1">
+                                    <span class="slot-title">Last Frame</span>
+                                    <div class="drop-zone-prompt"><p style="font-size:12px">Drop or click</p></div>
+                                    <img class="style-image-preview hidden" alt="Last frame reference image">
+                                    <button class="remove-style-image-btn icon-button hidden" aria-label="Remove Last Frame"><span class="material-symbols-outlined">delete</span></button>
+                                  </div>
+                                </div>
+                                <input type="file" id="p2d-motion-reference-image-input" class="hidden" accept="image/*">
+                                <div class="control-card">
+                                    <h3>Generation Speed</h3>
+                                    <p style="font-size: 13px; color: var(--text-secondary); margin-top: -8px; margin-bottom: 8px;">'High Quality' may take longer to generate.</p>
+                                    <div class="segmented-control" id="p2d-motion-model-select">
+                                        <input type="radio" id="p2d-motion-model-fast" name="p2d-motion-model" value="veo-3.1-fast-generate-preview" checked />
+                                        <label for="p2d-motion-model-fast">Fast</label>
+                                        <input type="radio" id="p2d-motion-model-hq" name="p2d-motion-model" value="veo-3.1-generate-preview" />
+                                        <label for="p2d-motion-model-hq">High Quality</label>
+                                    </div>
+                                </div>
+                                <div id="p2d-motion-prompt-output" class="hidden">
+                                    <div class="control-card">
+                                        <label for="p2d-motion-prompt-final-english">Final Prompt</label>
+                                        <textarea id="p2d-motion-prompt-final-english" rows="4"></textarea>
+                                    </div>
+                                    <div class="control-card">
+                                        <label>Description (Korean)</label>
+                                        <div id="p2d-motion-prompt-korean" class="description-box"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="details-actions p2d-motion-actions">
+                                <button id="p2d-generate-motion-prompt-btn" class="primary-btn full-width-btn">
+                                    <span class="material-symbols-outlined">animation</span>
+                                    <span class="btn-text">Generate Prompt</span>
+                                    <div class="btn-loader"></div>
+                                </button>
+                                <button id="p2d-regenerate-motion-prompt-btn" class="secondary-btn hidden full-width-btn">
+                                    <span class="material-symbols-outlined">refresh</span>
+                                    <span class="btn-text">Regenerate Motion Prompt</span>
+                                    <div class="btn-loader"></div>
+                                </button>
+                                <button id="p2d-generate-video-btn" class="primary-btn hidden full-width-btn">
+                                    <span class="material-symbols-outlined">movie</span>
+                                    <span class="btn-text">Generate Video</span>
+                                    <div class="btn-loader"></div>
+                                </button>
+                                <button id="p2d-regenerate-video-btn" class="secondary-btn hidden full-width-btn">
+                                    <span class="material-symbols-outlined">refresh</span>
+                                    <span class="btn-text">Regenerate Video</span>
+                                    <div class="btn-loader"></div>
+                                </button>
+                                <button id="p2d-motion-more-menu-btn" class="icon-button hidden" aria-label="More actions" title="More actions">
+                                    <span class="material-symbols-outlined">more_horiz</span>
+                                </button>
+                                <div id="p2d-motion-more-menu" class="kebab-menu hidden" style="position: absolute; left: 0; bottom: 56px; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); box-shadow: 0 8px 24px rgba(0,0,0,0.12); width: 200px; overflow: hidden; z-index: 20;">
+                                    <button id="p2d-motion-more-regenerate-prompt" class="secondary-btn" style="width: 100%; justify-content: flex-start; gap: var(--spacing-2); border: none; background: transparent;">
+                                        <span class="material-symbols-outlined">refresh</span> Regenerate Motion Prompt
+                                    </button>
+                                    <button id="p2d-motion-more-regenerate-video" class="secondary-btn" style="width: 100%; justify-content: flex-start; gap: var(--spacing-2); border: none; background: transparent;">
+                                        <span class="material-symbols-outlined">refresh</span> Regenerate Video
+                                    </button>
+                                </div>
+                                <a href="#" id="p2d-download-video-btn" class="secondary-btn hidden" download style="flex: 1;">
+                                    <span class="material-symbols-outlined">download</span> Download Video
                                 </a>
                             </div>
                         </div>

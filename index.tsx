@@ -68,6 +68,8 @@ let currentGeneratedIcon3d: { data: string; prompt: string } | null = null;
   let referenceImagesForIconStudio3d: ({ file: File; dataUrl: string } | null)[] = [null, null, null];
   let motionFirstFrameImage: { file: File; dataUrl: string; } | null = null;
   let motionLastFrameImage: { file: File; dataUrl: string; } | null = null;
+let motionFirstFrameImage2d: { file: File; dataUrl: string; } | null = null;
+let motionLastFrameImage2d: { file: File; dataUrl: string; } | null = null;
   let motionFirstFrameImageStudio: { file: File; dataUrl: string; } | null = null;
   let motionLastFrameImageStudio: { file: File; dataUrl: string; } | null = null;
   let currentPage = 'page-usages';
@@ -785,8 +787,8 @@ const imagePromptDisplay = $('#image-prompt-display') as HTMLTextAreaElement;
   const shadowToggleIcons = $('#shadow-toggle-icons') as HTMLInputElement;
   const shadowToggle3d = $('#shadow-toggle-3d') as HTMLInputElement;
   const toggleDetailsPanelBtn = $('#toggle-details-panel-btn');
-  const previewSwitcherImageBtn = $('.preview-switcher .preview-tab-item[data-tab="image"]');
-  const previewSwitcherVideoBtn = $('.preview-switcher .preview-tab-item[data-tab="video"]');
+  const previewSwitcherImageBtn = $('#page-id-3d .preview-switcher .preview-tab-item[data-tab="image"]');
+  const previewSwitcherVideoBtn = $('#page-id-3d .preview-switcher .preview-tab-item[data-tab="video"]');
   const motionPromptPlaceholder = $('#motion-prompt-placeholder');
   // 3D Details: More menu (Upscale / Copy Prompt / Delete)
   const detailsMoreMenuBtn = $('#details-more-menu-btn');
@@ -801,9 +803,14 @@ const imagePromptDisplay = $('#image-prompt-display') as HTMLTextAreaElement;
   const resultIdlePlaceholder2d = $('#p2d-result-idle-placeholder');
   const resultPlaceholder2d = $('#page-id-2d .result-placeholder');
   const resultImage2d = $('#page-id-2d .result-image') as HTMLImageElement;
+const resultVideo2d = $('#p2d-result-video') as HTMLVideoElement;
   const resultError2d = $('#page-id-2d .result-error');
   const retryGenerateBtn2d = $('#p2d-retry-generate-btn');
   const historyPanel2d = $('#page-id-2d .history-panel');
+const motionPromptPlaceholder2d = $('#p2d-motion-prompt-placeholder');
+const p2dPreviewSwitcherImageBtn = $('#p2d-preview-tab-image') as HTMLButtonElement;
+const p2dPreviewSwitcherVideoBtn = $('#p2d-preview-tab-motion') as HTMLButtonElement;
+const p2dGenerateMotionFromPreviewBtn = $('#p2d-generate-motion-from-preview-btn');
   
   // Initialize 2D Studio placeholder images from assets folder (same as 3D)
   const initialize2DPlaceholder = async () => {
@@ -935,10 +942,31 @@ const imagePromptDisplay = $('#image-prompt-display') as HTMLTextAreaElement;
   const detailsCopyBtn2d = $('#p2d-details-copy-btn');
   const detailsDeleteBtn2d = $('#p2d-details-delete-btn');
   const toggleDetailsPanelBtn2d = $('#p2d-toggle-details-panel-btn');
+const detailsTabBtnMotion2d = $('#p2d-image-details-panel .tab-item[data-tab="motion"]');
+const p2dMotionThumbnailImage = $('#p2d-motion-thumbnail-image') as HTMLImageElement;
+const p2dMotionThumbnailLabel = $('#p2d-motion-thumbnail-label');
+const p2dMotionVideoContainer = $('#p2d-motion-video-container');
+const p2dMotionVideoPlayer = $('#p2d-motion-video-player') as HTMLVideoElement;
+const p2dMotionVideoLoader = $('#p2d-motion-video-loader');
+const p2dMotionPromptOutput = $('#p2d-motion-prompt-output');
+const p2dMotionPromptFinalEnglish = $('#p2d-motion-prompt-final-english') as HTMLTextAreaElement;
+const p2dMotionPromptKorean = $('#p2d-motion-prompt-korean');
+const p2dMotionGenStatusText = $('#p2d-motion-gen-status-text');
+const p2dGenerateMotionPromptBtn = $('#p2d-generate-motion-prompt-btn');
+const p2dRegenerateMotionPromptBtn = $('#p2d-regenerate-motion-prompt-btn');
+const p2dGenerateVideoBtn = $('#p2d-generate-video-btn');
+const p2dRegenerateVideoBtn = $('#p2d-regenerate-video-btn');
+const p2dMotionMoreMenuBtn = $('#p2d-motion-more-menu-btn');
+const p2dMotionMoreMenu = $('#p2d-motion-more-menu');
+const p2dMotionMoreRegeneratePrompt = $('#p2d-motion-more-regenerate-prompt');
+const p2dMotionMoreRegenerateVideo = $('#p2d-motion-more-regenerate-video');
+const p2dDownloadVideoBtn = $('#p2d-download-video-btn') as HTMLAnchorElement;
+const p2dMotionReferenceInput = $('#p2d-motion-reference-image-input') as HTMLInputElement;
+const p2dMotionReferenceContainer = $('#p2d-motion-reference-image-container');
 
   // Motion Tab (Details Panel)
-  const motionTabBtn = $('.details-panel-tabs .tab-item[data-tab="motion"]');
-  const motionTabContent = $('.details-panel .details-tab-content[data-tab-content="motion"]');
+const motionTabBtn = $('#image-details-panel .tab-item[data-tab="motion"]');
+const motionTabContent = $('#image-details-panel .details-tab-content[data-tab-content="motion"]');
   const motionPreviewIcon = $('#motion-preview-icon');
   const motionThumbnailImage = $('#motion-thumbnail-image') as HTMLImageElement;
   const motionThumbnailLabel = $('#motion-thumbnail-label');
@@ -1275,6 +1303,18 @@ const imagePromptDisplay = $('#image-prompt-display') as HTMLTextAreaElement;
             console.log('[2D Studio] Force update history (500ms)');
             updateDetailsPanelHistory2d();
           }, 500);
+        }
+
+        if (container.id === 'p2d-image-details-panel') {
+          if (tabName === 'motion') {
+            if (p2dPreviewSwitcherVideoBtn && !p2dPreviewSwitcherVideoBtn.classList.contains('active')) {
+              p2dPreviewSwitcherVideoBtn.click();
+            }
+          } else if (tabName === 'detail') {
+            if (p2dPreviewSwitcherImageBtn && !p2dPreviewSwitcherImageBtn.classList.contains('active')) {
+              p2dPreviewSwitcherImageBtn.click();
+            }
+          }
         }
 
         if (container.id === 'settings-panel' && settingsFooter) {
@@ -1881,7 +1921,9 @@ const imagePromptDisplay = $('#image-prompt-display') as HTMLTextAreaElement;
             subject: imagePromptSubjectInput2d.value,
             styleConstraints: imagePromptDisplay2d.value,
                 timestamp: Date.now(),
-                modificationType: 'Original'
+                modificationType: 'Original',
+                motionPrompt: null,
+                videoDataUrl: undefined
         };
         
         currentGeneratedImage2d = newImage;
@@ -1891,6 +1933,7 @@ const imagePromptDisplay = $('#image-prompt-display') as HTMLTextAreaElement;
             
             // Reset right panel history and seed with "Original" entry for this new base asset
             resetRightHistoryForBaseAsset2d(newImage);
+            await setInitialMotionFrames2d(newImage);
 
         const dataUrl = `data:${newImage.mimeType};base64,${newImage.data}`;
         const newLibraryItem = { id: newImage.id, dataUrl, mimeType: newImage.mimeType };
@@ -1922,6 +1965,113 @@ const imagePromptDisplay = $('#image-prompt-display') as HTMLTextAreaElement;
         }
     }
   };
+  const updateMotionUI2d = () => {
+    if (!currentGeneratedImage2d) return;
+
+    const hasMotionPrompt = !!currentGeneratedImage2d.motionPrompt;
+    const hasVideo = !!currentGeneratedImage2d.videoDataUrl;
+
+    if (p2dMotionPromptOutput && p2dMotionPromptFinalEnglish && p2dMotionPromptKorean) {
+        if (hasMotionPrompt) {
+            const englishPrompt = currentGeneratedImage2d.motionPrompt!.english;
+            const koreanPrompt = currentGeneratedImage2d.motionPrompt!.korean;
+
+            if (p2dMotionPromptFinalEnglish.value.trim() === '' || p2dMotionPromptFinalEnglish.dataset.originalPrompt === englishPrompt) {
+                p2dMotionPromptFinalEnglish.value = englishPrompt;
+            }
+            p2dMotionPromptFinalEnglish.dataset.originalPrompt = englishPrompt;
+            p2dMotionPromptKorean.textContent = koreanPrompt;
+            p2dMotionPromptOutput.classList.remove('hidden');
+        } else {
+            p2dMotionPromptOutput.classList.add('hidden');
+            p2dMotionPromptFinalEnglish.value = '';
+            p2dMotionPromptKorean.textContent = '';
+        }
+    }
+
+    if (p2dMotionVideoPlayer && p2dMotionVideoContainer) {
+        if (hasVideo) {
+            const videoUrl = currentGeneratedImage2d.videoDataUrl!;
+            if (p2dMotionVideoPlayer.src !== videoUrl) {
+                p2dMotionVideoPlayer.src = videoUrl;
+            }
+            p2dMotionVideoContainer.classList.remove('hidden');
+            p2dMotionVideoContainer.classList.remove('loading');
+        } else {
+            p2dMotionVideoPlayer.pause();
+            p2dMotionVideoPlayer.removeAttribute('src');
+            p2dMotionVideoContainer.classList.add('hidden');
+        }
+    }
+
+    if (p2dDownloadVideoBtn) {
+        if (hasVideo) {
+            const downloadUrl = currentGeneratedImage2d.videoDataUrl!;
+            p2dDownloadVideoBtn.href = downloadUrl;
+            p2dDownloadVideoBtn.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}_motion.mp4`;
+            p2dDownloadVideoBtn.classList.remove('hidden');
+        } else {
+            p2dDownloadVideoBtn.classList.add('hidden');
+            p2dDownloadVideoBtn.removeAttribute('href');
+        }
+    }
+
+    if (p2dGenerateMotionPromptBtn && p2dRegenerateMotionPromptBtn && p2dGenerateVideoBtn && p2dRegenerateVideoBtn) {
+        if (hasVideo) {
+            p2dGenerateMotionPromptBtn.classList.add('hidden');
+            p2dRegenerateMotionPromptBtn.classList.add('hidden');
+            p2dGenerateVideoBtn.classList.add('hidden');
+            p2dRegenerateVideoBtn.classList.add('hidden');
+            p2dMotionMoreMenuBtn?.classList.remove('hidden');
+            p2dMotionMoreMenu?.classList.add('hidden');
+        } else if (hasMotionPrompt) {
+            p2dGenerateMotionPromptBtn.classList.add('hidden');
+            p2dRegenerateMotionPromptBtn.classList.remove('hidden');
+            p2dGenerateVideoBtn.classList.remove('hidden');
+            p2dRegenerateVideoBtn.classList.add('hidden');
+            p2dMotionMoreMenuBtn?.classList.add('hidden');
+            p2dMotionMoreMenu?.classList.add('hidden');
+        } else {
+            p2dGenerateMotionPromptBtn.classList.remove('hidden');
+            p2dRegenerateMotionPromptBtn.classList.add('hidden');
+            p2dGenerateVideoBtn.classList.add('hidden');
+            p2dRegenerateVideoBtn.classList.add('hidden');
+            p2dMotionMoreMenuBtn?.classList.add('hidden');
+            p2dMotionMoreMenu?.classList.add('hidden');
+        }
+    }
+
+    if (p2dMotionThumbnailImage && p2dMotionThumbnailLabel && currentGeneratedImage2d) {
+        const dataUrl = `data:${currentGeneratedImage2d.mimeType};base64,${currentGeneratedImage2d.data}`;
+        p2dMotionThumbnailImage.src = dataUrl;
+        p2dMotionThumbnailLabel.textContent = currentGeneratedImage2d.subject;
+    }
+
+    if (resultVideo2d) {
+        if (hasVideo) {
+            const videoUrl = currentGeneratedImage2d.videoDataUrl!;
+            if (resultVideo2d.src !== videoUrl) {
+                resultVideo2d.src = videoUrl;
+            }
+            if (p2dPreviewSwitcherVideoBtn?.classList.contains('active')) {
+                resultVideo2d.classList.remove('hidden');
+                motionPromptPlaceholder2d?.classList.add('hidden');
+            }
+        } else {
+            resultVideo2d.pause();
+            resultVideo2d.removeAttribute('src');
+            resultVideo2d.classList.add('hidden');
+            if (p2dPreviewSwitcherVideoBtn?.classList.contains('active')) {
+                motionPromptPlaceholder2d?.classList.toggle('hidden', !hasMotionPrompt);
+            }
+        }
+    }
+
+    if (!hasVideo && !hasMotionPrompt) {
+        motionPromptPlaceholder2d?.classList.add('hidden');
+    }
+  };
+
   const update2dViewFromState = () => {
     if (!currentGeneratedImage2d || !resultImage2d || !resultIdlePlaceholder2d || !resultPlaceholder2d || !resultError2d || !mainResultContentHeader2d) return;
 
@@ -2013,6 +2163,17 @@ const imagePromptDisplay = $('#image-prompt-display') as HTMLTextAreaElement;
     if (actionButtonsContainer) {
         actionButtonsContainer.style.gridTemplateColumns = '1fr';
     }
+
+    if (resultVideo2d) {
+        resultVideo2d.pause?.();
+        resultVideo2d.classList.add('hidden');
+        resultVideo2d.removeAttribute('src');
+    }
+    motionPromptPlaceholder2d?.classList.add('hidden');
+    p2dPreviewSwitcherImageBtn?.classList.add('active');
+    p2dPreviewSwitcherVideoBtn?.classList.remove('active');
+
+    updateMotionUI2d();
   };
 
   // Reset right panel history and seed with "Original" entry for a new base asset
@@ -3401,6 +3562,33 @@ const imagePromptDisplay = $('#image-prompt-display') as HTMLTextAreaElement;
         console.error("Failed to set initial motion frames for Image Studio:", error);
     }
   };
+
+const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
+  const dataUrl = `data:${imageData.mimeType};base64,${imageData.data}`;
+  
+  try {
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      const file = new File([blob], `generated_frame_2d.${imageData.mimeType.split('/')[1] || 'png'}`, { type: imageData.mimeType });
+      
+      const frameData = { file, dataUrl };
+      
+      motionFirstFrameImage2d = frameData;
+      motionLastFrameImage2d = frameData;
+      
+      const firstFrameZone = document.querySelector<HTMLElement>('#p2d-motion-reference-image-container .image-drop-zone[data-index="0"]');
+      const lastFrameZone = document.querySelector<HTMLElement>('#p2d-motion-reference-image-container .image-drop-zone[data-index="1"]');
+      
+      if (firstFrameZone) {
+          updateDropZoneUI(firstFrameZone, dataUrl);
+      }
+      if (lastFrameZone) {
+          updateDropZoneUI(lastFrameZone, dataUrl);
+      }
+  } catch (error) {
+      console.error("Failed to set initial motion frames for 2D Studio:", error);
+  }
+};
 
   const build3dPromptTemplate = (): any => {
   try {
@@ -4792,6 +4980,120 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
     }
   };
 
+  const handleGenerateVideo2d = async () => {
+    if (!currentGeneratedImage2d || !currentGeneratedImage2d.motionPrompt || !motionFirstFrameImage2d) {
+        showToast({ type: 'error', title: 'Missing Data', body: 'Generate a motion prompt first.' });
+        return;
+    }
+
+    updateButtonLoadingState(p2dGenerateVideoBtn, true);
+    updateButtonLoadingState(p2dRegenerateVideoBtn, true);
+    isGeneratingVideo = true;
+
+    if (videoGenerationLoaderModal && videoLoaderMessage) {
+        videoGenerationLoaderModal.classList.remove('hidden');
+        let messageIndex = 0;
+        videoLoaderMessage.textContent = VIDEO_LOADER_MESSAGES[messageIndex];
+        videoMessageInterval = window.setInterval(() => {
+            messageIndex = (messageIndex + 1) % VIDEO_LOADER_MESSAGES.length;
+            videoLoaderMessage.textContent = VIDEO_LOADER_MESSAGES[messageIndex];
+        }, 3000);
+    }
+
+    try {
+        const userPrompt = p2dMotionPromptFinalEnglish?.value || '';
+        const motionInstruction = sanitizeMotionPromptText(userPrompt);
+
+        const finalPrompt = `CRITICAL: Do NOT create new content. Only animate the existing elements from the source icon. Keep identical line weights, shapes, colors, and composition. Movement Instructions: ${motionInstruction}. Do not add or remove any elements, gradients, particles, or lighting. Preserve the exact background. Maintain the same vector style and crisp lines. no black bars, no letterboxing, full-frame composition, fill the entire frame. Maintain full frame coverage with no black bars, borders, or letterboxing. Keep the entire icon visible. Preserve the exact background from the source image without any cropping or black bars.`;
+
+        const config: any = {
+            numberOfVideos: 1,
+            resolution: '1080p',
+            aspectRatio: '1:1',
+        };
+
+        const selectedModel = (document.querySelector('input[name="p2d-motion-model"]:checked') as HTMLInputElement)?.value || 'veo-3.1-fast-generate-preview';
+
+        if (p2dMotionPromptFinalEnglish) {
+            p2dMotionPromptFinalEnglish.value = finalPrompt;
+        }
+
+        const payload: any = {
+            model: selectedModel,
+            prompt: finalPrompt,
+            config,
+        };
+
+        if (motionFirstFrameImage2d) {
+            payload.image = {
+                imageBytes: await blobToBase64(motionFirstFrameImage2d.file),
+                mimeType: motionFirstFrameImage2d.file.type,
+            };
+        }
+
+        if (motionLastFrameImage2d) {
+            payload.config.lastFrame = {
+                imageBytes: await blobToBase64(motionLastFrameImage2d.file),
+                mimeType: motionLastFrameImage2d.file.type,
+            };
+        }
+
+        let operation = await ai.models.generateVideos(payload);
+        currentVideoGenerationOperation = operation;
+
+        while (!operation.done) {
+            await new Promise(resolve => setTimeout(resolve, 10000));
+            operation = await ai.operations.getVideosOperation({ operation });
+            currentVideoGenerationOperation = operation;
+        }
+
+        const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
+        if (!downloadLink) {
+            throw new Error("Video generation succeeded but no download link was found.");
+        }
+
+        const videoResponse = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
+        if (!videoResponse.ok) {
+            throw new Error(`Failed to download video: ${videoResponse.statusText}`);
+        }
+
+        const videoBlob = await videoResponse.blob();
+        const videoDataUrl = URL.createObjectURL(videoBlob);
+
+        currentGeneratedImage2d.videoDataUrl = videoDataUrl;
+        const historyItem = imageHistory2d.find(item => item.id === currentGeneratedImage2d!.id);
+        if (historyItem) {
+            historyItem.videoDataUrl = videoDataUrl;
+        }
+
+        if (resultVideo2d) {
+            resultVideo2d.src = videoDataUrl;
+            resultVideo2d.classList.remove('hidden');
+            resultImage2d?.classList.add('hidden');
+            motionPromptPlaceholder2d?.classList.add('hidden');
+        }
+        p2dPreviewSwitcherVideoBtn?.classList.add('active');
+        p2dPreviewSwitcherImageBtn?.classList.remove('active');
+
+        updateMotionUI2d();
+        showToast({ type: 'success', title: 'Motion Ready!', body: 'Your animated icon is ready.' });
+    } catch (error) {
+        console.error("2D motion generation failed:", error);
+        showToast({ type: 'error', title: 'Video Failed', body: 'Something went wrong during video generation.' });
+        p2dMotionVideoContainer?.classList.remove('loading');
+    } finally {
+        updateButtonLoadingState(p2dGenerateVideoBtn, false);
+        updateButtonLoadingState(p2dRegenerateVideoBtn, false);
+        isGeneratingVideo = false;
+        currentVideoGenerationOperation = null;
+        videoGenerationLoaderModal?.classList.add('hidden');
+        if (videoMessageInterval) {
+            clearInterval(videoMessageInterval);
+            videoMessageInterval = null;
+        }
+    }
+  };
+
   const updateMotionUIStudio = () => {
     if (!currentGeneratedImageStudio) return;
     
@@ -5128,6 +5430,132 @@ Return the 5 suggestions as a JSON array.`;
     });
   };
   
+  const generateAndDisplayMotionCategories2d = async () => {
+    if (!currentGeneratedImage2d || !motionCategoryList) return;
+
+    motionCategoryList.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--spacing-4); padding: var(--spacing-6);">
+            <div class="loader"></div>
+            <p style="color: var(--text-secondary);">Analyzing icon and generating motion ideas...</p>
+        </div>
+    `;
+
+    try {
+        const subject = currentGeneratedImage2d.subject;
+        const textPrompt = `Analyze the provided vector-style icon of '${subject}'. Create 5 subtle motion ideas that can turn this static icon into a looping animation while keeping the original design untouched.
+Hard rules for every suggestion:
+- Absolutely keep the original shape, line weight, color palette, background, and composition identical to the source icon.
+- Do NOT introduce new shapes, gradients, glow, particles, or props beyond what already exists in the icon.
+- Describe only gentle, looping motions applied to existing strokes, fills, or components. Motions must feel natural for a vector icon.
+- Start and end frames must match perfectly to create a seamless loop with no visual jump.
+For each suggestion, provide:
+1. 'name': Short Korean title (예: '은은한 호흡').
+2. 'description': Korean explanation (allow limited <b> tags for emphasis).
+3. 'english': Concise English prompt mentioning it is a looping animation that preserves every original element with zero new additions.
+4. 'korean': Korean description reiterating that no new elements are added and that the loop is 자연스럽게 반복됨.
+Return as a JSON array.`;
+
+        const imagePart = {
+          inlineData: {
+            data: currentGeneratedImage2d.data,
+            mimeType: currentGeneratedImage2d.mimeType,
+          },
+        };
+
+        const parts = { parts: [imagePart, { text: textPrompt }] };
+
+        const schema = {
+            type: Type.ARRAY,
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    name: { type: Type.STRING },
+                    description: { type: Type.STRING },
+                    english: { type: Type.STRING },
+                    korean: { type: Type.STRING },
+                },
+                required: ['name', 'description', 'english', 'korean'],
+            }
+        };
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: parts,
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: schema,
+            },
+        });
+
+        const jsonResponse = JSON.parse(response.text.trim());
+        renderGeneratedMotionCategories2d(jsonResponse);
+
+    } catch (error) {
+        console.error("Failed to generate 2D motion categories:", error);
+        showToast({ type: 'error', title: 'Error', body: 'Could not generate motion ideas.' });
+        if (motionCategoryList) {
+            motionCategoryList.innerHTML = `<p style="text-align: center; color: var(--text-secondary); padding: var(--spacing-5);">An error occurred. Please close this and try again.</p>`;
+        }
+    }
+  };
+
+  const renderGeneratedMotionCategories2d = (categories: any[]) => {
+    if (!motionCategoryList) return;
+    motionCategoryList.innerHTML = '';
+
+    if (!categories || categories.length === 0) {
+        motionCategoryList.innerHTML = `<p style="text-align: center; color: var(--text-secondary); padding: var(--spacing-5);">Could not generate motion ideas. Please try again.</p>`;
+        return;
+    }
+
+    categories.forEach((category) => {
+        const item = document.createElement('button');
+        item.className = 'category-item';
+
+        item.innerHTML = `
+            <div class="category-item-header">
+                <h3 class="category-item-title">${category.name}</h3>
+            </div>
+            <p class="category-item-description">${category.description}</p>
+        `;
+
+        item.addEventListener('click', () => {
+            if (!currentGeneratedImage2d) return;
+
+            motionCategoryModal?.classList.add('hidden');
+
+            const sanitizedEnglish = sanitizeMotionPromptText(category.english || '');
+            const sanitizedCategory = { ...category, english: sanitizedEnglish };
+            const motionData = {
+                json: sanitizedCategory,
+                english: sanitizedEnglish,
+                korean: category.korean
+            };
+
+            currentGeneratedImage2d.motionPrompt = motionData;
+
+            const historyItem = imageHistory2d.find(item => item.id === currentGeneratedImage2d!.id);
+            if (historyItem) {
+                historyItem.motionPrompt = motionData;
+            }
+
+            if (p2dMotionPromptFinalEnglish) {
+                p2dMotionPromptFinalEnglish.value = sanitizedEnglish;
+            }
+
+            motionPromptPlaceholder2d?.classList.add('hidden');
+
+            setTimeout(() => {
+                updateMotionUI2d();
+            }, 100);
+
+            lastFocusedElement?.focus();
+        });
+
+        motionCategoryList.appendChild(item);
+    });
+  };
+
   const generateAndDisplayMotionCategories = async () => {
     if (!currentGeneratedImage || !motionCategoryList) return;
 
@@ -6270,6 +6698,68 @@ Return the 5 suggestions as a JSON array.`;
           });
       });
   };
+
+const setupMotionDropZones2d = () => {
+    const container = $('#p2d-motion-reference-image-container');
+    const inputEl = $('#p2d-motion-reference-image-input') as HTMLInputElement;
+    if (!container || !inputEl) return;
+
+    const zones = container.querySelectorAll<HTMLElement>('.image-drop-zone');
+
+    zones.forEach(zone => {
+        const index = parseInt(zone.dataset.index!);
+        const removeBtn = zone.querySelector('.remove-style-image-btn') as HTMLButtonElement;
+
+        const handleFile = (file: File | undefined) => {
+            if (!file || !file.type.startsWith('image/')) return;
+
+            const reader = new FileReader();
+            reader.onload = e => {
+                const dataUrl = e.target?.result as string;
+                const frameData = { file, dataUrl };
+                if (index === 0) {
+                    motionFirstFrameImage2d = frameData;
+                } else {
+                    motionLastFrameImage2d = frameData;
+                }
+                updateDropZoneUI(zone, dataUrl);
+            };
+            reader.readAsDataURL(file);
+        };
+
+        const handleFileSelect = () => {
+            const file = inputEl.files?.[0];
+            if (file) handleFile(file);
+            inputEl.value = '';
+        };
+
+        zone.addEventListener('click', () => {
+            const currentState = index === 0 ? motionFirstFrameImage2d : motionLastFrameImage2d;
+            if (currentState) return;
+            inputEl.addEventListener('change', handleFileSelect, { once: true });
+            inputEl.click();
+        });
+
+        zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('dragover'); });
+        zone.addEventListener('dragleave', (e) => { e.preventDefault(); zone.classList.remove('dragover'); });
+        zone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            zone.classList.remove('dragover');
+            const file = e.dataTransfer?.files[0];
+            handleFile(file);
+        });
+
+        removeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (index === 0) {
+                motionFirstFrameImage2d = null;
+            } else {
+                motionLastFrameImage2d = null;
+            }
+            clearDropZoneUI(zone);
+        });
+    });
+};
 
   // Create a new image reference zone
   const createImageReferenceZone = (index: number, container: HTMLElement) => {
@@ -7497,6 +7987,7 @@ regenerate3DBtn?.addEventListener('click', () => {
     setupDropZoneListeners('#reference-image-container-3d', '#reference-image-input-3d', referenceImagesForIconStudio3d);
     setupDropZoneListeners('#p2d-edit-reference-image-container-3d', '#p2d-edit-reference-image-input-3d', referenceImagesForEdit2d);
     setupMotionDropZones();
+    setupMotionDropZones2d();
     setupMotionDropZonesImage();
     setupImageStudioDropZones();
     
@@ -7575,6 +8066,7 @@ regenerate3DBtn?.addEventListener('click', () => {
             
             // Reset right panel history to match the selected left history item
             resetRightHistoryForBaseAsset2d(currentGeneratedImage2d);
+            void setInitialMotionFrames2d(currentGeneratedImage2d);
             
             update2dViewFromState();
             renderHistory2d();
@@ -7593,6 +8085,7 @@ regenerate3DBtn?.addEventListener('click', () => {
             
             // Reset right panel history to match the selected left history item
             resetRightHistoryForBaseAsset2d(currentGeneratedImage2d);
+            void setInitialMotionFrames2d(currentGeneratedImage2d);
             
             update2dViewFromState();
             renderHistory2d();
@@ -8823,6 +9316,71 @@ detailsMoreCopy?.addEventListener('click', async () => {
     });
     generateVideoBtnStudio?.addEventListener('click', handleGenerateVideoStudio);
     regenerateVideoBtnStudio?.addEventListener('click', handleGenerateVideoStudio);
+
+    const openMotionCategoryModal2d = () => {
+        motionCategoryModal?.classList.remove('hidden');
+        generateAndDisplayMotionCategories2d();
+        lastFocusedElement = document.activeElement as HTMLElement;
+    };
+    p2dGenerateMotionPromptBtn?.addEventListener('click', openMotionCategoryModal2d);
+    p2dRegenerateMotionPromptBtn?.addEventListener('click', openMotionCategoryModal2d);
+    p2dGenerateMotionFromPreviewBtn?.addEventListener('click', () => {
+        if (!currentGeneratedImage2d) {
+            showToast({ type: 'error', title: 'No Icon', body: 'Generate an icon first.' });
+            return;
+        }
+        if (detailsPanel2d?.classList.contains('hidden')) {
+            detailsPanel2d.classList.remove('hidden');
+            detailsPanel2d.classList.add('is-open');
+        }
+        detailsTabBtnMotion2d?.click();
+        openMotionCategoryModal2d();
+    });
+    p2dGenerateVideoBtn?.addEventListener('click', handleGenerateVideo2d);
+    p2dRegenerateVideoBtn?.addEventListener('click', handleGenerateVideo2d);
+    const closeMotionMoreMenu2d = () => p2dMotionMoreMenu?.classList.add('hidden');
+    p2dMotionMoreMenuBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        p2dMotionMoreMenu?.classList.toggle('hidden');
+    });
+    p2dMotionMoreMenu?.addEventListener('click', (e) => e.stopPropagation());
+    document.addEventListener('click', closeMotionMoreMenu2d);
+    p2dMotionMoreRegeneratePrompt?.addEventListener('click', () => {
+        closeMotionMoreMenu2d();
+        p2dRegenerateMotionPromptBtn?.dispatchEvent(new Event('click'));
+    });
+    p2dMotionMoreRegenerateVideo?.addEventListener('click', () => {
+        closeMotionMoreMenu2d();
+        p2dRegenerateVideoBtn?.dispatchEvent(new Event('click'));
+    });
+    p2dPreviewSwitcherImageBtn?.addEventListener('click', () => {
+        if (!currentGeneratedImage2d) return;
+        p2dPreviewSwitcherImageBtn.classList.add('active');
+        p2dPreviewSwitcherVideoBtn?.classList.remove('active');
+        resultImage2d?.classList.remove('hidden');
+        resultVideo2d?.classList.add('hidden');
+        motionPromptPlaceholder2d?.classList.add('hidden');
+    });
+    p2dPreviewSwitcherVideoBtn?.addEventListener('click', () => {
+        if (!currentGeneratedImage2d) return;
+        p2dPreviewSwitcherVideoBtn.classList.add('active');
+        p2dPreviewSwitcherImageBtn?.classList.remove('active');
+
+        if (currentGeneratedImage2d.videoDataUrl) {
+            if (resultVideo2d) {
+                if (resultVideo2d.src !== currentGeneratedImage2d.videoDataUrl) {
+                    resultVideo2d.src = currentGeneratedImage2d.videoDataUrl;
+                }
+                resultVideo2d.classList.remove('hidden');
+            }
+            motionPromptPlaceholder2d?.classList.add('hidden');
+        } else {
+            resultVideo2d?.classList.add('hidden');
+            motionPromptPlaceholder2d?.classList.remove('hidden');
+        }
+
+        resultImage2d?.classList.add('hidden');
+    });
 
     motionCategoryCloseBtn?.addEventListener('click', () => {
       motionCategoryModal?.classList.add('hidden');

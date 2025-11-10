@@ -1,3 +1,7 @@
+.full-width-btn {
+    width: 100%;
+    justify-content: center;
+}
 .size-color-group {
     display: flex;
     flex-direction: column;
@@ -2524,6 +2528,15 @@ a.secondary-btn[disabled] {
     padding-bottom: 0;
 }
 
+.p2d-motion-actions {
+    position: sticky;
+    bottom: 0;
+    background: var(--surface-color);
+    padding-top: var(--spacing-4);
+    padding-bottom: var(--spacing-4);
+    gap: var(--spacing-2);
+}
+
 /* 3D Studio: Bottom actions with fixed position and bottom margin */
 .image-details-actions {
     position: sticky;
@@ -2635,7 +2648,8 @@ a.secondary-btn[disabled] {
     min-height: 150px; /* Give it a minimum height */
 }
 
-#motion-video-container.video-result-container {
+#motion-video-container.video-result-container,
+#p2d-motion-video-container.video-result-container {
     width: 270px;
     height: 270px;
     flex-grow: 0;
@@ -2643,7 +2657,8 @@ a.secondary-btn[disabled] {
     background-color: #FFFFFF;
 }
 
-#motion-video-player {
+#motion-video-player,
+#p2d-motion-video-player {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
@@ -3655,15 +3670,9 @@ a.secondary-btn[disabled] {
     border-radius: var(--border-radius-md);
     border: 1px solid var(--border-color);
 }
-#motion-thumbnail-image {
-    width: 48px;
-    height: 48px;
-    border-radius: var(--border-radius-sm);
-    object-fit: cover;
-    flex-shrink: 0;
-    background-color: #FFFFFF;
-}
-#motion-thumbnail-image-image {
+#motion-thumbnail-image,
+#motion-thumbnail-image-image,
+#p2d-motion-thumbnail-image {
     width: 48px;
     height: 48px;
     border-radius: var(--border-radius-sm);
@@ -3677,7 +3686,9 @@ a.secondary-btn[disabled] {
     gap: var(--spacing-1);
     overflow: hidden;
 }
-#motion-thumbnail-label {
+#motion-thumbnail-label,
+#motion-thumbnail-label-image,
+#p2d-motion-thumbnail-label {
     font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
