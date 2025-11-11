@@ -332,6 +332,11 @@ input:where(:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
   min-height: 100vh;
 }
 
+#page-usages {
+  margin-top: calc(-1 * var(--header-height));
+  padding-top: var(--header-height);
+}
+
 #page-usages .explore-main {
   background: transparent !important;
 }
