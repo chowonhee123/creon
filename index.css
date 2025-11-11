@@ -190,7 +190,7 @@ input:where(:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
   justify-content: space-between;
   height: var(--header-height);
   padding: 0 var(--spacing-6);
-  border-bottom: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -207,19 +207,21 @@ input:where(:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border-bottom: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .app-header.header-transparent {
   background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .app-header.header-transparent.scrolled {
   background: rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .logo {
@@ -3802,6 +3804,11 @@ a.secondary-btn[disabled] {
 .explore-main.has-content .explore-title {
     padding-top: 0;
     padding-bottom: 20px;
+}
+
+/* Icon Studio - Add top padding to explore-title */
+#page-icons .explore-title {
+    padding-top: 60px;
 }
 
 .explore-main.has-content .main-content-header {
