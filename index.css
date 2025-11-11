@@ -182,6 +182,7 @@ input:where(:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
   display: flex;
   flex-direction: column;
   height: 100vh;
+  padding-top: var(--header-height);
 }
 
 .app-header {
