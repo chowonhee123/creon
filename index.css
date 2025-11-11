@@ -1028,6 +1028,7 @@ input[type='range']::-moz-range-thumb {
 
 #prompt-display-3d {
   background-color: var(--input-bg);
+  border: 1px solid #ffffff;
   border-radius: var(--border-radius-md);
   padding: var(--spacing-4);
   font-family: 'Roboto Mono', monospace;
@@ -1040,6 +1041,7 @@ input[type='range']::-moz-range-thumb {
 }
 #prompt-display-3d:focus {
   outline: none;
+  border-color: var(--accent-color);
 }
 
 
