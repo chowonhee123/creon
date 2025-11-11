@@ -4916,7 +4916,7 @@ a.secondary-btn[disabled] {
   display: grid !important;
   grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)) !important;
   gap: var(--spacing-5) !important;
-  padding: 24px;
+  padding: var(--spacing-5);
   overflow-y: auto;
   max-height: calc(100vh - 300px);
 }
