@@ -2504,9 +2504,10 @@ a.secondary-btn[disabled] {
     align-items: center;
     gap: var(--spacing-2);
     margin-top: auto;
-    padding: 16px 24px;
+    padding: 24px;
     flex-shrink: 0;
     background: var(--surface-color);
+    border-top: 1px solid var(--border-color);
 }
 
 .details-actions button,
