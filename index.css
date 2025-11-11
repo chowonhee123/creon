@@ -2510,10 +2510,15 @@ a.secondary-btn[disabled] {
     border-top: 1px solid var(--border-color);
 }
 
-.details-actions button,
+.details-actions button:not(.icon-button),
 .details-actions a {
     flex: 1;
     width: 100%;
+}
+
+.details-actions .icon-button {
+    flex: 0 0 44px;
+    width: 44px;
 }
 
 /* Home page details panel - download button full width */
@@ -4866,11 +4871,12 @@ a.secondary-btn[disabled] {
 
 /* Details Panel History List Styles */
 #p2d-details-history-list,
-#3d-details-history-list {
+#3d-details-history-list,
+#image-details-history-list {
   display: grid !important;
   grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)) !important;
   gap: 12px !important;
-  padding: var(--spacing-2);
+  padding: 24px;
   overflow-y: auto;
   max-height: calc(100vh - 300px);
 }
@@ -4901,7 +4907,8 @@ a.secondary-btn[disabled] {
 
 /* Empty state for history list */
 #p2d-details-history-list:empty::before,
-#3d-details-history-list:empty::before {
+#3d-details-history-list:empty::before,
+#image-details-history-list:empty::before {
   content: 'No history available';
   display: block;
   padding: var(--spacing-4);
