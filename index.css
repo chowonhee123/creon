@@ -4885,7 +4885,7 @@ a.secondary-btn[disabled] {
 #image-details-history-list {
   display: grid !important;
   grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)) !important;
-  gap: 12px !important;
+  gap: var(--spacing-5) !important;
   padding: 24px;
   overflow-y: auto;
   max-height: calc(100vh - 300px);
