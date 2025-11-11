@@ -5169,54 +5169,56 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
         console.log('[2D Video] User prompt:', userPrompt);
         const motionInstruction = sanitizeMotionPromptText(userPrompt);
 
-        const finalPrompt = `CRITICAL CONSTRAINTS for 2D Vector Icon Animation - STRICT SHAPE PRESERVATION:
+        const finalPrompt = `🚨 CRITICAL: This is a SOLID VECTOR GRAPHIC icon - NOT liquid, NOT organic material, NOT flexible.
 
-⚠️ MOST IMPORTANT - ZERO SHAPE DISTORTION:
-   - Icon lines and shapes MUST remain perfectly rigid and solid
-   - NO liquid effects, flowing, melting, or dripping
-   - NO elastic deformation or stretching
-   - NO wave effects or rippling through the icon
-   - Every line and curve must maintain EXACT geometric integrity
-   - Icon must look like a solid, rigid graphic element - NOT fluid or organic material
+ABSOLUTE RULE #1 - FREEZE THE ICON SHAPE:
+- The icon is made of SOLID, HARD, RIGID material like metal or plastic
+- Every single line, curve, and shape is LOCKED and FROZEN in place
+- Treat the ENTIRE icon as ONE SOLID PIECE that cannot bend, warp, melt, or deform
+- NO liquid-like flowing, dripping, melting, or water effects
+- NO elastic stretching, squashing, or rubber-like behavior
+- NO wave propagation or rippling through any part
+- NO gravity effects that make parts sag or droop
+- The icon must maintain EXACT geometric shape at ALL times - as if it were carved from solid stone
 
-1. PRESERVE VECTOR QUALITY (ABSOLUTE):
-   - Keep EXACT line weights and stroke width throughout every frame
-   - Maintain razor-sharp, crisp vector edges - NO blurring, NO anti-aliasing artifacts, NO smoothing
-   - Preserve sharp corners and precise curves with mathematical precision
-   - Keep absolutely consistent outline thickness - lines must not thin, thicken, break, or waver
-   - NO line breaks, gaps, distortions, wobbling, or quality degradation whatsoever
-   - Lines must remain perfectly clean and crisp like a vector graphic
+ABSOLUTE RULE #2 - PRESERVE EVERY LINE PERFECTLY:
+- All lines and strokes must remain PERFECTLY STRAIGHT or maintain their EXACT curves
+- Line thickness must be ABSOLUTELY CONSTANT - no thinning, thickening, or variation
+- Line edges must stay RAZOR SHARP and CRISP - no blur, no anti-aliasing artifacts
+- NO line breaks, gaps, wobbling, wavering, or any distortion
+- Every corner, angle, and curve must preserve its EXACT MATHEMATICAL GEOMETRY
+- Lines must look like they are drawn with a ruler and compass - perfect and unchanging
 
-2. MAINTAIN ICON STRUCTURE (LOCKED):
-   - Keep 100% identical shape, form, and silhouette in every frame
-   - Icon edges and contours must be frozen - treat icon as a single rigid object
-   - Preserve exact color palette and fills - no color shifts or variations
-   - NO morphing, warping, melting, flowing, or any shape deformation
-   - NO internal distortion - all parts must move together as one solid unit
-   - Maintain original composition and layout perfectly
-   - Icon must stay perfectly recognizable and identical to the first frame
+ABSOLUTE RULE #3 - SINGLE RIGID OBJECT MOVEMENT:
+- ${motionInstruction}
+- Apply animation to the COMPLETE icon as if it were ONE SOLID BLOCK
+- If scaling: scale the ENTIRE icon uniformly (max 1.0 ↔ 1.03) while keeping perfect proportions
+- If rotating: rotate the WHOLE icon as a solid piece around its exact center
+- If moving vertically: move the ENTIRE icon together without any internal deformation
+- All parts must move in PERFECT SYNCHRONIZATION - no independent movement of pieces
+- NO parts can move separately from others - everything is welded together
+- NO internal distortion, bending, or deformation during any movement
 
-3. MINIMAL MOVEMENT ONLY (RIGID TRANSFORM):
-   - ${motionInstruction}
-   - Apply motion to the ENTIRE icon as a single rigid object
-   - Animate in place - NO position changes that break composition
-   - NO camera movement, zoom, or lens effects
-   - NO perspective shifts or 3D rotation
-   - Maximum 3% scale variation (1.0 ↔ 1.03) - uniform scaling only
-   - Keep all parts connected, intact, and moving together as one piece
-   - If scaling: scale uniformly, maintain all proportions exactly
+ABSOLUTE RULE #4 - WHAT IS STRICTLY FORBIDDEN:
+- NO fluid dynamics, liquid simulation, water effects, or melting
+- NO organic material behavior (flesh, fabric, rubber, jelly)
+- NO flexibility, elasticity, or soft-body physics
+- NO mesh deformation, vertex displacement, or morphing
+- NO parts moving independently or at different speeds
+- NO shape changes of any kind for any reason
+- NO new visual elements, effects, particles, trails, or artifacts
+- NO changes to line weight, color, opacity, or any visual property
+- NO camera effects, zoom, perspective changes, or lens distortion
 
-4. STRICTLY FORBIDDEN:
-   - NO fluid simulation, liquid effects, or material deformation
-   - NO elastic, rubber, or organic material properties
-   - NO new elements, particles, effects, glows, shadows, or trails
-   - NO gradients, color shifts, or transparency changes
-   - NO background alterations or color changes
-   - NO letterboxing or black bars
-   - NO line quality degradation, blur, or artifacts
-   - NO separate movement of icon parts - treat as single solid object
+TECHNICAL SPECIFICATION:
+- Resolution: Full-frame 16:9 canvas with no letterboxing
+- Visual Quality: Maintain pixel-perfect vector sharpness throughout all frames
+- Loop: Seamless - first frame and last frame must be IDENTICAL
+- Material: Treat icon as if made from solid, inflexible material (metal, hard plastic, stone)
+- Physics: NO physics simulation - only simple geometric transforms (translate, rotate, uniform scale)
+- Constraint: Icon must look EXACTLY THE SAME in terms of shape, lines, and structure in every single frame
 
-Technical Requirements: Full-frame 16:9 canvas, preserve perfect vector clarity, seamless loop, first and last frames must be pixel-identical. Treat icon as a rigid, solid graphic element, not as organic matter.`;
+Remember: This is a VECTOR GRAPHIC ICON - it is SOLID, HARD, and RIGID. It cannot flow, melt, bend, or deform. Animate it like a solid object, not like a liquid or organic material.`;
 
         console.log('[2D Video] Final prompt:', finalPrompt);
 
