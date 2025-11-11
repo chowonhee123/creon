@@ -1037,10 +1037,13 @@ const motionTabContent = $('#image-details-panel .details-tab-content[data-tab-c
 
   // Loader Modals
   const imageGenerationLoaderModal = $('#image-generation-loader-modal');
+  const imageGenerationLoaderText = $('#image-generation-loader-text');
   const videoGenerationLoaderModal = $('#video-generation-loader-modal');
   const videoLoaderMessage = $('#video-loader-message');
   const p2dLoaderModal = $('#p2d-loader-modal');
   const p2dLoaderMessage = $('#p2d-loader-message');
+  const mainGenerationLoaderModal = $('#main-generation-loader-modal');
+  const mainGenerationLoaderText = $('#main-generation-loader-text');
   
   // 2D Studio: New action buttons
   const p2dRevertBackgroundBtn = $('#p2d-revert-background-btn');
@@ -3667,6 +3670,9 @@ const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
         return;
     }
 
+    if (imageGenerationLoaderText) {
+        imageGenerationLoaderText.textContent = 'Generating your 3D image...';
+    }
     imageGenerationLoaderModal?.classList.remove('hidden');
 
     try {
@@ -3836,6 +3842,17 @@ const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
     const userPrompt = generateInput.value.trim();
     const selectedStudio = studioSelector?.value || '3d';
     console.log('User prompt:', userPrompt, 'Selected studio:', selectedStudio);
+    
+    // Set loading text based on studio type
+    if (mainGenerationLoaderText) {
+      if (selectedStudio === 'icon') {
+        mainGenerationLoaderText.textContent = 'Generating your icon...';
+      } else if (selectedStudio === '3d') {
+        mainGenerationLoaderText.textContent = 'Generating your 3D image...';
+      } else {
+        mainGenerationLoaderText.textContent = 'Generating your image...';
+      }
+    }
     
     // Show loading modal
     if (mainGenerationLoaderModal) {
@@ -4331,6 +4348,9 @@ const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
     const resultError = $('.result-error');
     const promptDisplay = $('#image-prompt-display-image') as HTMLTextAreaElement;
 
+    if (imageGenerationLoaderText) {
+        imageGenerationLoaderText.textContent = 'Generating your image...';
+    }
     loaderModal?.classList.remove('hidden');
     resultPlaceholder?.classList.add('hidden');
     resultIdlePlaceholder?.classList.add('hidden');
