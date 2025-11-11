@@ -943,7 +943,8 @@ const p2dGenerateMotionFromPreviewBtn = $('#p2d-generate-motion-from-preview-btn
   const detailsPanel2d = $('#p2d-image-details-panel');
   const detailsCloseBtn2d = $('#p2d-details-close-btn');
   const detailsPreviewImage2d = $('#p2d-details-preview-image') as HTMLImageElement;
-  const detailsDownloadBtn2d = $('#p2d-details-download-btn') as HTMLAnchorElement;
+  const p2dDownloadPngBtn = $('#p2d-download-png-btn') as HTMLAnchorElement;
+  const p2dDownloadSvgBtn = $('#p2d-download-svg-btn') as HTMLAnchorElement;
   const detailsCopyBtn2d = $('#p2d-details-copy-btn');
   const detailsDeleteBtn2d = $('#p2d-details-delete-btn');
   const toggleDetailsPanelBtn2d = $('#p2d-toggle-details-panel-btn');
@@ -2113,10 +2114,18 @@ const motionTabContent = $('#image-details-panel .details-tab-content[data-tab-c
     resultError2d.classList.add('hidden');
     mainResultContentHeader2d.classList.remove('hidden');
     
-    if(detailsPreviewImage2d && detailsDownloadBtn2d) {
+    if(detailsPreviewImage2d) {
         detailsPreviewImage2d.src = resultImage2d.src;
-        detailsDownloadBtn2d.href = resultImage2d.src;
-        detailsDownloadBtn2d.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}.png`;
+    }
+    
+    // Show PNG download button only
+    if(p2dDownloadPngBtn) {
+        p2dDownloadPngBtn.href = resultImage2d.src;
+        p2dDownloadPngBtn.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}.png`;
+        p2dDownloadPngBtn.classList.remove('hidden');
+    }
+    if(p2dDownloadSvgBtn) {
+        p2dDownloadSvgBtn.classList.add('hidden');
     }
     
     // Apply checkerboard background to Detail preview only (not center preview)
@@ -2809,10 +2818,14 @@ const motionTabContent = $('#image-details-panel .details-tab-content[data-tab-c
             }
             
             // Update download button
-            if (detailsDownloadBtn2d && currentGeneratedImage2d) {
+            if (p2dDownloadPngBtn && currentGeneratedImage2d) {
                 const downloadUrl = `data:${currentGeneratedImage2d.mimeType};base64,${currentGeneratedImage2d.data}`;
-                detailsDownloadBtn2d.href = downloadUrl;
-                detailsDownloadBtn2d.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}.png`;
+                p2dDownloadPngBtn.href = downloadUrl;
+                p2dDownloadPngBtn.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}.png`;
+                p2dDownloadPngBtn.classList.remove('hidden');
+            }
+            if(p2dDownloadSvgBtn) {
+                p2dDownloadSvgBtn.classList.add('hidden');
             }
             
             update2dViewFromState();
@@ -8486,9 +8499,13 @@ regenerate3DBtn?.addEventListener('click', () => {
                 }
                 
                 // Update download button
-                if (detailsDownloadBtn2d) {
-                    detailsDownloadBtn2d.href = newDataUrl;
-                    detailsDownloadBtn2d.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}-bg-removed.png`;
+                if (p2dDownloadPngBtn) {
+                    p2dDownloadPngBtn.href = newDataUrl;
+                    p2dDownloadPngBtn.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}-bg-removed.png`;
+                    p2dDownloadPngBtn.classList.remove('hidden');
+                }
+                if(p2dDownloadSvgBtn) {
+                    p2dDownloadSvgBtn.classList.add('hidden');
                 }
                 
                 // Update UI state
@@ -8552,9 +8569,13 @@ regenerate3DBtn?.addEventListener('click', () => {
         
         if (detailsPreviewImage2d) detailsPreviewImage2d.src = p2dOriginalImageData;
         if (resultImage2d) resultImage2d.src = p2dOriginalImageData;
-        if (detailsDownloadBtn2d) {
-            detailsDownloadBtn2d.href = p2dOriginalImageData;
-            detailsDownloadBtn2d.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}.png`;
+        if (p2dDownloadPngBtn) {
+            p2dDownloadPngBtn.href = p2dOriginalImageData;
+            p2dDownloadPngBtn.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}.png`;
+            p2dDownloadPngBtn.classList.remove('hidden');
+        }
+        if(p2dDownloadSvgBtn) {
+            p2dDownloadSvgBtn.classList.add('hidden');
         }
         
         // Reset state
@@ -8708,6 +8729,20 @@ regenerate3DBtn?.addEventListener('click', () => {
             if (convertToSvgBtn2d) {
                 convertToSvgBtn2d.style.display = 'none';
                 convertToSvgBtn2d.classList.add('hidden');
+            }
+            
+            // Show both PNG and SVG download buttons
+            if (p2dDownloadPngBtn) {
+                p2dDownloadPngBtn.href = dataUrl;
+                p2dDownloadPngBtn.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}.png`;
+                p2dDownloadPngBtn.classList.remove('hidden');
+            }
+            if (p2dDownloadSvgBtn) {
+                const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+                const svgUrl = URL.createObjectURL(svgBlob);
+                p2dDownloadSvgBtn.href = svgUrl;
+                p2dDownloadSvgBtn.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}.svg`;
+                p2dDownloadSvgBtn.classList.remove('hidden');
             }
             
         } catch (error) {
