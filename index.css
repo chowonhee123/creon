@@ -4077,14 +4077,16 @@ a.secondary-btn[disabled] {
   margin: 0;
 }
 
-.p2d-options-group .option-row {
+.p2d-options-group .option-row,
+#p2d-fix-icon-content .option-row {
   display: grid;
   grid-template-columns: 70px auto;
   column-gap: 16px;
   align-items: center;
 }
 
-.p2d-options-group .option-row label {
+.p2d-options-group .option-row label,
+#p2d-fix-icon-content .option-row label {
   font-weight: 500;
   font-size: 14px;
   color: var(--text-primary);
