@@ -1449,6 +1449,7 @@ a.secondary-btn[disabled] {
 #image-prompt-display,
 #p2d-image-prompt-display {
   background-color: var(--input-bg);
+  border: 1px solid #ffffff;
   border-radius: var(--border-radius-md);
   padding: var(--spacing-4);
   font-family: 'Roboto Mono', monospace;
@@ -1458,6 +1459,11 @@ a.secondary-btn[disabled] {
   resize: vertical;
   width: 100%;
   min-height: 300px;
+}
+#image-prompt-display:focus,
+#p2d-image-prompt-display:focus {
+  outline: none;
+  border-color: var(--accent-color);
 }
 
 /* Style Reference Card */
