@@ -5169,38 +5169,54 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
         console.log('[2D Video] User prompt:', userPrompt);
         const motionInstruction = sanitizeMotionPromptText(userPrompt);
 
-        const finalPrompt = `CRITICAL CONSTRAINTS for 2D Vector Icon Animation:
+        const finalPrompt = `CRITICAL CONSTRAINTS for 2D Vector Icon Animation - STRICT SHAPE PRESERVATION:
 
-1. PRESERVE VECTOR QUALITY:
-   - Keep EXACT line weights and stroke width throughout animation
-   - Maintain crisp, clean vector edges - NO blurring, NO smoothing
-   - Preserve sharp corners and precise curves
-   - Keep consistent outline thickness at all times
-   - NO line breaks, gaps, or distortions
+⚠️ MOST IMPORTANT - ZERO SHAPE DISTORTION:
+   - Icon lines and shapes MUST remain perfectly rigid and solid
+   - NO liquid effects, flowing, melting, or dripping
+   - NO elastic deformation or stretching
+   - NO wave effects or rippling through the icon
+   - Every line and curve must maintain EXACT geometric integrity
+   - Icon must look like a solid, rigid graphic element - NOT fluid or organic material
 
-2. MAINTAIN ICON STRUCTURE:
-   - Keep identical shape, form, and silhouette 
-   - Preserve exact color palette and fills
-   - NO morphing, warping, or shape changes
-   - Maintain original composition and layout
-   - Icon must stay recognizable and identical
+1. PRESERVE VECTOR QUALITY (ABSOLUTE):
+   - Keep EXACT line weights and stroke width throughout every frame
+   - Maintain razor-sharp, crisp vector edges - NO blurring, NO anti-aliasing artifacts, NO smoothing
+   - Preserve sharp corners and precise curves with mathematical precision
+   - Keep absolutely consistent outline thickness - lines must not thin, thicken, break, or waver
+   - NO line breaks, gaps, distortions, wobbling, or quality degradation whatsoever
+   - Lines must remain perfectly clean and crisp like a vector graphic
 
-3. MINIMAL MOVEMENT ONLY:
+2. MAINTAIN ICON STRUCTURE (LOCKED):
+   - Keep 100% identical shape, form, and silhouette in every frame
+   - Icon edges and contours must be frozen - treat icon as a single rigid object
+   - Preserve exact color palette and fills - no color shifts or variations
+   - NO morphing, warping, melting, flowing, or any shape deformation
+   - NO internal distortion - all parts must move together as one solid unit
+   - Maintain original composition and layout perfectly
+   - Icon must stay perfectly recognizable and identical to the first frame
+
+3. MINIMAL MOVEMENT ONLY (RIGID TRANSFORM):
    - ${motionInstruction}
-   - Animate in place - NO position changes
-   - NO camera movement or zoom
-   - NO perspective shifts
-   - Maximum 5% scale variation
-   - Keep all parts connected and intact
+   - Apply motion to the ENTIRE icon as a single rigid object
+   - Animate in place - NO position changes that break composition
+   - NO camera movement, zoom, or lens effects
+   - NO perspective shifts or 3D rotation
+   - Maximum 3% scale variation (1.0 ↔ 1.03) - uniform scaling only
+   - Keep all parts connected, intact, and moving together as one piece
+   - If scaling: scale uniformly, maintain all proportions exactly
 
-4. FORBIDDEN:
-   - NO new elements, particles, effects, glows, shadows
-   - NO gradients or color changes
-   - NO background alterations
+4. STRICTLY FORBIDDEN:
+   - NO fluid simulation, liquid effects, or material deformation
+   - NO elastic, rubber, or organic material properties
+   - NO new elements, particles, effects, glows, shadows, or trails
+   - NO gradients, color shifts, or transparency changes
+   - NO background alterations or color changes
    - NO letterboxing or black bars
-   - NO line quality degradation
+   - NO line quality degradation, blur, or artifacts
+   - NO separate movement of icon parts - treat as single solid object
 
-Technical: Full-frame 16:9, preserve vector clarity, seamless loop, maintain identical first/last frame appearance.`;
+Technical Requirements: Full-frame 16:9 canvas, preserve perfect vector clarity, seamless loop, first and last frames must be pixel-identical. Treat icon as a rigid, solid graphic element, not as organic matter.`;
 
         console.log('[2D Video] Final prompt:', finalPrompt);
 
