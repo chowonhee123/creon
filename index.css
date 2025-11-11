@@ -2634,6 +2634,18 @@ a.secondary-btn[disabled] {
     align-items: stretch;
 }
 
+/* 3D Studio Motion Tab - Vertical button layout */
+#image-details-panel .details-tab-content[data-tab-content="motion"] .details-actions {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+#image-details-panel .details-tab-content[data-tab-content="motion"] .details-actions button:not(.icon-button),
+#image-details-panel .details-tab-content[data-tab-content="motion"] .details-actions a {
+    flex: none;
+    width: 100%;
+}
+
 .p2d-motion-actions button:not(.icon-button),
 .p2d-motion-actions a {
     flex: none;
