@@ -1084,9 +1084,9 @@
                             <div class="details-fix-section">
                                 <h3 style="font-size: 16px; font-weight: 600; margin-bottom: var(--spacing-4);">Fix the image</h3>
                                 <div id="3d-fix-content" class="options-group">
-                                    <!-- Background Color Input -->
-                                    <div class="filter-group">
-                                        <label>Background Color</label>
+                                    <!-- Color Inputs with horizontal layout -->
+                                    <div style="display: grid; grid-template-columns: 80px 1fr; gap: var(--spacing-3); align-items: center; margin-bottom: var(--spacing-3);">
+                                        <label style="font-size: 14px; font-weight: 500;">BG Color</label>
                                         <div class="input-with-suffix color-input">
                                           <div class="input-swatch">
                                             <input type="color" id="details-background-color-picker-3d" value="#FFFFFF" class="color-swatch-input" />
@@ -1095,9 +1095,8 @@
                                         </div>
                                     </div>
                                     
-                                    <!-- Main Color Input -->
-                                    <div class="filter-group">
-                                        <label>Main Color</label>
+                                    <div style="display: grid; grid-template-columns: 80px 1fr; gap: var(--spacing-3); align-items: center; margin-bottom: var(--spacing-3);">
+                                        <label style="font-size: 14px; font-weight: 500;">Main Color</label>
                                         <div class="input-with-suffix color-input">
                                           <div class="input-swatch">
                                             <input type="color" id="details-object-color-picker-3d" value="#2962FF" class="color-swatch-input" />
@@ -1106,19 +1105,17 @@
                                         </div>
                                     </div>
                                     
-                                    <!-- Zoom Out Button -->
-                                    <button id="details-zoom-out-1-5x-btn" class="secondary-btn" style="width: 100%; margin-top: var(--spacing-2);">
-                                        <span class="material-symbols-outlined">zoom_out</span>
-                                        <span class="btn-text">Zoom Out 1.5x</span>
-                                    </button>
-                                    
-                                    <!-- Action Buttons -->
-                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-2); margin-top: var(--spacing-2);">
-                                        <button id="details-remove-bg-btn" class="secondary-btn">
+                                    <!-- Action Buttons - Vertical Layout -->
+                                    <div style="display: flex; flex-direction: column; gap: var(--spacing-2); margin-top: var(--spacing-2);">
+                                        <button id="details-zoom-out-1-5x-btn" class="secondary-btn" style="width: 100%;">
+                                            <span class="material-symbols-outlined">zoom_out</span>
+                                            <span class="btn-text">Zoom Out 1.5x</span>
+                                        </button>
+                                        <button id="details-remove-bg-btn" class="secondary-btn" style="width: 100%;">
                                             <span class="btn-text">Remove BG</span>
                                             <div class="btn-loader"></div>
                                         </button>
-                                        <button id="details-fix-btn" class="primary-btn" disabled>
+                                        <button id="details-fix-btn" class="primary-btn" style="width: 100%;" disabled>
                                             <span class="material-symbols-outlined">autorenew</span>
                                             <span class="btn-text">Regernerate</span>
                                             <div class="btn-loader"></div>
@@ -1388,9 +1385,9 @@
                             <div class="details-fix-section">
                                 <h3 style="font-size: 16px; font-weight: 600; margin-bottom: var(--spacing-4);">Fix the image</h3>
                                 <div id="image-fix-content" class="options-group">
-                                    <!-- Color Inputs -->
-                                    <div class="filter-group">
-                                        <label>Background Color</label>
+                                    <!-- Color Inputs with horizontal layout -->
+                                    <div style="display: grid; grid-template-columns: 80px 1fr; gap: var(--spacing-3); align-items: center; margin-bottom: var(--spacing-3);">
+                                        <label style="font-size: 14px; font-weight: 500;">BG Color</label>
                                         <div class="input-with-suffix color-input">
                                           <div class="input-swatch">
                                             <input type="color" id="details-background-color-picker-image" value="#FFFFFF" class="color-swatch-input" />
@@ -1399,8 +1396,8 @@
                                         </div>
                                     </div>
                                     
-                                    <div class="filter-group">
-                                        <label>Main Color</label>
+                                    <div style="display: grid; grid-template-columns: 80px 1fr; gap: var(--spacing-3); align-items: center; margin-bottom: var(--spacing-3);">
+                                        <label style="font-size: 14px; font-weight: 500;">Main Color</label>
                                         <div class="input-with-suffix color-input">
                                           <div class="input-swatch">
                                             <input type="color" id="details-object-color-picker-image" value="#2962FF" class="color-swatch-input" />
@@ -1409,14 +1406,14 @@
                                         </div>
                                     </div>
                                     
-                                    <!-- Action Buttons Grid -->
-                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-2); margin-top: var(--spacing-2);">
-                                        <button id="details-zoom-out-1-5x-btn-image" class="secondary-btn">
+                                    <!-- Action Buttons - Vertical Layout -->
+                                    <div style="display: flex; flex-direction: column; gap: var(--spacing-2); margin-top: var(--spacing-2);">
+                                        <button id="details-zoom-out-1-5x-btn-image" class="secondary-btn" style="width: 100%;">
                                             <span class="material-symbols-outlined">zoom_out</span>
                                             <span class="btn-text">Zoom Out 2x</span>
                                             <div class="btn-loader"></div>
                                         </button>
-                                        <button id="details-fix-btn-image" class="primary-btn" disabled>
+                                        <button id="details-fix-btn-image" class="primary-btn" style="width: 100%;" disabled>
                                             <span class="material-symbols-outlined">autorenew</span>
                                             <span class="btn-text">Regenerate</span>
                                             <div class="btn-loader"></div>
