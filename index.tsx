@@ -3110,227 +3110,44 @@ const motionTabContent = $('#image-details-panel .details-tab-content[data-tab-c
                 }
             });
             
-            // Compare button click handler - Slider comparison
+            // Compare button click handler - Use HTML modal like 2D Studio
             compareButton.addEventListener('click', (e) => {
                 e.stopPropagation(); // Prevent history item click
                 
-                // Create comparison modal with slider
-                const comparisonModal = document.createElement('div');
-                comparisonModal.className = 'comparison-modal-overlay';
-                comparisonModal.style.cssText = `
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background-color: rgba(0, 0, 0, 0.8);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    z-index: 2000;
-                    padding: 20px;
-                `;
+                // Use pre-defined modal (like 2D Studio)
+                const compareModal3d = $('#compare-modal-3d');
+                const compareOriginal3d = $('#compare-original-3d') as HTMLImageElement;
+                const compareCurrent3d = $('#compare-current-3d') as HTMLImageElement;
+                const compareSlider3d = $('#compare-slider-3d') as HTMLInputElement;
+                const compareDivider3d = $('#compare-divider-3d');
                 
-                const modalContent = document.createElement('div');
-                modalContent.style.cssText = `
-                    position: relative;
-                    width: 800px;
-                    height: 600px;
-                    background: var(--surface-color);
-                    border-radius: var(--border-radius-lg);
-                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-                    overflow: hidden;
-                    display: flex;
-                    flex-direction: column;
-                `;
-                
-                // Close button
-                const closeBtn = document.createElement('button');
-                closeBtn.className = 'icon-button';
-                closeBtn.innerHTML = '<span class="material-symbols-outlined">close</span>';
-                closeBtn.setAttribute('aria-label', 'Close comparison');
-                closeBtn.style.cssText = `
-                    position: absolute;
-                    top: 12px;
-                    right: 12px;
-                    z-index: 10;
-                    background: rgba(0, 0, 0, 0.5);
-                    color: white;
-                `;
-                closeBtn.addEventListener('click', () => {
-                    comparisonModal.remove();
-                });
-                modalContent.appendChild(closeBtn);
-                
-                // Labels
-                const labelsContainer = document.createElement('div');
-                labelsContainer.style.cssText = `
-                    display: flex;
-                    justify-content: space-between;
-                    padding: 16px 24px;
-                    background: var(--surface-color);
-                    border-bottom: 1px solid var(--border-color);
-                    flex-shrink: 0;
-                `;
-                const originalLabel = document.createElement('div');
-                originalLabel.style.cssText = 'font-size: 14px; font-weight: 600; color: var(--text-primary);';
-                originalLabel.textContent = 'Original';
-                const currentLabel = document.createElement('div');
-                currentLabel.style.cssText = 'font-size: 14px; font-weight: 600; color: var(--text-primary);';
-                currentLabel.textContent = tagText;
-                labelsContainer.appendChild(originalLabel);
-                labelsContainer.appendChild(currentLabel);
-                modalContent.appendChild(labelsContainer);
-                
-                // Comparison container with slider
-                const comparisonContainer = document.createElement('div');
-                comparisonContainer.style.cssText = `
-                    position: relative;
-                    width: 100%;
-                    flex: 1;
-                    overflow: hidden;
-                    background-color: #f5f5f5;
-                `;
-                
-                // Check if current or original image is transparent
-                const isCurrentTransparent = modificationType === 'BG Removed' || modificationType === 'SVG';
-                const isOriginalTransparent = originalItem.modificationType === 'BG Removed' || originalItem.modificationType === 'SVG';
-                
-                // Apply checkerboard if either image is transparent
-                if (isCurrentTransparent || isOriginalTransparent) {
-                    comparisonContainer.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
-                    comparisonContainer.style.backgroundPosition = '0 0, 8px 8px';
-                    comparisonContainer.style.backgroundSize = '16px 16px';
-                } else {
-                    comparisonContainer.style.backgroundColor = '#ffffff';
+                if (!compareModal3d || !compareOriginal3d || !compareCurrent3d || !compareSlider3d || !compareDivider3d) {
+                    console.error('[3D Compare] Modal elements not found');
+                    return;
                 }
                 
-                // Original image container (background layer)
-                const originalImgContainer = document.createElement('div');
-                originalImgContainer.style.cssText = `
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    z-index: 1;
-                `;
+                // Set images
+                compareOriginal3d.src = `data:${originalItem.mimeType};base64,${originalItem.data}`;
+                compareCurrent3d.src = `data:${item.mimeType};base64,${item.data}`;
                 
-                // Original image (background)
-                const originalImg = document.createElement('img');
-                originalImg.src = `data:${originalItem.mimeType};base64,${originalItem.data}`;
-                originalImg.style.cssText = `
-                    width: 100%;
-                    height: 100%;
-                    object-fit: contain;
-                    display: block;
-                `;
-                originalImgContainer.appendChild(originalImg);
-                comparisonContainer.appendChild(originalImgContainer);
-                
-                // Current image container (foreground, clipped by slider)
-                const currentImgContainer = document.createElement('div');
-                currentImgContainer.style.cssText = `
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    z-index: 2;
-                    overflow: hidden;
-                    clip-path: inset(0 50% 0 0);
-                `;
-                
-                // Current image (foreground, clipped by slider)
-                const currentImg = document.createElement('img');
-                currentImg.src = `data:${item.mimeType};base64,${item.data}`;
-                currentImg.style.cssText = `
-                    width: 100%;
-                    height: 100%;
-                    object-fit: contain;
-                    display: block;
-                `;
-                currentImgContainer.appendChild(currentImg);
-                comparisonContainer.appendChild(currentImgContainer);
-                
-                // Slider handle
-                const sliderHandle = document.createElement('div');
-                sliderHandle.className = 'comparison-slider-handle';
-                sliderHandle.style.cssText = `
-                    position: absolute;
-                    top: 0;
-                    left: 50%;
-                    width: 4px;
-                    height: 100%;
-                    background: white;
-                    cursor: ew-resize;
-                    z-index: 3;
-                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-                `;
-                
-                // Slider handle icon
-                const handleIcon = document.createElement('div');
-                handleIcon.style.cssText = `
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    width: 40px;
-                    height: 40px;
-                    border-radius: 50%;
-                    background: white;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-                `;
-                handleIcon.innerHTML = '<span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-primary);">drag_handle</span>';
-                sliderHandle.appendChild(handleIcon);
-                comparisonContainer.appendChild(sliderHandle);
-                
-                // Slider functionality
-                let isDragging = false;
-                const updateSlider = (clientX: number) => {
-                    const rect = comparisonContainer.getBoundingClientRect();
-                    const x = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-                    const percentage = x * 100;
-                    
-                    sliderHandle.style.left = `${percentage}%`;
-                    currentImgContainer.style.clipPath = `inset(0 ${100 - percentage}% 0 0)`;
+                // Slider handler
+                const handleSliderChange = () => {
+                    const value = compareSlider3d.valueAsNumber;
+                    compareDivider3d.style.left = `${value}%`;
+                    // Clip current image to show only right side from divider
+                    compareCurrent3d.style.clipPath = `inset(0 ${100 - value}% 0 0)`;
                 };
                 
-                sliderHandle.addEventListener('mousedown', (e) => {
-                    isDragging = true;
-                    e.preventDefault();
-                });
+                // Remove existing listener and add new one
+                compareSlider3d.removeEventListener('input', handleSliderChange);
+                compareSlider3d.addEventListener('input', handleSliderChange);
                 
-                document.addEventListener('mousemove', (e) => {
-                    if (isDragging) {
-                        updateSlider(e.clientX);
-                    }
-                });
+                // Initialize slider position
+                compareSlider3d.value = '50';
+                handleSliderChange();
                 
-                document.addEventListener('mouseup', () => {
-                    isDragging = false;
-                });
-                
-                comparisonContainer.addEventListener('click', (e) => {
-                    if (!isDragging) {
-                        updateSlider(e.clientX);
-                    }
-                });
-                
-                modalContent.appendChild(comparisonContainer);
-                comparisonModal.appendChild(modalContent);
-                
-                // Close on overlay click
-                comparisonModal.addEventListener('click', (e) => {
-                    if (e.target === comparisonModal && !isDragging) {
-                        comparisonModal.remove();
-                    }
-                });
-                
-                document.body.appendChild(comparisonModal);
+                // Show modal
+                compareModal3d.classList.remove('hidden');
             });
         }
         
