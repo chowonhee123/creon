@@ -2220,16 +2220,16 @@ a.secondary-btn[disabled] {
 
 /* All details panel padding - consistent across all panels */
 .details-tab-content {
-    padding: var(--spacing-5);
+    padding: 0;
 }
 
 #p2d-image-details-panel .details-tab-content[data-tab-content="detail"],
 #p2d-svg-preview-modal .details-tab-content[data-tab-content="preview"] {
-    padding: var(--spacing-5);
+    padding: 0;
 }
 
 #image-details-panel-image .details-tab-content[data-tab-content="detail"] {
-    padding: var(--spacing-5);
+    padding: 0;
 }
 
 #image-details-panel-image .details-tab-content[data-tab-content="motion"] {
@@ -2398,9 +2398,6 @@ a.secondary-btn[disabled] {
 }
 .details-tab-content.active {
   display: flex;
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: var(--spacing-5);
-  margin-bottom: 0;
 }
 .details-fix-section {
     display: flex;
@@ -2565,8 +2562,7 @@ a.secondary-btn[disabled] {
 }
 
 .details-tab-content[data-tab-content="detail"] {
-    padding: var(--spacing-5);
-    padding-bottom: 0;
+    padding: 0;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -2605,7 +2601,7 @@ a.secondary-btn[disabled] {
 
 .details-tab-content[data-tab-content="motion"] .details-actions {
     margin-top: 0;
-    padding: var(--spacing-4) var(--spacing-5);
+    padding: 24px;
     flex-shrink: 0;
     border-top: 1px solid var(--border-color);
     background-color: var(--surface-color);
