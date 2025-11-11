@@ -4249,6 +4249,9 @@ const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
       }, 100);
     }
 
+    // Update 3D view from state (this updates all UI elements including preview switcher)
+    update3dViewFromState();
+    
     // Update motion UI
     updateMotionUI();
     
