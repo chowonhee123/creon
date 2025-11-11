@@ -967,7 +967,6 @@ const p2dMotionMoreMenu = $('#p2d-motion-more-menu');
 const p2dMotionMoreRegeneratePrompt = $('#p2d-motion-more-regenerate-prompt');
 const p2dMotionMoreRegenerateVideo = $('#p2d-motion-more-regenerate-video');
 const p2dDownloadVideoBtn = $('#p2d-download-video-btn') as HTMLAnchorElement;
-const p2dDownloadGifBtn = $('#p2d-download-gif-btn') as HTMLAnchorElement;
 const p2dConvertToGifBtn = $('#p2d-convert-to-gif-btn');
 const p2dMotionReferenceInput = $('#p2d-motion-reference-image-input') as HTMLInputElement;
 const p2dMotionReferenceContainer = $('#p2d-motion-reference-image-container');
@@ -2026,20 +2025,9 @@ const motionTabContent = $('#image-details-panel .details-tab-content[data-tab-c
         }
     }
 
-    if (p2dDownloadGifBtn) {
-        if (hasGif) {
-            const gifUrl = currentGeneratedImage2d.gifDataUrl!;
-            p2dDownloadGifBtn.href = gifUrl;
-            p2dDownloadGifBtn.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}_motion.gif`;
-            p2dDownloadGifBtn.classList.remove('hidden');
-        } else {
-            p2dDownloadGifBtn.classList.add('hidden');
-            p2dDownloadGifBtn.removeAttribute('href');
-        }
-    }
-
+    // Convert to GIF button is now in more menu, no separate display logic needed
     if (p2dConvertToGifBtn) {
-        if (hasVideo && !hasGif) {
+        if (hasVideo) {
             p2dConvertToGifBtn.classList.remove('hidden');
         } else {
             p2dConvertToGifBtn.classList.add('hidden');
@@ -5101,6 +5089,12 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
       if (historyItem) {
         historyItem.gifDataUrl = gifUrl;
       }
+      
+      // Auto-download GIF
+      const a = document.createElement('a');
+      a.href = gifUrl;
+      a.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}_motion.gif`;
+      a.click();
       
       updateMotionUI2d();
     } catch (error) {
