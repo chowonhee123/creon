@@ -4084,6 +4084,10 @@ const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
       detailsPanelHistory3d = [originalImageData];
       detailsPanelHistoryIndex3d = 0;
 
+      // Render image library to show the new image in history
+      saveImageLibrary();
+      renderImageLibrary();
+
       // Update 3D Studio UI with the generated image
       // Use setTimeout to ensure DOM is ready after page transition
       setTimeout(() => {
