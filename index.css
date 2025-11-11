@@ -3458,20 +3458,16 @@ a.secondary-btn[disabled] {
 
 /* Make sure generate-box can stick properly - same structure as icon-grid-header */
 #page-usages .generate-box {
-  z-index: 5;
-  flex-shrink: 0;
-}
-
-#page-usages .generate-box.has-studio-selected {
   position: sticky;
   top: var(--header-height);
   background: white;
-  padding-top: var(--spacing-4);
-  padding-bottom: var(--spacing-4);
-  margin-left: calc(-1 * var(--spacing-6));
-  margin-right: calc(-1 * var(--spacing-6));
-  padding-left: var(--spacing-6);
-  padding-right: var(--spacing-6);
+  padding: var(--spacing-5) 0;
+  margin-bottom: var(--spacing-5);
+  z-index: 9;
+  flex-shrink: 0;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 #explore-feed-container {

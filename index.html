@@ -84,8 +84,11 @@
               <div class="hero-section">
                 <h1 class="hero-title">Build what you imagine.<br>Create beyond boundaries.</h1>
                 <p class="hero-description">From icons to 3D motion, all in one creative pipeline.</p>
-                <!-- Generate Box moved inside hero-section -->
-                <div class="generate-box has-studio-selected">
+              </div>
+            </div>
+            
+            <!-- Generate Box moved outside hero-content-wrapper for sticky to work -->
+            <div class="generate-box has-studio-selected">
                   <select id="studio-selector" class="studio-selector hidden">
                     <option value="icon">Icon</option>
                     <option value="3d" selected>3D</option>
@@ -115,36 +118,34 @@
                   <button id="generate-btn" class="generate-btn">
                     <span class="btn-text">Generate</span>
                   </button>
-                </div>
+            </div>
                 
-                <!-- Reference Image Upload Area -->
-                <div class="main-reference-container" id="main-reference-container" style="display: none;">
-                  <div class="control-card">
-                    <h3>Reference Image</h3>
-                    <div class="image-drop-zone" id="main-reference-drop-zone">
-                      <div class="drop-zone-content">
-                        <div class="drop-zone-prompt">
-                          <span class="material-symbols-outlined">add_photo_alternate</span>
-                          <p>Drop image here or click to upload</p>
-                        </div>
-                        <img class="drop-zone-preview hidden" alt="Reference preview" />
-                      </div>
-                      <div class="drop-zone-overlay">
-                        <button type="button" id="main-generate-with-text-btn">
-                          <span class="material-symbols-outlined">text_fields</span>
-                          <span class="overlay-text-label">Generate with Text</span>
-                        </button>
-                        <div class="overlay-divider"></div>
-                        <button type="button" id="main-attach-image-btn">
-                          <span class="material-symbols-outlined">attach_file</span>
-                          <span class="overlay-text-label">Attach Image</span>
-                        </button>
-                      </div>
-                      <button class="remove-style-image-btn hidden" id="main-remove-reference-btn">
-                        <span class="material-symbols-outlined">close</span>
-                      </button>
+            <!-- Reference Image Upload Area -->
+            <div class="main-reference-container" id="main-reference-container" style="display: none;">
+              <div class="control-card">
+                <h3>Reference Image</h3>
+                <div class="image-drop-zone" id="main-reference-drop-zone">
+                  <div class="drop-zone-content">
+                    <div class="drop-zone-prompt">
+                      <span class="material-symbols-outlined">add_photo_alternate</span>
+                      <p>Drop image here or click to upload</p>
                     </div>
+                    <img class="drop-zone-preview hidden" alt="Reference preview" />
                   </div>
+                  <div class="drop-zone-overlay">
+                    <button type="button" id="main-generate-with-text-btn">
+                      <span class="material-symbols-outlined">text_fields</span>
+                      <span class="overlay-text-label">Generate with Text</span>
+                    </button>
+                    <div class="overlay-divider"></div>
+                    <button type="button" id="main-attach-image-btn">
+                      <span class="material-symbols-outlined">attach_file</span>
+                      <span class="overlay-text-label">Attach Image</span>
+                    </button>
+                  </div>
+                  <button class="remove-style-image-btn hidden" id="main-remove-reference-btn">
+                    <span class="material-symbols-outlined">close</span>
+                  </button>
                 </div>
               </div>
             </div>
