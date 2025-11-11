@@ -3459,7 +3459,7 @@ a.secondary-btn[disabled] {
 /* Make sure generate-box can stick properly - same structure as icon-grid-header */
 #page-usages .generate-box {
   position: sticky;
-  top: var(--header-height);
+  top: calc(var(--header-height) + 12px);
   background: white;
   padding: var(--spacing-5) 0;
   margin-bottom: var(--spacing-5);
