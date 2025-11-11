@@ -1082,12 +1082,7 @@
                                 </label>
                             </div>
                             <div class="details-fix-section">
-                                <div class="details-fix-section-header">
-                                    <h3>Fix the image</h3>
-                                    <button class="details-fix-section-toggle" type="button" aria-expanded="true">
-                                        <span class="material-symbols-outlined">expand_less</span>
-                                    </button>
-                                </div>
+                                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: var(--spacing-4);">Fix the image</h3>
                                 <div id="3d-fix-content" class="options-group">
                                     <!-- Background Color Input -->
                                     <div class="filter-group">
@@ -1111,8 +1106,14 @@
                                         </div>
                                     </div>
                                     
+                                    <!-- Zoom Out Button -->
+                                    <button id="details-zoom-out-1-5x-btn" class="secondary-btn" style="width: 100%; margin-top: var(--spacing-2);">
+                                        <span class="material-symbols-outlined">zoom_out</span>
+                                        <span class="btn-text">Zoom Out 1.5x</span>
+                                    </button>
+                                    
                                     <!-- Action Buttons -->
-                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-2);">
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-2); margin-top: var(--spacing-2);">
                                         <button id="details-remove-bg-btn" class="secondary-btn">
                                             <span class="btn-text">Remove BG</span>
                                             <div class="btn-loader"></div>
@@ -1385,12 +1386,7 @@
                             
                             <!-- Fix the image section -->
                             <div class="details-fix-section">
-                                <div class="details-fix-section-header">
-                                    <h3>Fix the image</h3>
-                                    <button class="details-fix-section-toggle" type="button" aria-expanded="true">
-                                        <span class="material-symbols-outlined">expand_less</span>
-                                    </button>
-                                </div>
+                                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: var(--spacing-4);">Fix the image</h3>
                                 <div id="image-fix-content" class="options-group">
                                     <!-- Color Inputs -->
                                     <div class="filter-group">
@@ -1413,21 +1409,19 @@
                                         </div>
                                     </div>
                                     
-                                    <!-- Zoom Out Button -->
-                                    <div style="margin-top: var(--spacing-2); margin-bottom: var(--spacing-2);">
-                                        <button id="details-zoom-out-1-5x-btn-image" class="secondary-btn" style="width: 100%;">
+                                    <!-- Action Buttons Grid -->
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-2); margin-top: var(--spacing-2);">
+                                        <button id="details-zoom-out-1-5x-btn-image" class="secondary-btn">
                                             <span class="material-symbols-outlined">zoom_out</span>
                                             <span class="btn-text">Zoom Out 2x</span>
                                             <div class="btn-loader"></div>
                                         </button>
+                                        <button id="details-fix-btn-image" class="primary-btn" disabled>
+                                            <span class="material-symbols-outlined">autorenew</span>
+                                            <span class="btn-text">Regenerate</span>
+                                            <div class="btn-loader"></div>
+                                        </button>
                                     </div>
-                                    
-                                    <!-- Regenerate Button -->
-                                    <button id="details-fix-btn-image" class="primary-btn" style="width: 100%;" disabled>
-                                        <span class="material-symbols-outlined">autorenew</span>
-                                        <span class="btn-text">Regenerate</span>
-                                        <div class="btn-loader"></div>
-                                    </button>
                                 </div>
                             </div>
                             
