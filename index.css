@@ -2398,6 +2398,9 @@ a.secondary-btn[disabled] {
 }
 .details-tab-content.active {
   display: flex;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: var(--spacing-5);
+  margin-bottom: 0;
 }
 .details-fix-section {
     display: flex;
