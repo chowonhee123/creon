@@ -4033,7 +4033,7 @@ a.secondary-btn[disabled] {
 
 .p2d-options-group .option-row {
   display: grid;
-  grid-template-columns: 60px auto;
+  grid-template-columns: 70px auto;
   column-gap: 16px;
   align-items: center;
 }
@@ -4050,7 +4050,7 @@ a.secondary-btn[disabled] {
 
 .p2d-options-group .weight-group {
   display: grid;
-  grid-template-columns: 60px auto;
+  grid-template-columns: 70px auto;
   align-items: center;
   column-gap: 16px;
   row-gap: var(--spacing-2);
