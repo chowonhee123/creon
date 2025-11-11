@@ -4534,6 +4534,13 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
         }
         
         console.log(`[Image Studio] Sending request with ${parts.length} parts`);
+        console.log('[Image Studio] Model: gemini-2.5-flash-image');
+        console.log('[Image Studio] Temperature:', temperature);
+        console.log('[Image Studio] Has AI instance:', !!ai);
+        
+        if (!ai || !ai.models || !ai.models.generateContent) {
+          throw new Error('AI instance not properly initialized. Please check your API key.');
+        }
         
         const response = await ai.models.generateContent({
           model: 'gemini-2.5-flash-image',
@@ -4614,7 +4621,20 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
       }
     } catch (error) {
       console.error("Image generation failed:", error);
-      showToast({ type: 'error', title: 'Generation Failed', body: 'Could not generate image.' });
+      console.error("Error details:", {
+        name: error?.name,
+        message: error?.message,
+        stack: error?.stack
+      });
+      
+      let errorMessage = 'Could not generate image.';
+      if (error?.message?.includes('Failed to fetch')) {
+        errorMessage = 'Network error. Please check your connection and API key.';
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      showToast({ type: 'error', title: 'Generation Failed', body: errorMessage });
       resultError?.classList.remove('hidden');
     } finally {
       updateButtonLoadingState(generateBtn, false);
