@@ -3189,45 +3189,69 @@ const motionTabContent = $('#image-details-panel .details-tab-content[data-tab-c
                     width: 100%;
                     flex: 1;
                     overflow: hidden;
-                    background-color: #ffffff;
+                    background-color: #f5f5f5;
                 `;
                 
-                // Checkerboard background if current image is transparent
+                // Check if current or original image is transparent
                 const isCurrentTransparent = modificationType === 'BG Removed' || modificationType === 'SVG';
-                if (isCurrentTransparent) {
+                const isOriginalTransparent = originalItem.modificationType === 'BG Removed' || originalItem.modificationType === 'SVG';
+                
+                // Apply checkerboard if either image is transparent
+                if (isCurrentTransparent || isOriginalTransparent) {
                     comparisonContainer.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
                     comparisonContainer.style.backgroundPosition = '0 0, 8px 8px';
                     comparisonContainer.style.backgroundSize = '16px 16px';
+                } else {
+                    comparisonContainer.style.backgroundColor = '#ffffff';
                 }
+                
+                // Original image container (background layer)
+                const originalImgContainer = document.createElement('div');
+                originalImgContainer.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    z-index: 1;
+                `;
                 
                 // Original image (background)
                 const originalImg = document.createElement('img');
                 originalImg.src = `data:${originalItem.mimeType};base64,${originalItem.data}`;
                 originalImg.style.cssText = `
+                    width: 100%;
+                    height: 100%;
+                    object-fit: contain;
+                    display: block;
+                `;
+                originalImgContainer.appendChild(originalImg);
+                comparisonContainer.appendChild(originalImgContainer);
+                
+                // Current image container (foreground, clipped by slider)
+                const currentImgContainer = document.createElement('div');
+                currentImgContainer.style.cssText = `
                     position: absolute;
                     top: 0;
                     left: 0;
                     width: 100%;
                     height: 100%;
-                    object-fit: contain;
-                    z-index: 1;
+                    z-index: 2;
+                    overflow: hidden;
+                    clip-path: inset(0 50% 0 0);
                 `;
-                comparisonContainer.appendChild(originalImg);
                 
                 // Current image (foreground, clipped by slider)
                 const currentImg = document.createElement('img');
                 currentImg.src = `data:${item.mimeType};base64,${item.data}`;
                 currentImg.style.cssText = `
-                    position: absolute;
-                    top: 0;
-                    left: 0;
                     width: 100%;
                     height: 100%;
                     object-fit: contain;
-                    z-index: 2;
-                    clip-path: inset(0 50% 0 0);
+                    display: block;
                 `;
-                comparisonContainer.appendChild(currentImg);
+                currentImgContainer.appendChild(currentImg);
+                comparisonContainer.appendChild(currentImgContainer);
                 
                 // Slider handle
                 const sliderHandle = document.createElement('div');
@@ -3272,7 +3296,7 @@ const motionTabContent = $('#image-details-panel .details-tab-content[data-tab-c
                     const percentage = x * 100;
                     
                     sliderHandle.style.left = `${percentage}%`;
-                    currentImg.style.clipPath = `inset(0 ${100 - percentage}% 0 0)`;
+                    currentImgContainer.style.clipPath = `inset(0 ${100 - percentage}% 0 0)`;
                 };
                 
                 sliderHandle.addEventListener('mousedown', (e) => {
