@@ -5134,7 +5134,39 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
         console.log('[2D Video] User prompt:', userPrompt);
         const motionInstruction = sanitizeMotionPromptText(userPrompt);
 
-        const finalPrompt = `CRITICAL: Do NOT create new content. Only animate the existing elements from the source icon. Keep identical line weights, shapes, colors, and composition. Movement Instructions: ${motionInstruction}. Do not add or remove any elements, gradients, particles, or lighting. Preserve the exact background. Maintain the same vector style and crisp lines. no black bars, no letterboxing, full-frame composition, fill the entire frame. Maintain full frame coverage with no black bars, borders, or letterboxing. Keep the entire icon visible. Preserve the exact background from the source image without any cropping or black bars.`;
+        const finalPrompt = `CRITICAL CONSTRAINTS for 2D Vector Icon Animation:
+
+1. PRESERVE VECTOR QUALITY:
+   - Keep EXACT line weights and stroke width throughout animation
+   - Maintain crisp, clean vector edges - NO blurring, NO smoothing
+   - Preserve sharp corners and precise curves
+   - Keep consistent outline thickness at all times
+   - NO line breaks, gaps, or distortions
+
+2. MAINTAIN ICON STRUCTURE:
+   - Keep identical shape, form, and silhouette 
+   - Preserve exact color palette and fills
+   - NO morphing, warping, or shape changes
+   - Maintain original composition and layout
+   - Icon must stay recognizable and identical
+
+3. MINIMAL MOVEMENT ONLY:
+   - ${motionInstruction}
+   - Animate in place - NO position changes
+   - NO camera movement or zoom
+   - NO perspective shifts
+   - Maximum 5% scale variation
+   - Keep all parts connected and intact
+
+4. FORBIDDEN:
+   - NO new elements, particles, effects, glows, shadows
+   - NO gradients or color changes
+   - NO background alterations
+   - NO letterboxing or black bars
+   - NO line quality degradation
+
+Technical: Full-frame 16:9, preserve vector clarity, seamless loop, maintain identical first/last frame appearance.`;
+
         console.log('[2D Video] Final prompt:', finalPrompt);
 
         const config: any = {
