@@ -3462,7 +3462,7 @@ a.secondary-btn[disabled] {
   top: calc(var(--header-height) + 12px);
   background: white;
   padding: var(--spacing-5) 0;
-  margin-bottom: var(--spacing-5);
+  margin-bottom: 80px;
   z-index: 9;
   flex-shrink: 0;
   width: 580px;
