@@ -2220,16 +2220,19 @@ a.secondary-btn[disabled] {
 
 /* All details panel padding - consistent across all panels */
 .details-tab-content {
-    padding: var(--spacing-5);
+    padding: 0;
+    margin: 0;
 }
 
 #p2d-image-details-panel .details-tab-content[data-tab-content="detail"],
 #p2d-svg-preview-modal .details-tab-content[data-tab-content="preview"] {
-    padding: var(--spacing-5);
+    padding: 0;
+    margin: 0;
 }
 
 #image-details-panel-image .details-tab-content[data-tab-content="detail"] {
-    padding: var(--spacing-5);
+    padding: 0;
+    margin: 0;
 }
 
 #image-details-panel-image .details-tab-content[data-tab-content="motion"] {
@@ -2395,9 +2398,13 @@ a.secondary-btn[disabled] {
   gap: var(--spacing-4);
   flex-grow: 1;
   min-height: 0;
+  padding: 0;
+  margin: 0;
 }
 .details-tab-content.active {
   display: flex;
+  padding: 0;
+  margin: 0;
 }
 .details-fix-section {
     display: flex;
@@ -2558,8 +2565,8 @@ a.secondary-btn[disabled] {
 }
 
 .details-tab-content[data-tab-content="detail"] {
-    padding: var(--spacing-5);
-    padding-bottom: 0;
+    padding: 0;
+    margin: 0;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
