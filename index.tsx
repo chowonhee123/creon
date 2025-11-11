@@ -5651,36 +5651,41 @@ Return the 5 suggestions as a JSON array.`;
 CRITICAL CONSTRAINTS - 2D Icon Micro-Interactions:
 1. MINIMAL MOVEMENT ONLY:
    - Maximum 5% scale change (e.g., 1.0 to 1.05)
-   - Maximum 10 degree rotation
-   - Maximum 5 pixel position shift
+   - Maximum 10 degree rotation (for full icon rotation only)
+   - Maximum 3-5 pixels vertical shift ONLY (up/down)
+   - NO horizontal movement (left/right)
    - NO large movements, NO position changes that alter composition
    
 2. PRESERVE EVERYTHING:
    - Original icon shape, design, and layout MUST stay 100% identical
    - NO camera movement, NO zoom, NO perspective change
-   - Icon must stay in the EXACT same position
+   - Icon must stay in the EXACT same position horizontally
    - Background color and transparency unchanged
    
 3. ALLOWED MICRO-INTERACTIONS ONLY:
-   - Gentle breathing/pulsing (scale 1.0 ↔ 1.03)
-   - Tiny bounce at one spot (2-3 pixels up/down)
-   - Subtle rotation in place (±5-10 degrees)
-   - Soft floating (3-5 pixels vertical shift)
-   - Small wiggle/wobble effect
-   - Gentle idle animation
+   - Gentle breathing/pulsing (scale 1.0 ↔ 1.03) - expand and contract in place
+   - Tiny bounce at one spot (2-3 pixels up/down ONLY)
+   - Subtle rotation in place (±5-10 degrees, full icon rotates around its center)
+   - Soft floating (3-5 pixels vertical shift ONLY)
+   - Gentle idle animation (vertical bobbing or subtle scale)
    
-4. FORBIDDEN:
+4. STRICTLY FORBIDDEN:
+   - NO horizontal movement (left-to-right, side-to-side sway)
+   - NO swaying, swinging, or pendulum motions
    - NO new elements, particles, effects, glows
    - NO composition changes
    - NO dramatic movements
    - NO flying, jumping, or large animations
    - NO camera work or scene changes
+   - NO left-right oscillation or horizontal shifts
 
 For each micro-interaction:
-1. 'name': Korean title (예: '미세한 호흡', '부드러운 바운스')
+1. 'name': Korean title (예: '미세한 호흡', '부드러운 바운스', '제자리 회전')
 2. 'description': Korean explanation with <b> tags
-3. 'english': English prompt emphasizing "subtle", "gentle", "minimal", "in place", "seamless loop"
+3. 'english': English prompt emphasizing "subtle", "gentle", "minimal", "in place", "seamless loop", "vertical only" or "rotation only"
 4. 'korean': Korean description stating this is 매우 미세한 마이크로 인터랙션
+
+IMPORTANT: Focus on vertical movements (up/down), scale changes (breathing), or gentle rotation. Absolutely NO horizontal (left/right) movements.
 
 Return as JSON array with exactly 3 minimal suggestions.`;
 
