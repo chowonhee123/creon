@@ -2556,13 +2556,13 @@ a.secondary-btn[disabled] {
     flex-direction: column;
 }
 
-/* 3D Studio: Bottom actions with fixed position and bottom margin */
+/* 3D Studio: Bottom actions with fixed position */
 .image-details-actions {
     position: sticky;
     bottom: 0;
-    margin-bottom: var(--spacing-4);
+    margin-bottom: 0;
     background: var(--surface-color);
-    padding-bottom: var(--spacing-4);
+    padding: 24px;
 }
 
 /* Hide details-actions in history tab only */
