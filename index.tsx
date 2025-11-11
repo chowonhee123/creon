@@ -967,6 +967,7 @@ const p2dMotionMoreMenu = $('#p2d-motion-more-menu');
 const p2dMotionMoreRegeneratePrompt = $('#p2d-motion-more-regenerate-prompt');
 const p2dMotionMoreRegenerateVideo = $('#p2d-motion-more-regenerate-video');
 const p2dDownloadVideoBtn = $('#p2d-download-video-btn') as HTMLAnchorElement;
+const p2dDownloadGifBtn = $('#p2d-download-gif-btn') as HTMLAnchorElement;
 const p2dConvertToGifBtn = $('#p2d-convert-to-gif-btn');
 const p2dMotionReferenceInput = $('#p2d-motion-reference-image-input') as HTMLInputElement;
 const p2dMotionReferenceContainer = $('#p2d-motion-reference-image-container');
@@ -2025,9 +2026,22 @@ const motionTabContent = $('#image-details-panel .details-tab-content[data-tab-c
         }
     }
 
-    // Convert to GIF button is now in more menu, no separate display logic needed
+    // GIF download button
+    if (p2dDownloadGifBtn) {
+        if (hasGif) {
+            const gifUrl = currentGeneratedImage2d.gifDataUrl!;
+            p2dDownloadGifBtn.href = gifUrl;
+            p2dDownloadGifBtn.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}_motion.gif`;
+            p2dDownloadGifBtn.classList.remove('hidden');
+        } else {
+            p2dDownloadGifBtn.classList.add('hidden');
+            p2dDownloadGifBtn.removeAttribute('href');
+        }
+    }
+
+    // Convert to GIF button is in more menu
     if (p2dConvertToGifBtn) {
-        if (hasVideo) {
+        if (hasVideo && !hasGif) {
             p2dConvertToGifBtn.classList.remove('hidden');
         } else {
             p2dConvertToGifBtn.classList.add('hidden');
@@ -5081,6 +5095,12 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
       return;
     }
     
+    // Show loading modal
+    if (p2dLoaderModal && p2dLoaderMessage) {
+      p2dLoaderMessage.textContent = 'Converting to GIF...';
+      p2dLoaderModal.classList.remove('hidden');
+    }
+    
     try {
       const gifUrl = await convertVideoToGif(currentGeneratedImage2d.videoDataUrl);
       
@@ -5090,15 +5110,17 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
         historyItem.gifDataUrl = gifUrl;
       }
       
-      // Auto-download GIF
-      const a = document.createElement('a');
-      a.href = gifUrl;
-      a.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}_motion.gif`;
-      a.click();
+      // Close more menu after conversion
+      p2dMotionMoreMenu?.classList.add('hidden');
       
       updateMotionUI2d();
     } catch (error) {
       console.error('[2D GIF] Conversion failed:', error);
+    } finally {
+      // Hide loading modal
+      if (p2dLoaderModal) {
+        p2dLoaderModal.classList.add('hidden');
+      }
     }
   };
 
