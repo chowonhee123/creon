@@ -1065,7 +1065,6 @@ const motionTabContent = $('#image-details-panel .details-tab-content[data-tab-c
   const mainGenerateWithTextBtn = $('#main-generate-with-text-btn');
   const mainAttachImageBtn = $('#main-attach-image-btn');
   const mainRemoveReferenceBtn = $('#main-remove-reference-btn');
-  const mainGenerationLoaderModal = $('#main-generation-loader-modal');
   const exploreFeed = $('#explore-feed');
   const exploreDetailsPanel = $('#explore-details-panel');
   const exploreDetailsCloseBtn = $('#explore-details-close-btn');
