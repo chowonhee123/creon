@@ -966,6 +966,7 @@ const p2dMotionMoreMenuBtn = $('#p2d-motion-more-menu-btn');
 const p2dMotionMoreMenu = $('#p2d-motion-more-menu');
 const p2dMotionMoreRegeneratePrompt = $('#p2d-motion-more-regenerate-prompt');
 const p2dMotionMoreRegenerateVideo = $('#p2d-motion-more-regenerate-video');
+const p2dDownloadButtonsRow = $('.p2d-motion-actions .download-buttons-row') as HTMLElement;
 const p2dDownloadVideoBtn = $('#p2d-download-video-btn') as HTMLAnchorElement;
 const p2dDownloadGifBtn = $('#p2d-download-gif-btn') as HTMLAnchorElement;
 const p2dConvertToGifBtn = $('#p2d-convert-to-gif-btn');
@@ -2056,6 +2057,10 @@ const motionTabContent = $('#image-details-panel .details-tab-content[data-tab-c
             p2dRegenerateVideoBtn.classList.add('hidden');
             p2dMotionMoreMenuBtn?.classList.remove('hidden');
             p2dMotionMoreMenu?.classList.add('hidden');
+            // Show download buttons row
+            if (p2dDownloadButtonsRow) {
+                p2dDownloadButtonsRow.style.display = 'flex';
+            }
         } else if (hasMotionPrompt) {
             p2dGenerateMotionPromptBtn.classList.add('hidden');
             p2dRegenerateMotionPromptBtn.classList.remove('hidden');
@@ -2063,6 +2068,10 @@ const motionTabContent = $('#image-details-panel .details-tab-content[data-tab-c
             p2dRegenerateVideoBtn.classList.add('hidden');
             p2dMotionMoreMenuBtn?.classList.add('hidden');
             p2dMotionMoreMenu?.classList.add('hidden');
+            // Hide download buttons row
+            if (p2dDownloadButtonsRow) {
+                p2dDownloadButtonsRow.style.display = 'none';
+            }
         } else {
             p2dGenerateMotionPromptBtn.classList.remove('hidden');
             p2dRegenerateMotionPromptBtn.classList.add('hidden');
@@ -2070,6 +2079,10 @@ const motionTabContent = $('#image-details-panel .details-tab-content[data-tab-c
             p2dRegenerateVideoBtn.classList.add('hidden');
             p2dMotionMoreMenuBtn?.classList.add('hidden');
             p2dMotionMoreMenu?.classList.add('hidden');
+            // Hide download buttons row
+            if (p2dDownloadButtonsRow) {
+                p2dDownloadButtonsRow.style.display = 'none';
+            }
         }
     }
 
