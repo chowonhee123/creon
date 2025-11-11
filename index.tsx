@@ -3868,6 +3868,7 @@ const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
 
     try {
       let imagePromptText: string;
+      let templateJson: string;
       
       if (selectedStudio === 'icon') {
         // Use 2D Studio prompt generation logic
@@ -3878,12 +3879,25 @@ const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
         const weight = 400;
         template.controls.style.fill.enabled = fill;
         template.controls.style.weight = weight;
-        imagePromptText = JSON.stringify(template, null, 2);
+        templateJson = JSON.stringify(template, null, 2);
+        imagePromptText = templateJson;
       } else {
-        // Use 3D Studio prompt generation logic
+        // Use 3D Studio prompt generation logic - same as 3D Studio page
         const template = JSON.parse(DEFAULT_3D_STYLE_PROMPT_TEMPLATE);
         template.subject = userPrompt || 'a friendly robot';
-        imagePromptText = createImagePromptFromTemplate(template, '');
+        // Apply default 3D Studio settings
+        template.output.aspectRatio = '16:9';
+        template.output.imageStyle = 'photorealistic';
+        template.controls.style.renderQuality = 'high';
+        template.controls.style.material = 'glossy';
+        template.controls.lighting.type = 'studio';
+        template.controls.lighting.intensity = 'medium';
+        template.controls.camera.angle = 'eye-level';
+        template.controls.camera.distance = 'medium';
+        template.controls.color.background = '#FFFFFF';
+        template.controls.color.primary = '#000000';
+        templateJson = JSON.stringify(template, null, 2);
+        imagePromptText = createImagePromptFromTemplate(template);
       }
       
       console.log('Generated prompt:', imagePromptText);
@@ -3910,7 +3924,7 @@ const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
           data: imageData.data,
           mimeType: imageData.mimeType,
           subject: userPrompt,
-          styleConstraints: imagePromptText,
+          styleConstraints: templateJson,
           timestamp: Date.now(),
           videoDataUrl: undefined,
           motionPrompt: null,
