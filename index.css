@@ -3649,6 +3649,17 @@ a.secondary-btn[disabled] {
     word-break: break-all;
 }
 
+/* Explore Details Modal */
+#explore-details-modal #explore-details-preview-container img,
+#explore-details-modal #explore-details-preview-container video {
+    max-width: 100%;
+    max-height: 500px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: var(--border-radius-md);
+}
+
 /* Dropdown Menu */
 .dropdown-menu {
     position: absolute;

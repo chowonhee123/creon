@@ -1066,7 +1066,7 @@ const motionTabContent = $('#image-details-panel .details-tab-content[data-tab-c
   const mainAttachImageBtn = $('#main-attach-image-btn');
   const mainRemoveReferenceBtn = $('#main-remove-reference-btn');
   const exploreFeed = $('#explore-feed');
-  const exploreDetailsPanel = $('#explore-details-panel');
+  const exploreDetailsModal = $('#explore-details-modal');
   const exploreDetailsCloseBtn = $('#explore-details-close-btn');
   const exploreDetailsTitle = $('#explore-details-title');
   const exploreDetailsPreviewContainer = $('#explore-details-preview-container');
@@ -6511,9 +6511,7 @@ Return the 5 suggestions as a JSON array.`;
         exploreDetailsDownloadBtn.download = item.name;
     }
 
-    exploreDetailsPanel.classList.remove('hidden');
-    exploreDetailsPanel.classList.add('is-open');
-    explorePage?.classList.add('panel-open');
+    exploreDetailsModal?.classList.remove('hidden');
   };
 
   const handleFileUpload = (files: FileList) => {
@@ -7987,8 +7985,14 @@ regenerate3DBtn?.addEventListener('click', () => {
     }
   });
   exploreDetailsCloseBtn?.addEventListener('click', () => {
-    exploreDetailsPanel?.classList.remove('is-open');
-    explorePage?.classList.remove('panel-open');
+    exploreDetailsModal?.classList.add('hidden');
+  });
+  
+  // Close modal when clicking outside
+  exploreDetailsModal?.addEventListener('click', (e) => {
+    if (e.target === exploreDetailsModal) {
+      exploreDetailsModal.classList.add('hidden');
+    }
   });
 
 
