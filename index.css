@@ -2829,7 +2829,7 @@ a.secondary-btn[disabled] {
 .loader {
     --uib-size: 45px;
     --uib-color: var(--accent-color);
-    --uib-speed: 1.75s;
+    --uib-speed: 2.5s;
     position: relative;
     height: var(--uib-size);
     width: var(--uib-size);
