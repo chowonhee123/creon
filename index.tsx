@@ -4073,6 +4073,9 @@ const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
       imageHistory = [imageData];
       historyIndex = 0;
 
+      // Initialize motion frames for 3D Studio
+      setInitialMotionFrames(imageData);
+
       // Initialize details panel history with Original entry
       const originalImageData: GeneratedImageData = {
         ...imageData,
@@ -4249,10 +4252,19 @@ const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
       }, 100);
     }
 
-    // Update 3D view from state (this updates all UI elements including preview switcher)
-    update3dViewFromState();
+    // Show preview switcher with Image tab active
+    const previewSwitcher = document.querySelector('#page-id-3d .preview-switcher');
+    if (previewSwitcher) {
+      previewSwitcher.classList.remove('hidden');
+    }
     
-    // Update motion UI
+    // Ensure Image tab is active by default
+    const previewSwitcherImageBtn = document.querySelector('#page-id-3d .preview-switcher-btn[data-view="image"]');
+    const previewSwitcherVideoBtn = document.querySelector('#page-id-3d .preview-switcher-btn[data-view="video"]');
+    if (previewSwitcherImageBtn) previewSwitcherImageBtn.classList.add('active');
+    if (previewSwitcherVideoBtn) previewSwitcherVideoBtn.classList.remove('active');
+    
+    // Update motion UI (this will handle motion tab state)
     updateMotionUI();
     
     // Update history tab
