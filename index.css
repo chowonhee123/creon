@@ -2504,7 +2504,7 @@ a.secondary-btn[disabled] {
     align-items: center;
     gap: var(--spacing-2);
     margin-top: auto;
-    padding: 24px;
+    padding: 16px 24px;
     flex-shrink: 0;
     background: var(--surface-color);
 }
