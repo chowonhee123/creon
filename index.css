@@ -2571,6 +2571,13 @@ a.secondary-btn[disabled] {
     position: relative;
 }
 
+.details-content-scroll {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-4);
+}
+
 .details-tab-content[data-tab-content="motion"] {
     gap: 0;
     padding: 0; /* Remove inherited padding since motion-fixed-header and motion-scroll-content handle their own padding */
@@ -4913,6 +4920,13 @@ a.secondary-btn[disabled] {
 .icon-button {
   width: 44px;
   height: 44px;
+}
+
+#details-more-menu-btn,
+#details-more-menu-btn-image {
+  width: 44px;
+  min-width: 44px;
+  flex-shrink: 0;
 }
 
 /* Header Action Buttons */

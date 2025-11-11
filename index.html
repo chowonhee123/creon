@@ -1074,16 +1074,17 @@
                     </nav>
                     <div class="details-panel-body">
                         <div class="details-tab-content active" data-tab-content="detail">
-                            <div class="details-preview" id="details-preview-container-3d">
-                                <img id="details-preview-image" src="" alt="Details preview">
-                                <label class="checkerboard-toggle" id="details-preview-checkerboard-toggle-3d" style="display: none;">
-                                    <input type="checkbox" id="details-preview-checkerboard-checkbox-3d" checked>
-                                    <span>Show checkerboard</span>
-                                </label>
-                            </div>
-                            <div style="display: flex; flex-direction: column; gap: var(--spacing-3);">
-                                <h3 style="font-size: 16px; font-weight: 600; margin: 0;">Fix the image</h3>
-                                <div class="details-fix-section">
+                            <div class="details-content-scroll">
+                                <div class="details-preview" id="details-preview-container-3d">
+                                    <img id="details-preview-image" src="" alt="Details preview">
+                                    <label class="checkerboard-toggle" id="details-preview-checkerboard-toggle-3d" style="display: none;">
+                                        <input type="checkbox" id="details-preview-checkerboard-checkbox-3d" checked>
+                                        <span>Show checkerboard</span>
+                                    </label>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: var(--spacing-3);">
+                                    <h3 style="font-size: 16px; font-weight: 600; margin: 0;">Fix the image</h3>
+                                    <div class="details-fix-section">
                                     <div id="3d-fix-content" class="options-group">
                                     <!-- Color Inputs Group -->
                                     <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 16px;">
@@ -1126,6 +1127,7 @@
                                     </div>
                                     </div>
                                 </div>
+                            </div>
                             </div>
                             <div class="details-actions image-details-actions">
                                 <button id="details-more-menu-btn" class="icon-button" aria-label="More actions" title="More actions">
@@ -1381,14 +1383,15 @@
                     </nav>
                     <div class="details-panel-body">
                         <div class="details-tab-content active" data-tab-content="detail">
-                            <div class="details-preview">
-                                <img id="details-preview-image-image" src="" alt="Details preview">
-                            </div>
-                            
-                            <!-- Fix the image section -->
-                            <div style="display: flex; flex-direction: column; gap: var(--spacing-3);">
-                                <h3 style="font-size: 16px; font-weight: 600; margin: 0;">Fix the image</h3>
-                                <div class="details-fix-section">
+                            <div class="details-content-scroll">
+                                <div class="details-preview">
+                                    <img id="details-preview-image-image" src="" alt="Details preview">
+                                </div>
+                                
+                                <!-- Fix the image section -->
+                                <div style="display: flex; flex-direction: column; gap: var(--spacing-3);">
+                                    <h3 style="font-size: 16px; font-weight: 600; margin: 0;">Fix the image</h3>
+                                    <div class="details-fix-section">
                                     <div id="image-fix-content" class="options-group">
                                     <!-- Color Inputs Group -->
                                     <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 16px;">
@@ -1428,6 +1431,7 @@
                                     </div>
                                     </div>
                                 </div>
+                            </div>
                             </div>
                             
                             <div class="details-actions">
