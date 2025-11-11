@@ -214,14 +214,14 @@ input:where(:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
   background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(40px);
   -webkit-backdrop-filter: blur(40px);
-  border-bottom: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .app-header.header-transparent.scrolled {
   background: rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(40px);
   -webkit-backdrop-filter: blur(40px);
-  border-bottom: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .logo {
