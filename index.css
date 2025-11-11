@@ -2504,12 +2504,15 @@ a.secondary-btn[disabled] {
     align-items: center;
     gap: var(--spacing-2);
     margin-top: auto;
-    padding-top: var(--spacing-4);
-    padding-left: 0;
-    padding-right: 0;
-    padding-bottom: 0;
+    padding: 24px;
     flex-shrink: 0;
     background: var(--surface-color);
+}
+
+.details-actions button,
+.details-actions a {
+    flex: 1;
+    width: 100%;
 }
 
 /* Home page details panel - download button full width */
