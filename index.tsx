@@ -6463,7 +6463,7 @@ Return the 5 suggestions as a JSON array.`;
   // --- PAGE-SPECIFIC LOGIC: Explore Page ---
 
   const openExploreDetails = (item: any) => {
-    if (!item || !exploreDetailsPanel) return;
+    if (!item || !exploreDetailsModal) return;
     
     currentSelectedExploreMedia = item;
 
