@@ -599,7 +599,7 @@ input[type='range']::-moz-range-thumb {
 }
 
 .color-input {
-    padding: 4px 4px 4px 4px;
+    padding: 4px 4px 4px 8px;
     min-width: 140px;
     width: 100%;
     box-sizing: border-box;
