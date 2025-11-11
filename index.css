@@ -2640,6 +2640,22 @@ a.secondary-btn[disabled] {
     width: 100%;
 }
 
+/* Download buttons row (more menu + downloads) - horizontal layout */
+.p2d-motion-actions .download-buttons-row {
+    display: flex;
+    flex-direction: row;
+    gap: var(--spacing-2);
+    align-items: center;
+}
+
+.p2d-motion-actions .download-buttons-row .icon-button {
+    flex: 0 0 44px;
+}
+
+.p2d-motion-actions .download-buttons-row a {
+    flex: 1;
+}
+
 /* Prompt Chip Styles */
 .prompt-chip-group {
     display: flex;
@@ -4075,7 +4091,7 @@ a.secondary-btn[disabled] {
 }
 
 .p2d-options-group .option-row .toggle-switch {
-  justify-self: flex-start;
+  justify-self: flex-end;
 }
 
 .p2d-options-group .weight-group {
