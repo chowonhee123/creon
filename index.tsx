@@ -9388,7 +9388,19 @@ detailsMoreCopy?.addEventListener('click', async () => {
             const currentImageReference = { file: currentImageFile, dataUrl: currentDataUrl };
             
             // Create prompt: Keep the image exactly the same, only change colors
-            const colorChangePrompt = `Keep this image exactly the same in shape, composition, and all details. Only change the colors: background color to ${backgroundColor} and object color to ${objectColor}. Do not modify, transform, or change any other aspects of the image.`;
+            const colorChangePrompt = `Keep this 3D rendered image exactly the same in shape, composition, lighting, and all visual details. Only adjust the color scheme as follows:
+- Background color: ${backgroundColor}
+- Main accent color (use ${objectColor} as the PRIMARY/DOMINANT color for the main subject, but maintain natural color variations for other elements like shadows, highlights, and secondary objects)
+
+IMPORTANT: Preserve all other aspects including:
+- Original shapes, forms, and proportions
+- Lighting and shadows
+- Material properties and textures  
+- Depth and 3D perspective
+- Natural color variations (don't make everything a single flat color)
+- Secondary objects should keep their original colors or complementary shades
+
+Apply the main color (${objectColor}) thoughtfully as the primary/accent color of the main subject while keeping the overall image natural and well-balanced.`;
             
             // Use gemini-2.5-flash-image directly with current image as reference
             const parts: any[] = [
