@@ -2539,7 +2539,11 @@ a.secondary-btn[disabled] {
     bottom: 0;
     margin-bottom: 0;
     background: var(--surface-color);
-    padding-bottom: 0;
+}
+
+#p2d-image-details-panel .secondary-btn,
+#p2d-image-details-panel .primary-btn {
+    height: 44px;
 }
 
 .p2d-motion-actions {

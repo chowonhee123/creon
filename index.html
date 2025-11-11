@@ -703,18 +703,20 @@
                     </div>
                     <div class="details-panel-body">
                         <div class="details-tab-content" data-tab-content="detail">
-                            <div class="details-preview" id="p2d-details-preview-container">
-                                <img id="p2d-details-preview-image" src="" alt="Details preview">
-                                <label class="checkerboard-toggle" id="p2d-preview-checkerboard-toggle" style="display: none;">
-                                    <input type="checkbox" id="p2d-preview-checkerboard-checkbox" checked>
-                                    <span>Show checkerboard</span>
-                                </label>
-                            </div>
-                            
-                            <!-- Fix the icon section -->
-                            <div class="details-fix-section" style="margin-top: var(--spacing-4);">
-                                <h3>Fix the icon</h3>
-                                <div id="p2d-fix-icon-content">
+                            <div class="details-content-scroll">
+                                <div class="details-preview" id="p2d-details-preview-container">
+                                    <img id="p2d-details-preview-image" src="" alt="Details preview">
+                                    <label class="checkerboard-toggle" id="p2d-preview-checkerboard-toggle" style="display: none;">
+                                        <input type="checkbox" id="p2d-preview-checkerboard-checkbox" checked>
+                                        <span>Show checkerboard</span>
+                                    </label>
+                                </div>
+                                
+                                <!-- Fix the icon section -->
+                                <div style="display: flex; flex-direction: column; gap: var(--spacing-3);">
+                                    <h3 style="font-size: 16px; font-weight: 600; margin: 0;">Fix the icon</h3>
+                                    <div class="details-fix-section">
+                                        <div id="p2d-fix-icon-content">
                                     <!-- Stroke Color Input -->
                                     <div class="filter-group">
                                         <label style="font-size: 13px; margin-bottom: var(--spacing-1);">Stroke</label>
@@ -741,6 +743,8 @@
                                         <button id="p2d-convert-to-svg-btn" class="secondary-btn" style="display: none;">
                                             <span class="material-symbols-outlined">code</span> Convert to SVG
                                         </button>
+                                    </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
