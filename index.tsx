@@ -5070,33 +5070,32 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
         const userPrompt = p2dMotionPromptFinalEnglish?.value || '';
         console.log('[2D Video] User prompt:', userPrompt);
         
-        // Completely rewrite user prompt to enforce rigid transform only
-        // Extract the core motion intent and convert to pure geometric transform
+        // Preserve user's motion intent but enforce rigid transform constraints
         let motionInstruction = userPrompt.trim();
         
-        // Remove all organic/fluid/descriptive terms that could cause deformation
+        // Convert organic/fluid terms to geometric transform equivalents (preserving intent)
         motionInstruction = motionInstruction
-            .replace(/breathing|breath|pulsing|pulse/gi, 'uniform scale')
-            .replace(/gentle|smooth|organic|seamless|subtle/gi, 'precise')
-            .replace(/effect|animation|movement/gi, 'transform')
+            .replace(/breathing|breath/gi, 'uniform scale')
+            .replace(/pulsing|pulse/gi, 'uniform scale')
             .replace(/expands?|contracts?|grows?|shrinks?/gi, 'uniform scale')
             .replace(/rotates?|spins?|turns?/gi, 'rotate')
-            .replace(/moves?|shifts?|floats?|bounces?/gi, 'translate')
-            .replace(/swimming|swim|water|ripple|wave/gi, '') // Remove water-related terms
-            .replace(/simulate|create|show|display/gi, 'apply')
-            .replace(/in place|in-place/gi, 'without position change');
+            .replace(/floats?|rises?|falls?|bounces?/gi, 'vertical translate')
+            .replace(/sways?|moves? horizontally|shifts? left|shifts? right/gi, 'horizontal translate')
+            .replace(/gentle|smooth|subtle/gi, 'precise')
+            .replace(/seamless/gi, 'continuous')
+            .replace(/effect/gi, 'transform');
         
-        // Extract scale values if mentioned
+        // Extract scale values if mentioned (e.g., "scale 1.0 to 1.03")
         const scaleMatch = motionInstruction.match(/scale\s*([\d.]+)\s*to\s*([\d.]+)|scale\s*([\d.]+)/i);
         let scaleRange = '';
         if (scaleMatch) {
             const min = scaleMatch[1] || scaleMatch[3] || '1.0';
             const max = scaleMatch[2] || '1.03';
-            scaleRange = ` (${min} to ${max})`;
+            scaleRange = ` (scale range: ${min} to ${max})`;
         }
         
-        // Force pure geometric transform description
-        motionInstruction = `Apply ONLY uniform geometric transform to the COMPLETE icon as a single rigid object${scaleRange}. The icon must maintain 100% identical shape, lines, and structure. Only transform properties (scale/rotate/translate) can change - the icon itself is a FIXED image file.`;
+        // Wrap user's motion instruction with rigid transform constraints
+        motionInstruction = `${motionInstruction}${scaleRange}. CRITICAL: Apply this motion as a pure geometric transform to the COMPLETE icon as a single rigid object. The icon shape, lines, and structure must remain 100% identical - only transform properties (scale/rotate/translate) can change.`;
 
         const finalPrompt = `🚨🚨🚨 CRITICAL CONSTRAINT: This is a STATIC VECTOR ICON FILE (PNG/SVG format). The icon image file itself is PERMANENTLY FROZEN and CANNOT be modified.
 
@@ -5121,12 +5120,12 @@ ${motionInstruction}
 - ANY new elements appearing or existing elements disappearing
 - ANY camera movement, zoom, perspective changes, or lens effects
 - ANY particle effects, trails, glows, shadows, or visual artifacts
-- ANY interpretation of motion-related words (swimming, floating, etc.) as shape changes
+- DO NOT interpret motion words (swimming, flying, running, etc.) as shape changes - these are just transform descriptions
 
 🔒 TECHNICAL REQUIREMENT:
 The icon must appear IDENTICAL in every single frame - as if you took a screenshot of the first frame and applied ONLY CSS transform properties (scale/rotate/translate) to it. The icon image file itself is a FIXED, UNCHANGEABLE static image.
 
-Think: PNG image file + CSS transform = The PNG file never changes, only its transform matrix changes.`;
+Think: PNG image file + CSS transform = The PNG file never changes, only its transform matrix changes. Motion words in the instruction describe HOW to transform the icon, NOT how to change the icon's shape.`;
 
         console.log('[2D Video] Final prompt:', finalPrompt);
 
