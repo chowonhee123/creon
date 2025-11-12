@@ -5071,56 +5071,43 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
         console.log('[2D Video] User prompt:', userPrompt);
         const motionInstruction = sanitizeMotionPromptText(userPrompt);
 
-        const finalPrompt = `🚨 CRITICAL: This is a SOLID VECTOR GRAPHIC icon - NOT liquid, NOT organic material, NOT flexible.
+        const finalPrompt = `⚠️⚠️⚠️ CRITICAL CONSTRAINT: This is a FIXED VECTOR ICON - treat it as a PRINTED STAMP or STENCIL that CANNOT CHANGE SHAPE.
 
-ABSOLUTE RULE #1 - FREEZE THE ICON SHAPE:
-- The icon is made of SOLID, HARD, RIGID material like metal or plastic
-- Every single line, curve, and shape is LOCKED and FROZEN in place
-- Treat the ENTIRE icon as ONE SOLID PIECE that cannot bend, warp, melt, or deform
-- NO liquid-like flowing, dripping, melting, or water effects
-- NO elastic stretching, squashing, or rubber-like behavior
-- NO wave propagation or rippling through any part
-- NO gravity effects that make parts sag or droop
-- The icon must maintain EXACT geometric shape at ALL times - as if it were carved from solid stone
+🚫 ABSOLUTE PROHIBITION - SHAPE PRESERVATION:
+The icon shape, lines, curves, and all visual elements are PERMANENTLY FROZEN. They are like a metal stamp or laser-cut stencil.
+- Every pixel of every line must remain IDENTICAL across all frames
+- NO morphing, warping, bending, stretching, or any shape deformation
+- NO flowing, dripping, melting, or liquid-like movement
+- NO elastic or rubber-like behavior
+- NO wave effects, ripples, or distortions
+- The icon is a SINGLE RIGID OBJECT - imagine it's carved from solid steel
 
-ABSOLUTE RULE #2 - PRESERVE EVERY LINE PERFECTLY:
-- All lines and strokes must remain PERFECTLY STRAIGHT or maintain their EXACT curves
-- Line thickness must be ABSOLUTELY CONSTANT - no thinning, thickening, or variation
-- Line edges must stay RAZOR SHARP and CRISP - no blur, no anti-aliasing artifacts
-- NO line breaks, gaps, wobbling, wavering, or any distortion
-- Every corner, angle, and curve must preserve its EXACT MATHEMATICAL GEOMETRY
-- Lines must look like they are drawn with a ruler and compass - perfect and unchanging
+🎯 ANIMATION RULES - ONLY ALLOWED MOVEMENTS:
+${motionInstruction}
 
-ABSOLUTE RULE #3 - SINGLE RIGID OBJECT MOVEMENT:
-- ${motionInstruction}
-- Apply animation to the COMPLETE icon as if it were ONE SOLID BLOCK
-- If scaling: scale the ENTIRE icon uniformly (max 1.0 ↔ 1.03) while keeping perfect proportions
-- If rotating: rotate the WHOLE icon as a solid piece around its exact center
-- If moving vertically: move the ENTIRE icon together without any internal deformation
-- All parts must move in PERFECT SYNCHRONIZATION - no independent movement of pieces
-- NO parts can move separately from others - everything is welded together
-- NO internal distortion, bending, or deformation during any movement
+ONLY these movements are permitted:
+1. Uniform scaling of the ENTIRE icon (like zooming a photo) - max 1.0 to 1.03 scale
+2. Rotation of the ENTIRE icon as one piece (like spinning a coin)
+3. Vertical translation of the ENTIRE icon (like moving a sticker up/down)
+4. Combination of above movements applied to the COMPLETE icon simultaneously
 
-ABSOLUTE RULE #4 - WHAT IS STRICTLY FORBIDDEN:
-- NO fluid dynamics, liquid simulation, water effects, or melting
-- NO organic material behavior (flesh, fabric, rubber, jelly)
-- NO flexibility, elasticity, or soft-body physics
-- NO mesh deformation, vertex displacement, or morphing
-- NO parts moving independently or at different speeds
-- NO shape changes of any kind for any reason
-- NO new visual elements, effects, particles, trails, or artifacts
-- NO changes to line weight, color, opacity, or any visual property
-- NO camera effects, zoom, perspective changes, or lens distortion
+❌ STRICTLY FORBIDDEN:
+- Any part of the icon changing shape, size, or form independently
+- Lines becoming thicker, thinner, wavy, or distorted
+- Corners becoming rounded or sharp edges becoming soft
+- Colors changing, fading, or blending
+- New elements appearing or existing elements disappearing
+- Any organic, fluid, or flexible material behavior
+- Camera movement, zoom, or perspective changes
+- Particle effects, trails, glows, or visual artifacts
 
-TECHNICAL SPECIFICATION:
-- Resolution: Full-frame 16:9 canvas with no letterboxing
-- Visual Quality: Maintain pixel-perfect vector sharpness throughout all frames
-- Loop: Seamless - first frame and last frame must be IDENTICAL
-- Material: Treat icon as if made from solid, inflexible material (metal, hard plastic, stone)
-- Physics: NO physics simulation - only simple geometric transforms (translate, rotate, uniform scale)
-- Constraint: Icon must look EXACTLY THE SAME in terms of shape, lines, and structure in every single frame
+🔒 TECHNICAL REQUIREMENTS:
+- Frame-to-frame consistency: Every frame must be pixel-perfect identical to the first frame in terms of shape and structure
+- Only position/rotation/scale can change - NOT the icon itself
+- The icon must look like a static image that is being moved/rotated/scaled, NOT an animated drawing
+- Think of it like animating a PNG image in After Effects - the image itself never changes, only its transform properties
 
-Remember: This is a VECTOR GRAPHIC ICON - it is SOLID, HARD, and RIGID. It cannot flow, melt, bend, or deform. Animate it like a solid object, not like a liquid or organic material.`;
+Remember: This is a VECTOR ICON - it's a FIXED SHAPE. Animate it like moving a rigid object, NOT like animating a drawing. The icon shape MUST remain 100% identical in every single frame.`;
 
         console.log('[2D Video] Final prompt:', finalPrompt);
 
