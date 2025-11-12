@@ -4941,12 +4941,23 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
 
   // FFmpeg initialization and GIF conversion functions
   const loadFFmpeg = async () => {
-    if (isFFmpegLoaded && ffmpegInstance) return ffmpegInstance;
+    if (isFFmpegLoaded && ffmpegInstance) {
+      console.log('[FFmpeg] Using cached instance');
+      return ffmpegInstance;
+    }
     
     try {
+      console.log('[FFmpeg] Initializing FFmpeg...');
       showToast({ type: 'success', title: 'Loading FFmpeg...', body: 'Initializing video converter. This may take a moment.' });
       
       ffmpegInstance = new FFmpeg();
+      
+      // Add progress logging
+      ffmpegInstance.on('log', ({ message }) => {
+        console.log('[FFmpeg]', message);
+      });
+      
+      console.log('[FFmpeg] Loading core...');
       await ffmpegInstance.load({
         coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.js',
         wasmURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm',
@@ -4957,20 +4968,37 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
       return ffmpegInstance;
     } catch (error) {
       console.error('[FFmpeg] Failed to load:', error);
-      showToast({ type: 'error', title: 'FFmpeg Error', body: 'Failed to load video converter.' });
+      console.error('[FFmpeg] Error details:', {
+        name: error?.name,
+        message: error?.message,
+        stack: error?.stack
+      });
+      isFFmpegLoaded = false;
+      ffmpegInstance = null;
+      showToast({ 
+        type: 'error', 
+        title: 'FFmpeg Error', 
+        body: error?.message || 'Failed to load video converter. Please check your internet connection.' 
+      });
       throw error;
     }
   };
 
   const convertVideoToGif = async (videoUrl: string) => {
     try {
-      console.log('[GIF Conversion] Starting...');
+      console.log('[GIF Conversion] Starting...', videoUrl);
       updateButtonLoadingState(p2dConvertToGifBtn, true);
       
+      console.log('[GIF Conversion] Loading FFmpeg...');
       const ffmpeg = await loadFFmpeg();
       
+      console.log('[GIF Conversion] Fetching video file...');
       // Fetch video file
       const videoData = await fetchFile(videoUrl);
+      const videoDataSize = videoData instanceof Uint8Array ? videoData.length : (videoData as any).byteLength || 0;
+      console.log('[GIF Conversion] Video data fetched, size:', videoDataSize);
+      
+      console.log('[GIF Conversion] Writing input file...');
       await ffmpeg.writeFile('input.mp4', videoData);
       
       console.log('[GIF Conversion] Converting to GIF...');
@@ -4988,16 +5016,38 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
       
       console.log('[GIF Conversion] Reading output...');
       const gifData = await ffmpeg.readFile('output.gif');
-      const gifBlob = new Blob([gifData], { type: 'image/gif' });
+      const gifDataSize = gifData instanceof Uint8Array ? gifData.length : (gifData as any).byteLength || 0;
+      console.log('[GIF Conversion] GIF data read, size:', gifDataSize);
+      
+      // Convert FileData to Uint8Array if needed
+      let gifArray: Uint8Array;
+      if (gifData instanceof Uint8Array) {
+        gifArray = gifData;
+      } else if (gifData instanceof ArrayBuffer) {
+        gifArray = new Uint8Array(gifData);
+      } else {
+        // Handle string or other types
+        gifArray = new Uint8Array(gifData as unknown as ArrayBuffer);
+      }
+      const gifBlob = new Blob([gifArray.buffer], { type: 'image/gif' });
       const gifUrl = URL.createObjectURL(gifBlob);
       
-      console.log('[GIF Conversion] Complete!');
+      console.log('[GIF Conversion] Complete!', gifUrl);
       showToast({ type: 'success', title: 'GIF Created!', body: 'Your animated GIF is ready.' });
       
       return gifUrl;
     } catch (error) {
       console.error('[GIF Conversion] Failed:', error);
-      showToast({ type: 'error', title: 'Conversion Failed', body: 'Could not convert video to GIF.' });
+      console.error('[GIF Conversion] Error details:', {
+        name: error?.name,
+        message: error?.message,
+        stack: error?.stack
+      });
+      showToast({ 
+        type: 'error', 
+        title: 'Conversion Failed', 
+        body: error?.message || 'Could not convert video to GIF.' 
+      });
       throw error;
     } finally {
       updateButtonLoadingState(p2dConvertToGifBtn, false);
@@ -5010,6 +5060,8 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
       return;
     }
     
+    console.log('[2D GIF] Starting conversion...', currentGeneratedImage2d.videoDataUrl);
+    
     // Show loading modal
     if (p2dLoaderModal && p2dLoaderMessage) {
       p2dLoaderMessage.textContent = 'Converting to GIF...';
@@ -5019,6 +5071,7 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
     try {
       const gifUrl = await convertVideoToGif(currentGeneratedImage2d.videoDataUrl);
       
+      console.log('[2D GIF] Conversion successful, updating state...');
       currentGeneratedImage2d.gifDataUrl = gifUrl;
       const historyItem = imageHistory2d.find(item => item.id === currentGeneratedImage2d!.id);
       if (historyItem) {
@@ -5029,8 +5082,15 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
       p2dMotionMoreMenu?.classList.add('hidden');
       
       updateMotionUI2d();
+      console.log('[2D GIF] State updated successfully');
     } catch (error) {
       console.error('[2D GIF] Conversion failed:', error);
+      console.error('[2D GIF] Error details:', {
+        name: error?.name,
+        message: error?.message,
+        stack: error?.stack
+      });
+      // Error toast is already shown in convertVideoToGif
     } finally {
       // Hide loading modal
       if (p2dLoaderModal) {
