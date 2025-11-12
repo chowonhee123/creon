@@ -2983,22 +2983,66 @@ const motionTabContent = $('#image-details-panel .details-tab-content[data-tab-c
                 const compareCurrent3d = $('#compare-current-3d') as HTMLImageElement;
                 const compareSlider3d = $('#compare-slider-3d') as HTMLInputElement;
                 const compareDivider3d = $('#compare-divider-3d');
+                const compareLeftLabel3d = $('#compare-left-label-3d');
                 
                 if (!compareModal3d || !compareOriginal3d || !compareCurrent3d || !compareSlider3d || !compareDivider3d) {
                     console.error('[3D Compare] Modal elements not found');
                     return;
                 }
                 
+                // Update label based on modification type
+                if (compareLeftLabel3d) {
+                    if (modificationType === 'BG Removed') {
+                        compareLeftLabel3d.textContent = 'Remove BG';
+                    } else {
+                        compareLeftLabel3d.textContent = 'Color Changed';
+                    }
+                }
+                
                 // Set images
                 compareOriginal3d.src = `data:${originalItem.mimeType};base64,${originalItem.data}`;
                 compareCurrent3d.src = `data:${item.mimeType};base64,${item.data}`;
+                
+                // Check if current image is transparent (BG Removed or SVG)
+                const isCurrentTransparent = modificationType === 'BG Removed' || modificationType === 'SVG';
+                const isOriginalTransparent = originalItem.modificationType === 'BG Removed' || originalItem.modificationType === 'SVG';
+                
+                // Apply checkerboard background if needed
+                const currentContainer = compareCurrent3d.parentElement;
+                const originalContainer = compareOriginal3d.parentElement;
+                
+                if (currentContainer) {
+                    if (isCurrentTransparent) {
+                        currentContainer.style.backgroundColor = '';
+                        currentContainer.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
+                        currentContainer.style.backgroundPosition = '0 0, 8px 8px';
+                        currentContainer.style.backgroundSize = '16px 16px';
+                    } else {
+                        currentContainer.style.backgroundColor = '#ffffff';
+                        currentContainer.style.backgroundImage = '';
+                    }
+                }
+                
+                if (originalContainer) {
+                    if (isOriginalTransparent) {
+                        originalContainer.style.backgroundColor = '';
+                        originalContainer.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
+                        originalContainer.style.backgroundPosition = '0 0, 8px 8px';
+                        originalContainer.style.backgroundSize = '16px 16px';
+                    } else {
+                        originalContainer.style.backgroundColor = '#ffffff';
+                        originalContainer.style.backgroundImage = '';
+                    }
+                }
                 
                 // Slider handler
                 const handleSliderChange = () => {
                     const value = compareSlider3d.valueAsNumber;
                     compareDivider3d.style.left = `${value}%`;
                     // Clip current image to show only right side from divider
-                    compareCurrent3d.style.clipPath = `inset(0 ${100 - value}% 0 0)`;
+                    if (currentContainer) {
+                        currentContainer.style.clipPath = `inset(0 ${100 - value}% 0 0)`;
+                    }
                 };
                 
                 // Remove existing listener and add new one
