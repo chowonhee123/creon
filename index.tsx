@@ -7676,7 +7676,7 @@ const setupMotionDropZones2d = () => {
       
       const parts = [
         { inlineData: { data: base64Data, mimeType: currentGeneratedImageStudio.mimeType } },
-        { text: `Regenerate this image with background color ${bgColor} and object color ${objColor}. Maintain the same composition and style.` }
+        { text: `Regenerate this image with background color ${bgColor} and object color ${objColor}. Maintain the same composition and style. Keep the exact same resolution (width x height) as the original image; do not resize or change the canvas dimensions.` }
       ];
       
       const regenerateResponse = await ai.models.generateContent({
@@ -8392,7 +8392,7 @@ regenerate3DBtn?.addEventListener('click', () => {
             
             // Use gemini-2.5-flash-image directly with current image as reference
             // Create prompt: Keep the image exactly the same, only change icon color
-            const colorChangePrompt = `Keep this icon image exactly the same in shape, composition, and all details. Only change the icon color to ${iconColor}. Do not modify, transform, or change any other aspects of the image.`;
+            const colorChangePrompt = `Keep this icon image exactly the same in shape, composition, and all details. Keep the exact same resolution (width x height) as the original image; do not resize or change the canvas dimensions. Only change the icon color to ${iconColor}. Do not modify, transform, or change any other aspects of the image.`;
             
             const parts: any[] = [
                 { text: colorChangePrompt },
@@ -9355,7 +9355,7 @@ detailsMoreCopy?.addEventListener('click', async () => {
             const currentImageReference = { file: currentImageFile, dataUrl: currentDataUrl };
             
             // Create prompt: Keep the image exactly the same, only change colors
-            const colorChangePrompt = `Keep this 3D rendered image exactly the same in shape, composition, lighting, and all visual details. Only adjust the color scheme as follows:
+            const colorChangePrompt = `Keep this 3D rendered image exactly the same in shape, composition, lighting, and all visual details. Keep the exact same resolution (width x height) as the original image; do not resize or change the canvas dimensions. Only adjust the color scheme as follows:
 - Background color: ${backgroundColor}
 - Main accent color (use ${objectColor} as the PRIMARY/DOMINANT color for the main subject, but maintain natural color variations for other elements like shadows, highlights, and secondary objects)
 
