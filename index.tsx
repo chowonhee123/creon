@@ -1001,6 +1001,31 @@ const motionTabContent = $('#image-details-panel .details-tab-content[data-tab-c
   const motionPlayBtn = $('#motion-play-btn');
   const generateMotionFromPreviewBtn = $('#generate-motion-from-preview-btn');
   const convertToLottieBtn = $('#convert-to-lottie-btn');
+
+const PARTICLE_LOADER_HTML = `
+    <div class="loader">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+`;
+
+const getLoaderMarkup = (message: string) => `
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--spacing-4); padding: var(--spacing-6);">
+        ${PARTICLE_LOADER_HTML}
+        <p style="color: var(--text-secondary);">${message}</p>
+    </div>
+`;
   
   // Image Modal
   const imageModal = $('#image-modal');
@@ -5492,12 +5517,7 @@ Think: PNG image file + CSS transform = The PNG file never changes, only its tra
   const generateAndDisplayMotionCategoriesStudio = async () => {
     if (!currentGeneratedImageStudio || !motionCategoryList) return;
 
-    motionCategoryList.innerHTML = `
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--spacing-4); padding: var(--spacing-6);">
-            <div class="loader"></div>
-            <p style="color: var(--text-secondary);">Analyzing image and generating ideas...</p>
-        </div>
-    `;
+    motionCategoryList.innerHTML = getLoaderMarkup('Analyzing image and generating ideas...');
 
     try {
         const subject = currentGeneratedImageStudio.subject;
@@ -5619,12 +5639,7 @@ Return the 5 suggestions as a JSON array.`;
   const generateAndDisplayMotionCategories2d = async () => {
     if (!currentGeneratedImage2d || !motionCategoryList) return;
 
-    motionCategoryList.innerHTML = `
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--spacing-4); padding: var(--spacing-6);">
-            <div class="loader"></div>
-            <p style="color: var(--text-secondary);">Analyzing icon and generating motion ideas...</p>
-        </div>
-    `;
+    motionCategoryList.innerHTML = getLoaderMarkup('Analyzing icon and generating motion ideas...');
 
     try {
         const subject = currentGeneratedImage2d.subject;
@@ -5775,12 +5790,7 @@ Return as JSON array with exactly 3 minimal suggestions.`;
   const generateAndDisplayMotionCategories = async () => {
     if (!currentGeneratedImage || !motionCategoryList) return;
 
-    motionCategoryList.innerHTML = `
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--spacing-4); padding: var(--spacing-6);">
-            <div class="loader"></div>
-            <p style="color: var(--text-secondary);">Analyzing image and generating ideas...</p>
-        </div>
-    `;
+    motionCategoryList.innerHTML = getLoaderMarkup('Analyzing image and generating ideas...');
 
     try {
         const subject = currentGeneratedImage.subject;
