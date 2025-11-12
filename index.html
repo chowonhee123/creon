@@ -1627,9 +1627,6 @@
                                     <span class="btn-text">Recreate Video</span>
                                     <div class="btn-loader"></div>
                                 </button>
-                                <button id="motion-more-menu-btn-image" class="icon-button hidden" aria-label="More actions" title="More actions">
-                                    <span class="material-symbols-outlined">more_horiz</span>
-                                </button>
                                 <div id="motion-more-menu-image" class="kebab-menu hidden" style="position: absolute; left: 0; bottom: 56px; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); box-shadow: 0 8px 24px rgba(0,0,0,0.12); width: 200px; overflow: hidden; z-index: 20;">
                                     <button id="motion-more-regenerate-prompt-image" class="secondary-btn" style="width: 100%; justify-content: flex-start; gap: var(--spacing-2); border: none; background: transparent;">
                                         <span class="material-symbols-outlined">refresh</span> Recreate Motion Prompt
@@ -1638,9 +1635,14 @@
                                         <span class="material-symbols-outlined">refresh</span> Recreate Video
                                     </button>
                                 </div>
-                                <a href="#" id="download-video-btn-image" class="secondary-btn hidden" download>
-                                    <span class="material-symbols-outlined">download</span> Download Video
-                                </a>
+                                <div id="motion-download-row-image" class="motion-download-row hidden">
+                                    <button id="motion-more-menu-btn-image" class="icon-button" aria-label="More actions" title="More actions">
+                                        <span class="material-symbols-outlined">more_horiz</span>
+                                    </button>
+                                    <a href="#" id="download-video-btn-image" class="secondary-btn" download>
+                                        <span class="material-symbols-outlined">download</span> Download Video
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>

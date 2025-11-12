@@ -2572,6 +2572,21 @@ a.secondary-btn[disabled] {
     padding: 24px;
 }
 
+.motion-download-row {
+    display: flex;
+    gap: var(--spacing-3);
+    width: 100%;
+    align-items: center;
+}
+
+.motion-download-row .secondary-btn {
+    height: 44px;
+}
+
+.motion-download-row .secondary-btn .material-symbols-outlined {
+    font-size: 18px;
+}
+
 /* Hide details-actions in history tab only */
 .details-tab-content[data-tab-content="history"] .details-actions {
     display: none;
@@ -3086,7 +3101,7 @@ a.secondary-btn[disabled] {
 .image-modal-content {
   position: relative;
   background-color: var(--surface-color);
-  border-radius: var(--border-radius-lg);
+  border-radius: 24px !important;
   padding: var(--spacing-6);
   max-width: 80vw;
   max-height: 80vh;
@@ -3182,7 +3197,7 @@ a.secondary-btn[disabled] {
 .video-modal-content {
   position: relative;
   background-color: var(--surface-color);
-  border-radius: var(--border-radius-lg);
+  border-radius: 24px;
   padding: var(--spacing-5);
   width: 90%;
   height: 90%;

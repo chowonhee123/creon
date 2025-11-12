@@ -1084,6 +1084,7 @@ const extractVideoDownloadUrl = (operation: any): string | null => {
   const motionMoreMenuImage = $('#motion-more-menu-image');
   const motionMoreRegeneratePromptImage = $('#motion-more-regenerate-prompt-image');
   const motionMoreRegenerateVideoImage = $('#motion-more-regenerate-video-image');
+  const motionDownloadRowImage = $('#motion-download-row-image');
   const detailsPanelImageStudio = $('#image-details-panel-image');
   const detailsTabBtnDetailImageStudio = $('#image-details-panel-image .tab-item[data-tab="detail"]');
   const detailsTabBtnMotionImageStudio = $('#image-details-panel-image .tab-item[data-tab="motion"]');
@@ -5382,8 +5383,18 @@ Think: PNG image file + CSS transform = The PNG file never changes, only its tra
       if (hasVideo) {
         downloadVideoBtnImage.href = currentGeneratedImageStudio.videoDataUrl!;
         downloadVideoBtnImage.download = `${currentGeneratedImageStudio.subject.replace(/\s+/g, '_')}_motion.mp4`;
+      } else {
+        downloadVideoBtnImage.removeAttribute('href');
+        downloadVideoBtnImage.removeAttribute('download');
       }
+      downloadVideoBtnImage.classList.toggle('hidden', !hasVideo);
     }
+
+    motionDownloadRowImage?.classList.toggle('hidden', !hasVideo);
+    if (motionMoreMenuBtnImage) {
+        motionMoreMenuBtnImage.classList.toggle('hidden', !hasVideo);
+    }
+    motionMoreMenuImage?.classList.add('hidden');
 
     // Update action buttons visibility
     if (generateMotionPromptBtnStudio && regenerateMotionPromptBtnStudio && generateVideoBtnStudio && regenerateVideoBtnStudio && downloadVideoBtnImage) {
@@ -5392,24 +5403,18 @@ Think: PNG image file + CSS transform = The PNG file never changes, only its tra
             generateVideoBtnStudio.classList.add('hidden');
             regenerateMotionPromptBtnStudio.classList.add('hidden');
             regenerateVideoBtnStudio.classList.add('hidden');
-            downloadVideoBtnImage.classList.remove('hidden');
-            if (motionMoreMenuBtnImage) motionMoreMenuBtnImage.classList.remove('hidden');
-            motionMoreMenuImage?.classList.add('hidden');
         } else if (hasMotionPrompt) {
             generateMotionPromptBtnStudio.classList.add('hidden');
             generateVideoBtnStudio.classList.remove('hidden');
             regenerateMotionPromptBtnStudio.classList.remove('hidden');
             regenerateVideoBtnStudio.classList.add('hidden');
-            downloadVideoBtnImage.classList.add('hidden');
-            if (motionMoreMenuBtnImage) motionMoreMenuBtnImage.classList.add('hidden');
-            motionMoreMenuImage?.classList.add('hidden');
         } else {
             generateMotionPromptBtnStudio.classList.remove('hidden');
             generateVideoBtnStudio.classList.add('hidden');
             regenerateMotionPromptBtnStudio.classList.add('hidden');
             regenerateVideoBtnStudio.classList.add('hidden');
-            downloadVideoBtnImage.classList.add('hidden');
-            if (motionMoreMenuBtnImage) motionMoreMenuBtnImage.classList.add('hidden');
+        }
+        if (!hasVideo) {
             motionMoreMenuImage?.classList.add('hidden');
         }
     }
