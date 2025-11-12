@@ -5069,45 +5069,48 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
         console.log('[2D Video] Preparing video generation payload...');
         const userPrompt = p2dMotionPromptFinalEnglish?.value || '';
         console.log('[2D Video] User prompt:', userPrompt);
-        const motionInstruction = sanitizeMotionPromptText(userPrompt);
+        
+        // Sanitize and rewrite user prompt to emphasize rigid transform only
+        let motionInstruction = userPrompt.trim();
+        
+        // Replace organic/fluid terms with rigid transform equivalents
+        motionInstruction = motionInstruction
+            .replace(/breathing|breath/gi, 'uniform scale transform')
+            .replace(/pulsing|pulse/gi, 'uniform scale transform')
+            .replace(/gentle|smooth|organic/gi, 'rigid')
+            .replace(/seamless/gi, 'precise')
+            .replace(/effect/gi, 'movement');
+        
+        // Add explicit constraint to user's motion instruction
+        motionInstruction = `Apply ONLY uniform geometric transform (scale/rotate/translate) to the COMPLETE icon as a single rigid object. ${motionInstruction}. The icon shape itself must remain 100% identical - only its position, rotation, or scale can change.`;
 
-        const finalPrompt = `⚠️⚠️⚠️ CRITICAL CONSTRAINT: This is a FIXED VECTOR ICON - treat it as a PRINTED STAMP or STENCIL that CANNOT CHANGE SHAPE.
+        const finalPrompt = `🚨🚨🚨 CRITICAL: This is a STATIC VECTOR ICON FILE - like a PNG image or SVG file. It CANNOT change shape, form, or structure.
 
-🚫 ABSOLUTE PROHIBITION - SHAPE PRESERVATION:
-The icon shape, lines, curves, and all visual elements are PERMANENTLY FROZEN. They are like a metal stamp or laser-cut stencil.
-- Every pixel of every line must remain IDENTICAL across all frames
-- NO morphing, warping, bending, stretching, or any shape deformation
-- NO flowing, dripping, melting, or liquid-like movement
-- NO elastic or rubber-like behavior
-- NO wave effects, ripples, or distortions
-- The icon is a SINGLE RIGID OBJECT - imagine it's carved from solid steel
+⚠️ MANDATORY RULE: Treat this as animating a STATIC IMAGE FILE in video editing software (like After Effects or Premiere Pro). The image file itself NEVER changes - only its TRANSFORM properties (position, rotation, scale) can be modified.
 
-🎯 ANIMATION RULES - ONLY ALLOWED MOVEMENTS:
+🎯 ANIMATION INSTRUCTION:
 ${motionInstruction}
 
-ONLY these movements are permitted:
-1. Uniform scaling of the ENTIRE icon (like zooming a photo) - max 1.0 to 1.03 scale
-2. Rotation of the ENTIRE icon as one piece (like spinning a coin)
-3. Vertical translation of the ENTIRE icon (like moving a sticker up/down)
-4. Combination of above movements applied to the COMPLETE icon simultaneously
+📐 ALLOWED TRANSFORMS ONLY:
+- Uniform scale: Scale the ENTIRE icon uniformly (like zooming a photo) - maximum 1.0 to 1.03
+- Rotation: Rotate the ENTIRE icon as one piece (like spinning a coin on a table)
+- Translation: Move the ENTIRE icon vertically or horizontally (like moving a sticker)
+- These transforms apply to the COMPLETE icon simultaneously - NO independent part movement
 
-❌ STRICTLY FORBIDDEN:
-- Any part of the icon changing shape, size, or form independently
-- Lines becoming thicker, thinner, wavy, or distorted
-- Corners becoming rounded or sharp edges becoming soft
-- Colors changing, fading, or blending
-- New elements appearing or existing elements disappearing
-- Any organic, fluid, or flexible material behavior
-- Camera movement, zoom, or perspective changes
-- Particle effects, trails, glows, or visual artifacts
+🚫 ABSOLUTELY FORBIDDEN:
+- ANY shape deformation, morphing, warping, bending, stretching
+- ANY line thickness changes, wavy lines, or distorted curves
+- ANY flowing, dripping, melting, or liquid-like effects
+- ANY elastic, rubber-like, or organic material behavior
+- ANY part of the icon moving independently from other parts
+- ANY color changes, fading, or blending
+- ANY new elements appearing or existing elements disappearing
+- ANY camera movement, zoom, or perspective changes
 
-🔒 TECHNICAL REQUIREMENTS:
-- Frame-to-frame consistency: Every frame must be pixel-perfect identical to the first frame in terms of shape and structure
-- Only position/rotation/scale can change - NOT the icon itself
-- The icon must look like a static image that is being moved/rotated/scaled, NOT an animated drawing
-- Think of it like animating a PNG image in After Effects - the image itself never changes, only its transform properties
+🔒 TECHNICAL REQUIREMENT:
+The icon must appear IDENTICAL in every single frame - as if you took a screenshot of the first frame and applied only transform properties (scale/rotate/translate) to it. The icon itself is a FIXED, UNCHANGEABLE image file.
 
-Remember: This is a VECTOR ICON - it's a FIXED SHAPE. Animate it like moving a rigid object, NOT like animating a drawing. The icon shape MUST remain 100% identical in every single frame.`;
+Think: PNG image + CSS transform = Only position/rotation/scale changes, image itself stays 100% identical.`;
 
         console.log('[2D Video] Final prompt:', finalPrompt);
 
