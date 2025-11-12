@@ -5070,47 +5070,63 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
         const userPrompt = p2dMotionPromptFinalEnglish?.value || '';
         console.log('[2D Video] User prompt:', userPrompt);
         
-        // Sanitize and rewrite user prompt to emphasize rigid transform only
+        // Completely rewrite user prompt to enforce rigid transform only
+        // Extract the core motion intent and convert to pure geometric transform
         let motionInstruction = userPrompt.trim();
         
-        // Replace organic/fluid terms with rigid transform equivalents
+        // Remove all organic/fluid/descriptive terms that could cause deformation
         motionInstruction = motionInstruction
-            .replace(/breathing|breath/gi, 'uniform scale transform')
-            .replace(/pulsing|pulse/gi, 'uniform scale transform')
-            .replace(/gentle|smooth|organic/gi, 'rigid')
-            .replace(/seamless/gi, 'precise')
-            .replace(/effect/gi, 'movement');
+            .replace(/breathing|breath|pulsing|pulse/gi, 'uniform scale')
+            .replace(/gentle|smooth|organic|seamless|subtle/gi, 'precise')
+            .replace(/effect|animation|movement/gi, 'transform')
+            .replace(/expands?|contracts?|grows?|shrinks?/gi, 'uniform scale')
+            .replace(/rotates?|spins?|turns?/gi, 'rotate')
+            .replace(/moves?|shifts?|floats?|bounces?/gi, 'translate')
+            .replace(/swimming|swim|water|ripple|wave/gi, '') // Remove water-related terms
+            .replace(/simulate|create|show|display/gi, 'apply')
+            .replace(/in place|in-place/gi, 'without position change');
         
-        // Add explicit constraint to user's motion instruction
-        motionInstruction = `Apply ONLY uniform geometric transform (scale/rotate/translate) to the COMPLETE icon as a single rigid object. ${motionInstruction}. The icon shape itself must remain 100% identical - only its position, rotation, or scale can change.`;
+        // Extract scale values if mentioned
+        const scaleMatch = motionInstruction.match(/scale\s*([\d.]+)\s*to\s*([\d.]+)|scale\s*([\d.]+)/i);
+        let scaleRange = '';
+        if (scaleMatch) {
+            const min = scaleMatch[1] || scaleMatch[3] || '1.0';
+            const max = scaleMatch[2] || '1.03';
+            scaleRange = ` (${min} to ${max})`;
+        }
+        
+        // Force pure geometric transform description
+        motionInstruction = `Apply ONLY uniform geometric transform to the COMPLETE icon as a single rigid object${scaleRange}. The icon must maintain 100% identical shape, lines, and structure. Only transform properties (scale/rotate/translate) can change - the icon itself is a FIXED image file.`;
 
-        const finalPrompt = `🚨🚨🚨 CRITICAL: This is a STATIC VECTOR ICON FILE - like a PNG image or SVG file. It CANNOT change shape, form, or structure.
+        const finalPrompt = `🚨🚨🚨 CRITICAL CONSTRAINT: This is a STATIC VECTOR ICON FILE (PNG/SVG format). The icon image file itself is PERMANENTLY FROZEN and CANNOT be modified.
 
-⚠️ MANDATORY RULE: Treat this as animating a STATIC IMAGE FILE in video editing software (like After Effects or Premiere Pro). The image file itself NEVER changes - only its TRANSFORM properties (position, rotation, scale) can be modified.
+⚠️ MANDATORY: This is NOT an animated drawing. This is a STATIC IMAGE FILE being animated with transform properties ONLY (like CSS transform or After Effects transform).
 
 🎯 ANIMATION INSTRUCTION:
 ${motionInstruction}
 
-📐 ALLOWED TRANSFORMS ONLY:
+📐 ALLOWED TRANSFORMS ONLY (applied to the COMPLETE icon as one unit):
 - Uniform scale: Scale the ENTIRE icon uniformly (like zooming a photo) - maximum 1.0 to 1.03
-- Rotation: Rotate the ENTIRE icon as one piece (like spinning a coin on a table)
-- Translation: Move the ENTIRE icon vertically or horizontally (like moving a sticker)
+- Rotation: Rotate the ENTIRE icon as one piece (like spinning a coin)
+- Translation: Move the ENTIRE icon vertically/horizontally (like moving a sticker)
 - These transforms apply to the COMPLETE icon simultaneously - NO independent part movement
 
-🚫 ABSOLUTELY FORBIDDEN:
-- ANY shape deformation, morphing, warping, bending, stretching
-- ANY line thickness changes, wavy lines, or distorted curves
-- ANY flowing, dripping, melting, or liquid-like effects
-- ANY elastic, rubber-like, or organic material behavior
+🚫 ABSOLUTELY FORBIDDEN - THE ICON FILE CANNOT CHANGE:
+- ANY shape deformation, morphing, warping, bending, stretching, or distortion
+- ANY line thickness changes, wavy lines, curved lines becoming straight, or straight lines becoming curved
+- ANY flowing, dripping, melting, liquid-like, or water-like effects
+- ANY elastic, rubber-like, organic, or flexible material behavior
 - ANY part of the icon moving independently from other parts
-- ANY color changes, fading, or blending
+- ANY color changes, fading, blending, or opacity changes
 - ANY new elements appearing or existing elements disappearing
-- ANY camera movement, zoom, or perspective changes
+- ANY camera movement, zoom, perspective changes, or lens effects
+- ANY particle effects, trails, glows, shadows, or visual artifacts
+- ANY interpretation of motion-related words (swimming, floating, etc.) as shape changes
 
 🔒 TECHNICAL REQUIREMENT:
-The icon must appear IDENTICAL in every single frame - as if you took a screenshot of the first frame and applied only transform properties (scale/rotate/translate) to it. The icon itself is a FIXED, UNCHANGEABLE image file.
+The icon must appear IDENTICAL in every single frame - as if you took a screenshot of the first frame and applied ONLY CSS transform properties (scale/rotate/translate) to it. The icon image file itself is a FIXED, UNCHANGEABLE static image.
 
-Think: PNG image + CSS transform = Only position/rotation/scale changes, image itself stays 100% identical.`;
+Think: PNG image file + CSS transform = The PNG file never changes, only its transform matrix changes.`;
 
         console.log('[2D Video] Final prompt:', finalPrompt);
 
