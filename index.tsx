@@ -83,7 +83,57 @@ let motionLastFrameImage2d: { file: File; dataUrl: string; } | null = null;
   let isFFmpegLoaded = false;
   
   // Explore page state
-  let exploreMedia: any[] = [];
+let exploreMedia: any[] = [];
+
+const getExploreMediaCategory = (item: any): 'video' | 'image' | '2dVideo' | 'other' => {
+  if (!item || !item.type) return 'other';
+
+  const type = String(item.type).toLowerCase();
+  const metadataCategory = String(item.category || item.mediaCategory || item.kind || item.assetType || '').toLowerCase();
+  const origin = String(item.studio || item.sourceStudio || item.origin || '').toLowerCase();
+  const name = String(item.name || '').toLowerCase();
+  const url = String(item.dataUrl || item.url || '').toLowerCase();
+  const tags: string[] = Array.isArray(item.tags)
+    ? item.tags.map((tag: any) => String(tag).toLowerCase())
+    : [];
+
+  const is2dHint =
+    metadataCategory.includes('2d') ||
+    origin.includes('2d') ||
+    origin.includes('icon') ||
+    tags.some((tag) => tag.includes('2d') || tag.includes('icon')) ||
+    name.includes('2d') ||
+    name.includes('icon_') ||
+    name.includes('icon-') ||
+    url.includes('/2d/') ||
+    url.includes('2d_') ||
+    url.includes('/icons/') ||
+    url.includes('icon');
+
+  if (type.startsWith('video/')) {
+    return is2dHint ? '2dVideo' : 'video';
+  }
+  if (type.startsWith('image/')) {
+    return 'image';
+  }
+  return 'other';
+};
+
+const reorderExploreMediaByCategory = (items: any[]): any[] => {
+  const buckets: Record<'video' | 'image' | '2dVideo' | 'other', any[]> = {
+    video: [],
+    image: [],
+    '2dVideo': [],
+    other: [],
+  };
+
+  items.forEach((item) => {
+    const category = getExploreMediaCategory(item);
+    buckets[category].push(item);
+  });
+
+  return [...buckets.video, ...buckets.image, ...buckets['2dVideo'], ...buckets.other];
+};
   let currentSelectedExploreMedia: any | null = null;
   let fileToRenameId: string | null = null;
   let videoObserver: IntersectionObserver | null = null;
@@ -6678,7 +6728,7 @@ Return the 5 suggestions as a JSON array.`;
                 dataUrl: dataUrl,
                 timestamp: Date.now()
             };
-            exploreMedia.unshift(newItem);
+            exploreMedia = reorderExploreMediaByCategory([newItem, ...exploreMedia]);
             renderExploreFeed();
         };
         reader.readAsDataURL(file);
@@ -8153,7 +8203,7 @@ regenerate3DBtn?.addEventListener('click', () => {
     try {
       const response = await fetch('/home_images.json');
       const homeImages = await response.json();
-      exploreMedia = [...homeImages];
+      exploreMedia = reorderExploreMediaByCategory(homeImages);
       renderExploreFeed();
     } catch (error) {
       console.error('Failed to load home images:', error);
