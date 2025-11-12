@@ -4985,12 +4985,44 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
   };
 
   const convertVideoToGif = async (videoUrl: string) => {
+    let conversionTimeout: number | null = null;
+    
     try {
       console.log('[GIF Conversion] Starting...', videoUrl);
       updateButtonLoadingState(p2dConvertToGifBtn, true);
       
+      // Set timeout (3 minutes)
+      conversionTimeout = window.setTimeout(() => {
+        console.error('[GIF Conversion] Timeout after 3 minutes');
+        showToast({ 
+          type: 'error', 
+          title: 'Conversion Timeout', 
+          body: 'GIF conversion is taking too long. Please try again or use a shorter video.' 
+        });
+        throw new Error('Conversion timeout');
+      }, 3 * 60 * 1000);
+      
       console.log('[GIF Conversion] Loading FFmpeg...');
       const ffmpeg = await loadFFmpeg();
+      
+      // Monitor FFmpeg progress
+      let progressMessages: string[] = [];
+      let lastProgressTime = Date.now();
+      
+      const progressHandler = ({ message }: { message: string }) => {
+        console.log('[FFmpeg Progress]', message);
+        progressMessages.push(message);
+        lastProgressTime = Date.now(); // Update progress time
+        
+        // Update loading message with progress
+        if (p2dLoaderMessage && progressMessages.length > 0) {
+          const lastMessage = progressMessages[progressMessages.length - 1];
+          if (lastMessage.includes('frame=') || lastMessage.includes('size=')) {
+            p2dLoaderMessage.textContent = `Converting to GIF... ${lastMessage}`;
+          }
+        }
+      };
+      ffmpeg.on('log', progressHandler);
       
       console.log('[GIF Conversion] Fetching video file...');
       // Fetch video file
@@ -4998,39 +5030,80 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
       const videoDataSize = videoData instanceof Uint8Array ? videoData.length : (videoData as any).byteLength || 0;
       console.log('[GIF Conversion] Video data fetched, size:', videoDataSize);
       
+      if (videoDataSize === 0) {
+        throw new Error('Video file is empty');
+      }
+      
       console.log('[GIF Conversion] Writing input file...');
       await ffmpeg.writeFile('input.mp4', videoData);
+      console.log('[GIF Conversion] Input file written successfully');
       
       console.log('[GIF Conversion] Converting to GIF...');
+      if (p2dLoaderMessage) {
+        p2dLoaderMessage.textContent = 'Converting to GIF... This may take a minute.';
+      }
       
-      // Convert to GIF with optimized settings for icons
-      // fps=10: 10 frames per second for smooth animation
-      // scale=512:-1: width 512px, height auto-calculated to maintain aspect ratio
-      // split, palettegen, paletteuse: creates optimized color palette for better quality
-      await ffmpeg.exec([
-        '-i', 'input.mp4',
-        '-vf', 'fps=10,scale=512:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse',
-        '-loop', '0',
-        'output.gif'
-      ]);
+      // Add a progress check every 10 seconds to detect if conversion is stuck
+      let progressCheckInterval: number | null = null;
+      progressCheckInterval = window.setInterval(() => {
+        const timeSinceLastProgress = Date.now() - lastProgressTime;
+        if (timeSinceLastProgress > 30000) { // 30 seconds without progress
+          console.warn('[GIF Conversion] No progress for 30 seconds, conversion may be stuck');
+          if (p2dLoaderMessage) {
+            p2dLoaderMessage.textContent = 'Conversion is taking longer than expected...';
+          }
+        }
+      }, 10000); // Check every 10 seconds
+      
+      // Use simpler conversion settings (faster, more reliable)
+      // Reduced fps and simpler scale for faster processing
+      try {
+        await ffmpeg.exec([
+          '-i', 'input.mp4',
+          '-vf', 'fps=8,scale=400:-1',
+          '-loop', '0',
+          '-y', // Overwrite output file
+          'output.gif'
+        ]);
+        console.log('[GIF Conversion] FFmpeg exec completed');
+      } finally {
+        // Clean up progress monitoring
+        if (progressCheckInterval) {
+          clearInterval(progressCheckInterval);
+        }
+        ffmpeg.off('log', progressHandler);
+      }
       
       console.log('[GIF Conversion] Reading output...');
       const gifData = await ffmpeg.readFile('output.gif');
       const gifDataSize = gifData instanceof Uint8Array ? gifData.length : (gifData as any).byteLength || 0;
       console.log('[GIF Conversion] GIF data read, size:', gifDataSize);
       
+      if (gifDataSize === 0) {
+        throw new Error('Generated GIF file is empty');
+      }
+      
       // Convert FileData to Uint8Array if needed
       let gifArray: Uint8Array;
       if (gifData instanceof Uint8Array) {
         gifArray = gifData;
-      } else if (gifData instanceof ArrayBuffer) {
-        gifArray = new Uint8Array(gifData);
       } else {
-        // Handle string or other types
-        gifArray = new Uint8Array(gifData as unknown as ArrayBuffer);
+        // Handle ArrayBuffer or other types
+        const dataBuffer = (gifData as any).buffer || gifData;
+        gifArray = dataBuffer instanceof ArrayBuffer 
+          ? new Uint8Array(dataBuffer)
+          : new Uint8Array(dataBuffer as ArrayBufferLike);
       }
-      const gifBlob = new Blob([gifArray.buffer], { type: 'image/gif' });
+      // Use slice to ensure we have a proper ArrayBuffer
+      const arrayBuffer = gifArray.buffer.slice(gifArray.byteOffset, gifArray.byteOffset + gifArray.byteLength);
+      const gifBlob = new Blob([arrayBuffer], { type: 'image/gif' });
       const gifUrl = URL.createObjectURL(gifBlob);
+      
+      // Clear timeout
+      if (conversionTimeout) {
+        clearTimeout(conversionTimeout);
+        conversionTimeout = null;
+      }
       
       console.log('[GIF Conversion] Complete!', gifUrl);
       showToast({ type: 'success', title: 'GIF Created!', body: 'Your animated GIF is ready.' });
@@ -5043,14 +5116,24 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
         message: error?.message,
         stack: error?.stack
       });
+      
+      // Clear timeout if still active
+      if (conversionTimeout) {
+        clearTimeout(conversionTimeout);
+        conversionTimeout = null;
+      }
+      
       showToast({ 
         type: 'error', 
         title: 'Conversion Failed', 
-        body: error?.message || 'Could not convert video to GIF.' 
+        body: error?.message || 'Could not convert video to GIF. Please try again.' 
       });
       throw error;
     } finally {
       updateButtonLoadingState(p2dConvertToGifBtn, false);
+      if (p2dLoaderMessage) {
+        p2dLoaderMessage.textContent = 'Generating your icon...';
+      }
     }
   };
 
