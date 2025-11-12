@@ -1026,6 +1026,34 @@ const getLoaderMarkup = (message: string) => `
         <p style="color: var(--text-secondary);">${message}</p>
     </div>
 `;
+
+const extractVideoDownloadUrl = (operation: any): string | null => {
+    if (!operation) return null;
+    const videoEntry = operation.response?.generatedVideos?.[0] ?? operation.generatedVideos?.[0];
+    if (!videoEntry) return null;
+
+    const videoObj = videoEntry.video ?? {};
+    const candidates: Array<string | undefined> = [
+        videoObj.downloadUri,
+        videoObj.uri,
+        videoObj.url,
+        videoObj.signedUri,
+        videoEntry.videoUri,
+        videoEntry.uri,
+        videoEntry.downloadUri,
+    ];
+
+    if (Array.isArray(videoObj.uris)) {
+        candidates.push(...videoObj.uris);
+    }
+
+    if (Array.isArray(videoEntry.uris)) {
+        candidates.push(...videoEntry.uris);
+    }
+
+    const firstValid = candidates.find((value) => typeof value === 'string' && value.length > 0);
+    return firstValid ?? null;
+};
   
   // Image Modal
   const imageModal = $('#image-modal');
@@ -4704,8 +4732,9 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
             currentVideoGenerationOperation = operation;
         }
 
-        const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
+        const downloadLink = extractVideoDownloadUrl(operation);
         if (!downloadLink) {
+            console.error('[3D Video] Missing download link. Operation response:', JSON.stringify(operation, null, 2));
             throw new Error("Video generation succeeded but no download link was found.");
         }
         
@@ -4826,8 +4855,9 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
             currentVideoGenerationOperation = operation;
         }
 
-        const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
+        const downloadLink = extractVideoDownloadUrl(operation);
         if (!downloadLink) {
+            console.error('[Image Studio Video] Missing download link. Operation response:', JSON.stringify(operation, null, 2));
             throw new Error("Video generation succeeded but no download link was found.");
         }
         
@@ -5257,8 +5287,9 @@ Think: PNG image file + CSS transform = The PNG file never changes, only its tra
         }
         console.log('[2D Video] Operation completed!');
 
-        const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
+        const downloadLink = extractVideoDownloadUrl(operation);
         if (!downloadLink) {
+            console.error('[2D Video] Missing download link. Operation response:', JSON.stringify(operation, null, 2));
             throw new Error("Video generation succeeded but no download link was found.");
         }
 
