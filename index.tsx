@@ -2384,7 +2384,7 @@ const motionTabContent = $('#image-details-panel .details-tab-content[data-tab-c
         // Determine modification type and tag text
         let modificationType = item.modificationType || 'Original';
         let tagText = 'Original';
-        if (modificationType === 'Regenerated') {
+        if (modificationType === 'Regenerated' || modificationType === 'Fix') {
             tagText = 'Color Changed';
         } else if (modificationType === 'BG Removed') {
             tagText = 'Remove BG';
@@ -2489,8 +2489,8 @@ const motionTabContent = $('#image-details-panel .details-tab-content[data-tab-c
         
         // Create Compare button (only for non-Original items)
         let compareButton: HTMLElement | null = null;
-        // Show compare button for any item that is not Original (Regenerated, BG Removed, SVG, etc.)
-        if (originalItem && item.modificationType !== 'Original') {
+        // Show compare button for any item that is not Original (Regenerated, Fix, BG Removed, SVG, etc.)
+        if (originalItem && item.modificationType && item.modificationType !== 'Original') {
             compareButton = document.createElement('button');
             compareButton.className = 'history-compare-btn';
             compareButton.innerHTML = '<span class="material-symbols-outlined">compare</span>';
