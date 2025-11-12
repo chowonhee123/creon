@@ -2533,227 +2533,88 @@ const motionTabContent = $('#image-details-panel .details-tab-content[data-tab-c
                 }
             });
             
-            // Compare button click handler - Slider comparison
+            // Compare button click handler - Use HTML modal
             compareButton.addEventListener('click', (e) => {
                 e.stopPropagation(); // Prevent history item click
                 
-                // Create comparison modal with slider
-                const comparisonModal = document.createElement('div');
-                comparisonModal.className = 'comparison-modal-overlay';
-                comparisonModal.style.cssText = `
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background-color: rgba(0, 0, 0, 0.8);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    z-index: 2000;
-                    padding: 20px;
-                `;
+                // Use pre-defined modal
+                const compareModal2d = $('#p2d-compare-modal');
+                const compareOriginal2d = $('#p2d-compare-original') as HTMLImageElement;
+                const compareCurrent2d = $('#p2d-compare-current') as HTMLImageElement;
+                const compareSlider2d = $('#p2d-compare-slider') as HTMLInputElement;
+                const compareDivider2d = $('#p2d-compare-divider');
+                const compareLeftLabel2d = $('#compare-left-label-2d');
                 
-                const modalContent = document.createElement('div');
-                modalContent.style.cssText = `
-                    position: relative;
-                    width: 800px;
-                    height: 600px;
-                    background: var(--surface-color);
-                    border-radius: var(--border-radius-lg);
-                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-                    overflow: hidden;
-                    display: flex;
-                    flex-direction: column;
-                `;
+                if (!compareModal2d || !compareOriginal2d || !compareCurrent2d || !compareSlider2d || !compareDivider2d) {
+                    console.error('[2D Compare] Modal elements not found');
+                    return;
+                }
                 
-                // Close button
-                const closeBtn = document.createElement('button');
-                closeBtn.className = 'icon-button';
-                closeBtn.innerHTML = '<span class="material-symbols-outlined">close</span>';
-                closeBtn.setAttribute('aria-label', 'Close comparison');
-                closeBtn.style.cssText = `
-                    position: absolute;
-                    top: 12px;
-                    right: 12px;
-                    z-index: 10;
-                    background: rgba(0, 0, 0, 0.5);
-                    color: white;
-                `;
-                closeBtn.addEventListener('click', () => {
-                    comparisonModal.remove();
-                });
-                modalContent.appendChild(closeBtn);
+                // Update label based on modification type
+                if (compareLeftLabel2d) {
+                    if (modificationType === 'BG Removed') {
+                        compareLeftLabel2d.textContent = 'Remove BG';
+                    } else {
+                        compareLeftLabel2d.textContent = 'Color Changed';
+                    }
+                }
                 
-                // Labels
-                const labelsContainer = document.createElement('div');
-                labelsContainer.style.cssText = `
-                    display: flex;
-                    justify-content: space-between;
-                    padding: 16px 24px;
-                    background: var(--surface-color);
-                    border-bottom: 1px solid var(--border-color);
-                    flex-shrink: 0;
-                `;
-                const originalLabel = document.createElement('div');
-                originalLabel.style.cssText = 'font-size: 14px; font-weight: 600; color: var(--text-primary);';
-                originalLabel.textContent = 'Original';
-                const currentLabel = document.createElement('div');
-                currentLabel.style.cssText = 'font-size: 14px; font-weight: 600; color: var(--text-primary);';
-                currentLabel.textContent = tagText;
-                labelsContainer.appendChild(originalLabel);
-                labelsContainer.appendChild(currentLabel);
-                modalContent.appendChild(labelsContainer);
-                
-                // Comparison container with slider
-                const comparisonContainer = document.createElement('div');
-                comparisonContainer.style.cssText = `
-                    position: relative;
-                    width: 100%;
-                    flex: 1;
-                    overflow: hidden;
-                `;
+                // Set images
+                compareOriginal2d.src = `data:${originalItem.mimeType};base64,${originalItem.data}`;
+                compareCurrent2d.src = `data:${item.mimeType};base64,${item.data}`;
                 
                 // Check if current image is transparent (BG Removed or SVG)
                 const isCurrentTransparent = modificationType === 'BG Removed' || modificationType === 'SVG';
+                const isOriginalTransparent = originalItem.modificationType === 'BG Removed' || originalItem.modificationType === 'SVG';
                 
-                // Original image container (left side, white background)
-                const originalContainer = document.createElement('div');
-                originalContainer.style.cssText = `
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background-color: #ffffff;
-                    z-index: 1;
-                `;
+                // Apply checkerboard background if needed
+                const currentContainer = compareCurrent2d.parentElement;
+                const originalContainer = compareOriginal2d.parentElement;
                 
-                // Original image
-                const originalImg = document.createElement('img');
-                originalImg.src = `data:${originalItem.mimeType};base64,${originalItem.data}`;
-                originalImg.style.cssText = `
-                    width: 100%;
-                    height: 100%;
-                    object-fit: contain;
-                    display: block;
-                `;
-                originalContainer.appendChild(originalImg);
-                comparisonContainer.appendChild(originalContainer);
-                
-                // Current image container (right side, checkerboard if transparent)
-                const currentContainer = document.createElement('div');
-                currentContainer.style.cssText = `
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    z-index: 2;
-                    clip-path: inset(0 50% 0 0);
-                `;
-                
-                // Apply checkerboard background if current image is transparent
-                if (isCurrentTransparent) {
-                    currentContainer.style.backgroundColor = '';
-                    currentContainer.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
-                    currentContainer.style.backgroundPosition = '0 0, 8px 8px';
-                    currentContainer.style.backgroundSize = '16px 16px';
-                } else {
-                    currentContainer.style.backgroundColor = '#ffffff';
+                if (currentContainer) {
+                    if (isCurrentTransparent) {
+                        currentContainer.style.backgroundColor = '';
+                        currentContainer.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
+                        currentContainer.style.backgroundPosition = '0 0, 8px 8px';
+                        currentContainer.style.backgroundSize = '16px 16px';
+                    } else {
+                        currentContainer.style.backgroundColor = '#ffffff';
+                        currentContainer.style.backgroundImage = '';
+                    }
                 }
                 
-                // Current image (foreground, clipped by slider)
-                const currentImg = document.createElement('img');
-                currentImg.src = `data:${item.mimeType};base64,${item.data}`;
-                currentImg.style.cssText = `
-                    width: 100%;
-                    height: 100%;
-                    object-fit: contain;
-                    display: block;
-                `;
-                currentContainer.appendChild(currentImg);
-                comparisonContainer.appendChild(currentContainer);
+                if (originalContainer) {
+                    if (isOriginalTransparent) {
+                        originalContainer.style.backgroundColor = '';
+                        originalContainer.style.backgroundImage = 'repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0)';
+                        originalContainer.style.backgroundPosition = '0 0, 8px 8px';
+                        originalContainer.style.backgroundSize = '16px 16px';
+                    } else {
+                        originalContainer.style.backgroundColor = '#ffffff';
+                        originalContainer.style.backgroundImage = '';
+                    }
+                }
                 
-                // Slider handle
-                const sliderHandle = document.createElement('div');
-                sliderHandle.className = 'comparison-slider-handle';
-                sliderHandle.style.cssText = `
-                    position: absolute;
-                    top: 0;
-                    left: 50%;
-                    width: 4px;
-                    height: 100%;
-                    background: white;
-                    cursor: ew-resize;
-                    z-index: 3;
-                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-                `;
-                
-                // Slider handle icon
-                const handleIcon = document.createElement('div');
-                handleIcon.style.cssText = `
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    width: 40px;
-                    height: 40px;
-                    border-radius: 50%;
-                    background: white;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-                `;
-                handleIcon.innerHTML = '<span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-primary);">drag_handle</span>';
-                sliderHandle.appendChild(handleIcon);
-                comparisonContainer.appendChild(sliderHandle);
-                
-                // Slider functionality
-                let isDragging = false;
-                const updateSlider = (clientX: number) => {
-                    const rect = comparisonContainer.getBoundingClientRect();
-                    const x = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-                    const percentage = x * 100;
-                    
-                    sliderHandle.style.left = `${percentage}%`;
-                    // Update clip-path on current container (not currentImg)
-                    currentContainer.style.clipPath = `inset(0 ${100 - percentage}% 0 0)`;
+                // Slider handler
+                const handleSliderChange = () => {
+                    const value = compareSlider2d.valueAsNumber;
+                    compareDivider2d.style.left = `${value}%`;
+                    // Clip current image to show only right side from divider
+                    if (currentContainer) {
+                        currentContainer.style.clipPath = `inset(0 ${100 - value}% 0 0)`;
+                    }
                 };
                 
-                sliderHandle.addEventListener('mousedown', (e) => {
-                    isDragging = true;
-                    e.preventDefault();
-                });
+                // Remove existing listener and add new one
+                compareSlider2d.removeEventListener('input', handleSliderChange);
+                compareSlider2d.addEventListener('input', handleSliderChange);
                 
-                document.addEventListener('mousemove', (e) => {
-                    if (isDragging) {
-                        updateSlider(e.clientX);
-                    }
-                });
+                // Initialize slider position
+                compareSlider2d.value = '50';
+                handleSliderChange();
                 
-                document.addEventListener('mouseup', () => {
-                    isDragging = false;
-                });
-                
-                comparisonContainer.addEventListener('click', (e) => {
-                    if (!isDragging) {
-                        updateSlider(e.clientX);
-                    }
-                });
-                
-                modalContent.appendChild(comparisonContainer);
-                comparisonModal.appendChild(modalContent);
-                
-                // Close on overlay click
-                comparisonModal.addEventListener('click', (e) => {
-                    if (e.target === comparisonModal && !isDragging) {
-                        comparisonModal.remove();
-                    }
-                });
-                
-                document.body.appendChild(comparisonModal);
+                // Show modal
+                compareModal2d.classList.remove('hidden');
             });
         }
         // Click handler to load preview
@@ -10045,6 +9906,24 @@ Apply the main color (${objectColor}) thoughtfully as the primary/accent color o
       const isActive = p3dFixAccordion.getAttribute('data-active') === 'true';
       p3dFixAccordion.setAttribute('data-active', isActive ? 'false' : 'true');
       p3dFixContent.setAttribute('data-active', isActive ? 'false' : 'true');
+    });
+  }
+  
+  // 2D Studio Compare Modal Close Button
+  const p2dCompareCloseBtn = $('#p2d-compare-close-btn');
+  const p2dCompareModal = $('#p2d-compare-modal');
+  if (p2dCompareCloseBtn && p2dCompareModal) {
+    p2dCompareCloseBtn.addEventListener('click', () => {
+      p2dCompareModal.classList.add('hidden');
+    });
+  }
+  
+  // 3D Studio Compare Modal Close Button
+  const compareCloseBtn3d = $('#compare-close-btn-3d');
+  const compareModal3d = $('#compare-modal-3d');
+  if (compareCloseBtn3d && compareModal3d) {
+    compareCloseBtn3d.addEventListener('click', () => {
+      compareModal3d.classList.add('hidden');
     });
   }
   
