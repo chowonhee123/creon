@@ -1884,23 +1884,23 @@
       
       <div id="p2d-compare-modal" class="image-modal-overlay hidden">
         <div class="image-modal-content" style="width: 900px; max-height: 90vh; padding: var(--spacing-5);">
-            <header class="image-studio-modal-header">
-                <h3>Compare Images</h3>
+            <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-4);">
+                <h3 style="margin: 0; font-size: 20px; font-weight: 600;">Compare View</h3>
                 <button id="p2d-compare-close-btn" class="icon-button" aria-label="Close">
                     <span class="material-symbols-outlined">close</span>
                 </button>
             </header>
-            <div style="position: relative; margin-top: var(--spacing-4); background: #f5f5f5; border-radius: var(--border-radius-md); overflow: hidden;">
+            <div style="position: relative; background: #f5f5f5; border-radius: var(--border-radius-md); overflow: hidden;">
                 <div style="position: relative; width: 100%; height: 500px;">
-                    <!-- Original image as base layer -->
+                    <!-- Color Changed image as base layer (left side) -->
                     <div style="position: absolute; inset: 0; z-index: 1;">
-                        <label style="position: absolute; top: var(--spacing-2); left: var(--spacing-2); background: rgba(0,0,0,0.6); color: white; padding: var(--spacing-1) var(--spacing-2); border-radius: var(--border-radius-sm); font-size: 12px; z-index: 2;">Original</label>
-                        <img id="p2d-compare-original" src="" alt="Original" style="width: 100%; height: 100%; object-fit: contain; display: block;">
+                        <label style="position: absolute; top: var(--spacing-2); left: var(--spacing-2); background: rgba(0,0,0,0.6); color: white; padding: var(--spacing-1) var(--spacing-2); border-radius: var(--border-radius-sm); font-size: 12px; z-index: 2;">Color Changed</label>
+                        <img id="p2d-compare-current" src="" alt="Color Changed" style="width: 100%; height: 100%; object-fit: contain; display: block;">
                     </div>
-                    <!-- Current image clipped by divider -->
+                    <!-- Original image clipped by divider (right side) -->
                     <div style="position: absolute; inset: 0; z-index: 2; overflow: hidden;">
-                        <label style="position: absolute; top: var(--spacing-2); right: var(--spacing-2); background: rgba(0,0,0,0.6); color: white; padding: var(--spacing-1) var(--spacing-2); border-radius: var(--border-radius-sm); font-size: 12px; z-index: 3;">Current</label>
-                        <img id="p2d-compare-current" src="" alt="Current" style="width: 100%; height: 100%; object-fit: contain; display: block;">
+                        <label style="position: absolute; top: var(--spacing-2); right: var(--spacing-2); background: rgba(0,0,0,0.6); color: white; padding: var(--spacing-1) var(--spacing-2); border-radius: var(--border-radius-sm); font-size: 12px; z-index: 3;">Original</label>
+                        <img id="p2d-compare-original" src="" alt="Original" style="width: 100%; height: 100%; object-fit: contain; display: block;">
                     </div>
                     <!-- Draggable divider -->
                     <div id="p2d-compare-divider" style="position: absolute; top: 0; bottom: 0; left: 50%; width: 3px; background: #0070F3; cursor: ew-resize; z-index: 4; box-shadow: 0 0 8px rgba(0,112,243,0.5);">
@@ -1912,7 +1912,6 @@
                     <input type="range" id="p2d-compare-slider" min="0" max="100" value="50" style="position: absolute; top: 50%; left: 0; right: 0; width: 100%; z-index: 5; opacity: 0; cursor: ew-resize; transform: translateY(-50%);">
                 </div>
             </div>
-            <button id="p2d-compare-modal-close-btn" class="secondary-btn" style="margin-top: var(--spacing-4); width: 100%;">Close</button>
         </div>
       </div>
       
