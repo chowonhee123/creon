@@ -332,7 +332,7 @@ let motionLastFrameImage2d: { file: File; dataUrl: string; } | null = null;
       "single_output": true,
       "no_variations_or_set": true
     },
-    "negative_prompt": "3D, photo, realism, shading, gradients, textures, raster, pixelated, complex details, multiple icons, variations, set, collage, hand-drawn, overly detailed, skeuomorphic, shadows",
+    "negative_prompt": "3D, photo, realism, shading, gradients, textures, raster, pixelated, complex details, multiple icons, variations, set, collage, hand-drawn, overly detailed, skeuomorphic, shadows, outer border, frame, container shape, rounded square backdrop, card outline",
     "brand_tone": "Google Material Design, clean, minimal, consistent, modern, utilitarian",
     "style_rules": {
       "inspiration": "Google Material Symbols (fonts.google.com/icons)",
@@ -347,7 +347,8 @@ let motionLastFrameImage2d: { file: File; dataUrl: string; } | null = null;
     },
     "composition": {
       "elements": "exactly one icon, centered",
-      "margin": "15%"
+      "margin": "15%",
+      "forbidden": "no surrounding frame, no border, no container shape, no backdrop; icon strokes only"
     }
   }, null, 2);
 
