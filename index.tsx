@@ -9955,7 +9955,6 @@ Apply the main color (${objectColor}) thoughtfully as the primary/accent color o
   
   // 2D Studio Compare Modal Close Button
   const p2dCompareCloseBtn = $('#p2d-compare-close-btn');
-  const p2dCompareModal = $('#p2d-compare-modal');
   if (p2dCompareCloseBtn && p2dCompareModal) {
     p2dCompareCloseBtn.addEventListener('click', () => {
       p2dCompareModal.classList.add('hidden');
