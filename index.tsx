@@ -2595,15 +2595,19 @@ const motionTabContent = $('#image-details-panel .details-tab-content[data-tab-c
                     }
                 }
                 
-                // Slider handler
+                // Slider handler to reveal original image on the right side
                 const handleSliderChange = () => {
                     const value = compareSlider2d.valueAsNumber;
                     compareDivider2d.style.left = `${value}%`;
-                    // Clip current image to show only right side from divider
-                    if (currentContainer) {
-                        currentContainer.style.clipPath = `inset(0 ${100 - value}% 0 0)`;
+                    if (originalContainer) {
+                        originalContainer.style.clipPath = `inset(0 0 0 ${value}%)`;
                     }
                 };
+                
+                // Reset clip path before attaching listener
+                if (originalContainer) {
+                    originalContainer.style.clipPath = 'inset(0 0 0 50%)';
+                }
                 
                 // Remove existing listener and add new one
                 compareSlider2d.removeEventListener('input', handleSliderChange);
@@ -3035,15 +3039,19 @@ const motionTabContent = $('#image-details-panel .details-tab-content[data-tab-c
                     }
                 }
                 
-                // Slider handler
+                // Slider handler to reveal original image on the right side
                 const handleSliderChange = () => {
                     const value = compareSlider3d.valueAsNumber;
                     compareDivider3d.style.left = `${value}%`;
-                    // Clip current image to show only right side from divider
-                    if (currentContainer) {
-                        currentContainer.style.clipPath = `inset(0 ${100 - value}% 0 0)`;
+                    if (originalContainer) {
+                        originalContainer.style.clipPath = `inset(0 0 0 ${value}%)`;
                     }
                 };
+                
+                // Reset clip path before attaching listener
+                if (originalContainer) {
+                    originalContainer.style.clipPath = 'inset(0 0 0 50%)';
+                }
                 
                 // Remove existing listener and add new one
                 compareSlider3d.removeEventListener('input', handleSliderChange);
