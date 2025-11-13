@@ -5075,14 +5075,12 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
         }
       }, 10000); // Check every 10 seconds
       
-      // Use simpler conversion settings (faster, more reliable)
-      // Reduced fps and simpler scale for faster processing
       try {
         await ffmpeg.exec([
           '-i', 'input.mp4',
-          '-vf', 'fps=8,scale=400:-1',
+          '-vf', 'fps=8,scale=-1:1024,crop=1024:1024',
           '-loop', '0',
-          '-y', // Overwrite output file
+          '-y',
           'output.gif'
         ]);
         console.log('[GIF Conversion] FFmpeg exec completed');
