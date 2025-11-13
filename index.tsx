@@ -5078,7 +5078,7 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
       try {
         await ffmpeg.exec([
           '-i', 'input.mp4',
-          '-vf', 'fps=8,scale=-1:1024,crop=1024:1024',
+          '-vf', 'fps=8,scale=-1:720,crop=720:720',
           '-loop', '0',
           '-y',
           'output.gif'
