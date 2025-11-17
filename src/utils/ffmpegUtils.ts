@@ -251,3 +251,355 @@ export const convertVideoToGif = async (
   }
 };
 
+/**
+ * Convert video URL to WebM
+ * Uses FFmpeg with libvpx-vp9 codec for high quality and small file size
+ * @param videoUrl - URL of the video to convert
+ * @param onProgress - Optional callback for progress updates
+ * @returns Promise resolving to WebM data URL
+ */
+export const convertVideoToWebM = async (
+  videoUrl: string,
+  onProgress?: (message: string) => void
+): Promise<string> => {
+  let conversionTimeout: number | null = null;
+
+  try {
+    console.log('[WebM Conversion] Starting...', videoUrl);
+
+    conversionTimeout = window.setTimeout(() => {
+      console.error('[WebM Conversion] Timeout after 3 minutes');
+      showToast({
+        type: 'error',
+        title: 'Conversion Timeout',
+        body: 'WebM conversion is taking too long. Please try again or use a shorter video.',
+      });
+      throw new Error('Conversion timeout');
+    }, 3 * 60 * 1000);
+
+    console.log('[WebM Conversion] Loading FFmpeg...');
+    const ffmpeg = await loadFFmpeg();
+
+    let progressMessages: string[] = [];
+    let lastProgressTime = Date.now();
+
+    const progressHandler = ({ message }: { message: string }) => {
+      console.log('[FFmpeg Progress]', message);
+      progressMessages.push(message);
+      lastProgressTime = Date.now();
+
+      if (onProgress && progressMessages.length > 0) {
+        const lastMessage = progressMessages[progressMessages.length - 1];
+        if (lastMessage.includes('frame=') || lastMessage.includes('size=')) {
+          onProgress(`Converting to WebM... ${lastMessage}`);
+        } else {
+          onProgress('Converting to WebM... This may take a minute.');
+        }
+      }
+    };
+    ffmpeg.on('log', progressHandler);
+
+    console.log('[WebM Conversion] Fetching video file...');
+    const videoData = await fetchFile(videoUrl);
+    const videoDataSize =
+      videoData instanceof Uint8Array
+        ? videoData.length
+        : (videoData as any).byteLength || 0;
+    console.log('[WebM Conversion] Video data fetched, size:', videoDataSize);
+
+    if (videoDataSize === 0) {
+      throw new Error('Video file is empty');
+    }
+
+    console.log('[WebM Conversion] Writing input file...');
+    await ffmpeg.writeFile('input.mp4', videoData);
+
+    console.log('[WebM Conversion] Converting to WebM...');
+    if (onProgress) {
+      onProgress('Converting to WebM... This may take a minute.');
+    }
+
+    let progressCheckInterval: number | null = null;
+    progressCheckInterval = window.setInterval(() => {
+      const timeSinceLastProgress = Date.now() - lastProgressTime;
+      if (timeSinceLastProgress > 30000) {
+        console.warn(
+          '[WebM Conversion] No progress for 30 seconds, conversion may be stuck'
+        );
+        if (onProgress) {
+          onProgress('Conversion is taking longer than expected...');
+        }
+      }
+    }, 10000);
+
+    try {
+      // WebM conversion with VP9 codec for high quality and small file size
+      await ffmpeg.exec([
+        '-i',
+        'input.mp4',
+        '-c:v',
+        'libvpx-vp9',
+        '-crf',
+        '30', // Quality: 0-63, lower is better quality but larger file
+        '-b:v',
+        '0', // Use CRF mode
+        '-c:a',
+        'libopus',
+        '-b:a',
+        '128k',
+        '-f',
+        'webm',
+        '-y',
+        'output.webm',
+      ]);
+      console.log('[WebM Conversion] FFmpeg exec completed');
+    } finally {
+      if (progressCheckInterval) {
+        clearInterval(progressCheckInterval);
+      }
+      ffmpeg.off('log', progressHandler);
+    }
+
+    console.log('[WebM Conversion] Reading output...');
+    const webmData = await ffmpeg.readFile('output.webm');
+    const webmDataSize =
+      webmData instanceof Uint8Array
+        ? webmData.length
+        : (webmData as any).byteLength || 0;
+    console.log('[WebM Conversion] WebM data read, size:', webmDataSize);
+
+    if (webmDataSize === 0) {
+      throw new Error('Generated WebM file is empty');
+    }
+
+    let webmArray: Uint8Array;
+    if (webmData instanceof Uint8Array) {
+      webmArray = webmData;
+    } else {
+      const dataBuffer = (webmData as any).buffer || webmData;
+      webmArray =
+        dataBuffer instanceof ArrayBuffer
+          ? new Uint8Array(dataBuffer)
+          : new Uint8Array(dataBuffer as ArrayBufferLike);
+    }
+
+    const arrayBuffer = webmArray.buffer.slice(
+      webmArray.byteOffset,
+      webmArray.byteOffset + webmArray.byteLength
+    );
+    const webmBlob = new Blob([arrayBuffer], { type: 'video/webm' });
+    const webmUrl = URL.createObjectURL(webmBlob);
+
+    if (conversionTimeout) {
+      clearTimeout(conversionTimeout);
+      conversionTimeout = null;
+    }
+
+    console.log('[WebM Conversion] Complete!', webmUrl);
+    showToast({
+      type: 'success',
+      title: 'WebM Created!',
+      body: 'Your WebM video is ready.',
+    });
+
+    return webmUrl;
+  } catch (error) {
+    console.error('[WebM Conversion] Failed:', error);
+    console.error('[WebM Conversion] Error details:', {
+      name: (error as Error)?.name,
+      message: (error as Error)?.message,
+      stack: (error as Error)?.stack,
+    });
+
+    if (conversionTimeout) {
+      clearTimeout(conversionTimeout);
+    }
+
+    showToast({
+      type: 'error',
+      title: 'WebM Conversion Failed',
+      body:
+        (error as Error)?.message ||
+        'Failed to convert video to WebM. Please try again.',
+    });
+
+    throw error;
+  }
+};
+
+/**
+ * Convert video URL to WebP (animated)
+ * Uses FFmpeg with libwebp codec for animated WebP
+ * @param videoUrl - URL of the video to convert
+ * @param onProgress - Optional callback for progress updates
+ * @returns Promise resolving to WebP data URL
+ */
+export const convertVideoToWebP = async (
+  videoUrl: string,
+  onProgress?: (message: string) => void
+): Promise<string> => {
+  let conversionTimeout: number | null = null;
+
+  try {
+    console.log('[WebP Conversion] Starting...', videoUrl);
+
+    conversionTimeout = window.setTimeout(() => {
+      console.error('[WebP Conversion] Timeout after 3 minutes');
+      showToast({
+        type: 'error',
+        title: 'Conversion Timeout',
+        body: 'WebP conversion is taking too long. Please try again or use a shorter video.',
+      });
+      throw new Error('Conversion timeout');
+    }, 3 * 60 * 1000);
+
+    console.log('[WebP Conversion] Loading FFmpeg...');
+    const ffmpeg = await loadFFmpeg();
+
+    let progressMessages: string[] = [];
+    let lastProgressTime = Date.now();
+
+    const progressHandler = ({ message }: { message: string }) => {
+      console.log('[FFmpeg Progress]', message);
+      progressMessages.push(message);
+      lastProgressTime = Date.now();
+
+      if (onProgress && progressMessages.length > 0) {
+        const lastMessage = progressMessages[progressMessages.length - 1];
+        if (lastMessage.includes('frame=') || lastMessage.includes('size=')) {
+          onProgress(`Converting to WebP... ${lastMessage}`);
+        } else {
+          onProgress('Converting to WebP... This may take a minute.');
+        }
+      }
+    };
+    ffmpeg.on('log', progressHandler);
+
+    console.log('[WebP Conversion] Fetching video file...');
+    const videoData = await fetchFile(videoUrl);
+    const videoDataSize =
+      videoData instanceof Uint8Array
+        ? videoData.length
+        : (videoData as any).byteLength || 0;
+    console.log('[WebP Conversion] Video data fetched, size:', videoDataSize);
+
+    if (videoDataSize === 0) {
+      throw new Error('Video file is empty');
+    }
+
+    console.log('[WebP Conversion] Writing input file...');
+    await ffmpeg.writeFile('input.mp4', videoData);
+
+    console.log('[WebP Conversion] Converting to WebP...');
+    if (onProgress) {
+      onProgress('Converting to WebP... This may take a minute.');
+    }
+
+    let progressCheckInterval: number | null = null;
+    progressCheckInterval = window.setInterval(() => {
+      const timeSinceLastProgress = Date.now() - lastProgressTime;
+      if (timeSinceLastProgress > 30000) {
+        console.warn(
+          '[WebP Conversion] No progress for 30 seconds, conversion may be stuck'
+        );
+        if (onProgress) {
+          onProgress('Conversion is taking longer than expected...');
+        }
+      }
+    }, 10000);
+
+    try {
+      // WebP (animated) conversion with libwebp codec
+      // WebP supports animation and transparency
+      await ffmpeg.exec([
+        '-i',
+        'input.mp4',
+        '-vf',
+        'fps=10,scale=-1:720', // Limit to 10fps and max 720p for smaller file size
+        '-c:v',
+        'libwebp',
+        '-quality',
+        '80', // Quality: 0-100, higher is better quality but larger file
+        '-loop',
+        '0', // Loop forever
+        '-preset',
+        'default',
+        '-an', // Remove audio (WebP doesn't support audio)
+        '-y',
+        'output.webp',
+      ]);
+      console.log('[WebP Conversion] FFmpeg exec completed');
+    } finally {
+      if (progressCheckInterval) {
+        clearInterval(progressCheckInterval);
+      }
+      ffmpeg.off('log', progressHandler);
+    }
+
+    console.log('[WebP Conversion] Reading output...');
+    const webpData = await ffmpeg.readFile('output.webp');
+    const webpDataSize =
+      webpData instanceof Uint8Array
+        ? webpData.length
+        : (webpData as any).byteLength || 0;
+    console.log('[WebP Conversion] WebP data read, size:', webpDataSize);
+
+    if (webpDataSize === 0) {
+      throw new Error('Generated WebP file is empty');
+    }
+
+    let webpArray: Uint8Array;
+    if (webpData instanceof Uint8Array) {
+      webpArray = webpData;
+    } else {
+      const dataBuffer = (webpData as any).buffer || webpData;
+      webpArray =
+        dataBuffer instanceof ArrayBuffer
+          ? new Uint8Array(dataBuffer)
+          : new Uint8Array(dataBuffer as ArrayBufferLike);
+    }
+
+    const arrayBuffer = webpArray.buffer.slice(
+      webpArray.byteOffset,
+      webpArray.byteOffset + webpArray.byteLength
+    );
+    const webpBlob = new Blob([arrayBuffer], { type: 'image/webp' });
+    const webpUrl = URL.createObjectURL(webpBlob);
+
+    if (conversionTimeout) {
+      clearTimeout(conversionTimeout);
+      conversionTimeout = null;
+    }
+
+    console.log('[WebP Conversion] Complete!', webpUrl);
+    showToast({
+      type: 'success',
+      title: 'WebP Created!',
+      body: 'Your animated WebP is ready.',
+    });
+
+    return webpUrl;
+  } catch (error) {
+    console.error('[WebP Conversion] Failed:', error);
+    console.error('[WebP Conversion] Error details:', {
+      name: (error as Error)?.name,
+      message: (error as Error)?.message,
+      stack: (error as Error)?.stack,
+    });
+
+    if (conversionTimeout) {
+      clearTimeout(conversionTimeout);
+    }
+
+    showToast({
+      type: 'error',
+      title: 'WebP Conversion Failed',
+      body:
+        (error as Error)?.message ||
+        'Failed to convert video to WebP. Please try again.',
+    });
+
+    throw error;
+  }
+};
+

@@ -848,8 +848,6 @@
                                         <label for="p2d-motion-model-fast">Veo 3.1 Fast</label>
                                         <input type="radio" id="p2d-motion-model-hq" name="p2d-motion-model" value="veo-3.1-generate-preview" />
                                         <label for="p2d-motion-model-hq">Veo 3.1</label>
-                                        <input type="radio" id="p2d-motion-model-veo2" name="p2d-motion-model" value="veo-2.0-generate-001" />
-                                        <label for="p2d-motion-model-veo2">Veo 2.0</label>
                                     </div>
                                 </div>
                                 <div id="p2d-motion-prompt-output" class="hidden">
@@ -898,9 +896,21 @@
                                         <button id="p2d-convert-to-gif-btn" class="secondary-btn" style="width: 100%; justify-content: flex-start; gap: var(--spacing-2); border: none; background: transparent;">
                                             <span class="material-symbols-outlined">gif</span> Convert to GIF
                                         </button>
+                                        <button id="p2d-convert-to-webm-btn" class="secondary-btn" style="width: 100%; justify-content: flex-start; gap: var(--spacing-2); border: none; background: transparent;">
+                                            <span class="material-symbols-outlined">movie</span> Convert to WebM
+                                        </button>
+                                        <button id="p2d-convert-to-webp-btn" class="secondary-btn" style="width: 100%; justify-content: flex-start; gap: var(--spacing-2); border: none; background: transparent;">
+                                            <span class="material-symbols-outlined">image</span> Convert to WebP
+                                        </button>
                                     </div>
                                     <a href="#" id="p2d-download-gif-btn" class="secondary-btn hidden" download>
                                         <span class="material-symbols-outlined">download</span> GIF
+                                    </a>
+                                    <a href="#" id="p2d-download-webm-btn" class="secondary-btn hidden" download>
+                                        <span class="material-symbols-outlined">download</span> WebM
+                                    </a>
+                                    <a href="#" id="p2d-download-webp-btn" class="secondary-btn hidden" download>
+                                        <span class="material-symbols-outlined">download</span> WebP
                                     </a>
                                     <a href="#" id="p2d-download-video-btn" class="secondary-btn hidden" download>
                                         <span class="material-symbols-outlined">download</span> MP4
@@ -1256,8 +1266,6 @@
                                         <label for="model-fast">Veo 3.1 Fast</label>
                                         <input type="radio" id="model-hq" name="motion-model" value="veo-3.1-generate-preview" />
                                         <label for="model-hq">Veo 3.1</label>
-                                        <input type="radio" id="model-veo2" name="motion-model" value="veo-2.0-generate-001" />
-                                        <label for="model-veo2">Veo 2.0</label>
                                     </div>
                                 </div>
                                 <div id="motion-prompt-output" class="hidden">
@@ -1599,8 +1607,6 @@
                                         <label for="model-fast-image">Veo 3.1 Fast</label>
                                         <input type="radio" id="model-hq-image" name="motion-model-image" value="veo-3.1-generate-preview" />
                                         <label for="model-hq-image">Veo 3.1</label>
-                                        <input type="radio" id="model-veo2-image" name="motion-model-image" value="veo-2.0-generate-001" />
-                                        <label for="model-veo2-image">Veo 2.0</label>
                                     </div>
                                 </div>
                                 <div id="motion-prompt-output-image" class="hidden">
@@ -1774,9 +1780,7 @@
                     <div class="particle"></div>
                     <div class="particle"></div>
                 </div>
-                <h3 style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin: 0;">Generating your video...</h3>
-                <p id="video-loader-message" style="color: var(--text-secondary); font-size: 12px; margin: 0; min-height: 20px;"></p>
-                <p style="font-size: 11px; color: var(--text-secondary); opacity: 0.8; margin: 0;">This may take a few minutes.</p>
+                <p id="video-loader-message" style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin: 0;">Generating Video...</p>
             </div>
         </div>
       </div>

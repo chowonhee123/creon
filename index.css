@@ -2027,9 +2027,10 @@ a.secondary-btn[disabled] {
   align-items: center;
   padding: var(--spacing-2) var(--spacing-4) 0;
   flex-shrink: 0;
-  z-index: 2;
+  z-index: 10;
   position: relative;
   min-height: 48px;
+  background: var(--background-color, #ffffff);
 }
 
 .result-content-header-image {
@@ -2060,6 +2061,8 @@ a.secondary-btn[disabled] {
   min-height: 0;
   padding: var(--spacing-2);
   box-sizing: border-box;
+  margin-top: 0;
+  overflow: hidden;
 }
 .result-placeholder-content,
 .result-placeholder {
@@ -2079,6 +2082,7 @@ a.secondary-btn[disabled] {
   height: auto;
   max-width: 100%;
   max-height: 100%;
+  z-index: 1;
 }
 
 .result-placeholder-content {
@@ -3325,7 +3329,9 @@ canvas[style*="position: fixed"] {
   display: flex;
   gap: var(--spacing-4);
   position: relative;
-  z-index: 1;
+  z-index: 11;
+  background: var(--background-color, #ffffff);
+  padding: var(--spacing-2) 0;
 }
 
 .preview-tab-item {
@@ -4037,6 +4043,8 @@ canvas[style*="position: fixed"] {
 
 #motion-prompt-placeholder.result-placeholder-content {
     gap: var(--spacing-4);
+    z-index: 2;
+    position: relative;
 }
 
 .motion-placeholder-icon {

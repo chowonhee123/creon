@@ -12,6 +12,8 @@ interface DetailsPanelProps {
   onRemoveBackground: () => Promise<void>;
   onConvertToSVG: () => Promise<void>;
   onConvertToGif?: () => Promise<void>;
+  onConvertToWebM?: () => Promise<void>;
+  onConvertToWebP?: () => Promise<void>;
   onCopy: () => void;
   onDelete: () => void;
   onDownload: () => void;
@@ -33,6 +35,8 @@ export const DetailsPanel: React.FC<DetailsPanelProps> = ({
   onRemoveBackground,
   onConvertToSVG,
   onConvertToGif,
+  onConvertToWebM,
+  onConvertToWebP,
   onCopy,
   onDelete,
   onDownload,
@@ -280,13 +284,14 @@ export const DetailsPanel: React.FC<DetailsPanelProps> = ({
                       </Button>
                     </div>
 
-                    {/* GIF Conversion - Show if video exists */}
+                    {/* Video Format Conversions - Show if video exists */}
                     {image?.videoDataUrl && (
-                      <div style={{ marginTop: 'var(--spacing-2)' }}>
-                        {image.gifDataUrl ? (
+                      <div style={{ marginTop: 'var(--spacing-2)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)' }}>
+                        {/* WebM Conversion */}
+                        {image.webmDataUrl ? (
                           <a
-                            href={image.gifDataUrl}
-                            download={`${image.subject.replace(/\s+/g, '_')}_motion.gif`}
+                            href={image.webmDataUrl}
+                            download={`${image.subject.replace(/\s+/g, '_')}_motion.webm`}
                             style={{ textDecoration: 'none', display: 'block' }}
                           >
                             <Button
@@ -295,18 +300,48 @@ export const DetailsPanel: React.FC<DetailsPanelProps> = ({
                               className="primary-btn"
                             >
                               <span className="material-symbols-outlined">download</span>
-                              Download GIF
+                              Download WebM
                             </Button>
                           </a>
                         ) : (
                           <Button
                             variant="solid"
                             fullWidth
-                            onClick={onConvertToGif}
+                            onClick={onConvertToWebM}
                             className="primary-btn"
+                            disabled={!onConvertToWebM}
                           >
-                            <span className="material-symbols-outlined">gif_box</span>
-                            Convert to GIF
+                            <span className="material-symbols-outlined">movie</span>
+                            Convert to WebM
+                          </Button>
+                        )}
+
+                        {/* WebP Conversion */}
+                        {image.webpDataUrl ? (
+                          <a
+                            href={image.webpDataUrl}
+                            download={`${image.subject.replace(/\s+/g, '_')}_motion.webp`}
+                            style={{ textDecoration: 'none', display: 'block' }}
+                          >
+                            <Button
+                              variant="solid"
+                              fullWidth
+                              className="primary-btn"
+                            >
+                              <span className="material-symbols-outlined">download</span>
+                              Download WebP
+                            </Button>
+                          </a>
+                        ) : (
+                          <Button
+                            variant="solid"
+                            fullWidth
+                            onClick={onConvertToWebP}
+                            className="primary-btn"
+                            disabled={!onConvertToWebP}
+                          >
+                            <span className="material-symbols-outlined">image</span>
+                            Convert to WebP
                           </Button>
                         )}
                       </div>

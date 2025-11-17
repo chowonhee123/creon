@@ -17,7 +17,7 @@ import {
   blobToBase64DataUrl,
   normalizeHex
 } from '../utils/imageUtils';
-import { convertVideoToGif } from '../../../../utils/ffmpegUtils';
+import { convertVideoToGif, convertVideoToWebM, convertVideoToWebP } from '../../../../utils/ffmpegUtils';
 
 /**
  * Main 2D Studio page component.
@@ -573,6 +573,138 @@ export const Studio2DPage: React.FC = () => {
     setDetailsPanelHistoryIndex2d,
   ]);
 
+  // Handle WebM conversion
+  const handleConvertToWebM = useCallback(async () => {
+    if (!currentGeneratedImage2d || !currentGeneratedImage2d.videoDataUrl) {
+      showToast({
+        type: 'error',
+        title: 'No Video',
+        body: 'Please generate a video first.',
+      });
+      return;
+    }
+
+    setIsLoadingModalVisible(true);
+    setLoadingMessage('Loading video converter...');
+
+    try {
+      const webmUrl = await convertVideoToWebM(
+        currentGeneratedImage2d.videoDataUrl,
+        (message) => setLoadingMessage(message)
+      );
+
+      // Update image with WebM URL
+      const updatedImage: GeneratedImageData = {
+        ...currentGeneratedImage2d,
+        webmDataUrl: webmUrl,
+        modificationType: currentGeneratedImage2d.modificationType || 'WebM',
+      };
+
+      setCurrentGeneratedImage2d(updatedImage);
+
+      // Update in history
+      setImageHistory2d((prev) =>
+        prev.map((item) =>
+          item.id === currentGeneratedImage2d.id ? updatedImage : item
+        )
+      );
+
+      // Add to details panel history
+      setDetailsPanelHistory2d((prev) => {
+        const newHistory = [...prev, updatedImage];
+        return newHistory;
+      });
+      setDetailsPanelHistoryIndex2d((prev) => prev + 1);
+
+      showToast({
+        type: 'success',
+        title: 'WebM Created! ✅',
+        body: 'Your WebM video is ready.',
+      });
+    } catch (error) {
+      console.error('WebM conversion failed:', error);
+      showToast({
+        type: 'error',
+        title: 'Conversion Failed',
+        body: 'Failed to convert video to WebM. Please try again.',
+      });
+    } finally {
+      setIsLoadingModalVisible(false);
+    }
+  }, [
+    currentGeneratedImage2d,
+    setCurrentGeneratedImage2d,
+    setImageHistory2d,
+    setDetailsPanelHistory2d,
+    setDetailsPanelHistoryIndex2d,
+  ]);
+
+  // Handle WebP conversion
+  const handleConvertToWebP = useCallback(async () => {
+    if (!currentGeneratedImage2d || !currentGeneratedImage2d.videoDataUrl) {
+      showToast({
+        type: 'error',
+        title: 'No Video',
+        body: 'Please generate a video first.',
+      });
+      return;
+    }
+
+    setIsLoadingModalVisible(true);
+    setLoadingMessage('Loading video converter...');
+
+    try {
+      const webpUrl = await convertVideoToWebP(
+        currentGeneratedImage2d.videoDataUrl,
+        (message) => setLoadingMessage(message)
+      );
+
+      // Update image with WebP URL
+      const updatedImage: GeneratedImageData = {
+        ...currentGeneratedImage2d,
+        webpDataUrl: webpUrl,
+        modificationType: currentGeneratedImage2d.modificationType || 'WebP',
+      };
+
+      setCurrentGeneratedImage2d(updatedImage);
+
+      // Update in history
+      setImageHistory2d((prev) =>
+        prev.map((item) =>
+          item.id === currentGeneratedImage2d.id ? updatedImage : item
+        )
+      );
+
+      // Add to details panel history
+      setDetailsPanelHistory2d((prev) => {
+        const newHistory = [...prev, updatedImage];
+        return newHistory;
+      });
+      setDetailsPanelHistoryIndex2d((prev) => prev + 1);
+
+      showToast({
+        type: 'success',
+        title: 'WebP Created! ✅',
+        body: 'Your animated WebP is ready.',
+      });
+    } catch (error) {
+      console.error('WebP conversion failed:', error);
+      showToast({
+        type: 'error',
+        title: 'Conversion Failed',
+        body: 'Failed to convert video to WebP. Please try again.',
+      });
+    } finally {
+      setIsLoadingModalVisible(false);
+    }
+  }, [
+    currentGeneratedImage2d,
+    setCurrentGeneratedImage2d,
+    setImageHistory2d,
+    setDetailsPanelHistory2d,
+    setDetailsPanelHistoryIndex2d,
+  ]);
+
   // Handle copy
   const handleCopy = useCallback(() => {
     if (!currentGeneratedImage2d) return;
@@ -786,6 +918,8 @@ export const Studio2DPage: React.FC = () => {
           onRemoveBackground={handleRemoveBackground}
           onConvertToSVG={handleConvertToSVG}
           onConvertToGif={handleConvertToGif}
+          onConvertToWebM={handleConvertToWebM}
+          onConvertToWebP={handleConvertToWebP}
           onCopy={handleCopy}
           onDelete={handleDelete}
           onDownload={handleDownload}

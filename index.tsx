@@ -9,6 +9,7 @@ import {marked} from 'https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js';
 import ImageTracer from 'imagetracerjs';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile } from '@ffmpeg/util';
+// WebM/WebP conversion functions will be defined inline below
 
 // --- TYPE DEFINITIONS ---
 interface IconData {
@@ -32,6 +33,8 @@ type GeneratedImageData = {
   timestamp: number;
   videoDataUrl?: string;
   gifDataUrl?: string;
+  webmDataUrl?: string;
+  webpDataUrl?: string;
   motionPrompt?: { json: any, korean: string, english:string } | null;
   originalData?: string; // Original image data before fix
   originalMimeType?: string; // Original image mimeType before fix
@@ -1266,6 +1269,10 @@ const p2dDownloadButtonsRow = $('.p2d-motion-actions .download-buttons-row') as 
 const p2dDownloadVideoBtn = $('#p2d-download-video-btn') as HTMLAnchorElement;
 const p2dDownloadGifBtn = $('#p2d-download-gif-btn') as HTMLAnchorElement;
 const p2dConvertToGifBtn = $('#p2d-convert-to-gif-btn');
+const p2dConvertToWebmBtn = $('#p2d-convert-to-webm-btn');
+const p2dConvertToWebpBtn = $('#p2d-convert-to-webp-btn');
+const p2dDownloadWebmBtn = $('#p2d-download-webm-btn') as HTMLAnchorElement;
+const p2dDownloadWebpBtn = $('#p2d-download-webp-btn') as HTMLAnchorElement;
 const p2dMotionReferenceInput = $('#p2d-motion-reference-image-input') as HTMLInputElement;
 const p2dMotionReferenceContainer = $('#p2d-motion-reference-image-container');
 
@@ -1323,31 +1330,101 @@ const getLoaderMarkup = (message: string) => `
 `;
 
 const extractVideoDownloadUrl = (operation: any): string | null => {
-    if (!operation) return null;
-    const videoEntry = operation.response?.generatedVideos?.[0] ?? operation.generatedVideos?.[0];
-    if (!videoEntry) return null;
-
-    const videoObj = videoEntry.video ?? {};
+    if (!operation) {
+        console.error('[extractVideoDownloadUrl] Operation is null or undefined');
+        return null;
+    }
+    
+    console.log('[extractVideoDownloadUrl] Full operation object:', JSON.stringify(operation, null, 2));
+    
+    // Try multiple paths to find the video
+    let videoEntry = null;
+    
+    // Path 1: operation.response.generatedVideos[0]
+    if (operation.response?.generatedVideos?.[0]) {
+        videoEntry = operation.response.generatedVideos[0];
+        console.log('[extractVideoDownloadUrl] Found video via operation.response.generatedVideos[0]');
+    }
+    // Path 2: operation.generatedVideos[0]
+    else if (operation.generatedVideos?.[0]) {
+        videoEntry = operation.generatedVideos[0];
+        console.log('[extractVideoDownloadUrl] Found video via operation.generatedVideos[0]');
+    }
+    // Path 3: operation.response.video
+    else if (operation.response?.video) {
+        videoEntry = operation.response.video;
+        console.log('[extractVideoDownloadUrl] Found video via operation.response.video');
+    }
+    // Path 4: operation.video
+    else if (operation.video) {
+        videoEntry = operation.video;
+        console.log('[extractVideoDownloadUrl] Found video via operation.video');
+    }
+    // Path 5: operation.response (if it's the video object itself)
+    else if (operation.response && typeof operation.response === 'object') {
+        videoEntry = operation.response;
+        console.log('[extractVideoDownloadUrl] Using operation.response as video entry');
+    }
+    
+    if (!videoEntry) {
+        console.error('[extractVideoDownloadUrl] No video entry found in operation');
+        console.error('[extractVideoDownloadUrl] Available keys:', Object.keys(operation));
+        if (operation.response) {
+            console.error('[extractVideoDownloadUrl] Response keys:', Object.keys(operation.response));
+        }
+        return null;
+    }
+    
+    console.log('[extractVideoDownloadUrl] Video entry:', JSON.stringify(videoEntry, null, 2));
+    
+    const videoObj = videoEntry.video ?? videoEntry;
     const candidates: Array<string | undefined> = [
         videoObj.downloadUri,
         videoObj.uri,
         videoObj.url,
         videoObj.signedUri,
+        videoObj.downloadUrl,
+        videoObj.videoUri,
         videoEntry.videoUri,
         videoEntry.uri,
         videoEntry.downloadUri,
+        videoEntry.url,
+        videoEntry.downloadUrl,
+        videoEntry.signedUri,
     ];
-
-    if (Array.isArray(videoObj.uris)) {
+    
+    // Also check nested paths
+    if (videoObj.uris && Array.isArray(videoObj.uris)) {
         candidates.push(...videoObj.uris);
     }
-
-    if (Array.isArray(videoEntry.uris)) {
+    
+    if (videoEntry.uris && Array.isArray(videoEntry.uris)) {
         candidates.push(...videoEntry.uris);
     }
-
+    
+    // Check if there's a nested video object
+    if (videoEntry.video) {
+        const nestedVideo = videoEntry.video;
+        candidates.push(
+            nestedVideo.downloadUri,
+            nestedVideo.uri,
+            nestedVideo.url,
+            nestedVideo.signedUri,
+            nestedVideo.downloadUrl,
+        );
+    }
+    
+    console.log('[extractVideoDownloadUrl] Candidates:', candidates);
+    
     const firstValid = candidates.find((value) => typeof value === 'string' && value.length > 0);
-    return firstValid ?? null;
+    
+    if (firstValid) {
+        console.log('[extractVideoDownloadUrl] Found valid URL:', firstValid);
+        return firstValid;
+    }
+    
+    console.error('[extractVideoDownloadUrl] No valid URL found in candidates');
+    return null;
 };
   
   // Image Modal
@@ -1682,6 +1759,12 @@ const extractVideoDownloadUrl = (operation: any): string | null => {
                 videoTab.classList.add('active');
                 if (imageTab) imageTab.classList.remove('active');
                 
+                // Ensure header is visible
+                const header3d = resultItemMain3d.querySelector('.result-content-header');
+                if (header3d) {
+                  header3d.classList.remove('hidden');
+                }
+                
                 // Update preview content
                 const resultImage3d = $('#result-image') as HTMLImageElement;
                 const resultVideo3d = $('#result-video') as HTMLVideoElement;
@@ -1698,7 +1781,14 @@ const extractVideoDownloadUrl = (operation: any): string | null => {
                   if (motionPromptPlaceholder3d) motionPromptPlaceholder3d.classList.add('hidden');
                 } else {
                   if (resultVideo3d) resultVideo3d.classList.add('hidden');
-                  if (motionPromptPlaceholder3d) motionPromptPlaceholder3d.classList.remove('hidden');
+                  if (motionPromptPlaceholder3d) {
+                    motionPromptPlaceholder3d.classList.remove('hidden');
+                    // Ensure placeholder is visible and positioned correctly
+                    motionPromptPlaceholder3d.style.display = 'flex';
+                    motionPromptPlaceholder3d.style.position = 'absolute';
+                    motionPromptPlaceholder3d.style.inset = '0';
+                    motionPromptPlaceholder3d.style.zIndex = '2';
+                  }
                 }
                 if (resultIdlePlaceholder3d) resultIdlePlaceholder3d.classList.add('hidden');
               }
@@ -2632,12 +2722,54 @@ const extractVideoDownloadUrl = (operation: any): string | null => {
         }
     }
 
-    // Convert to GIF button is in more menu
+    // WebM download button
+    const hasWebm = !!currentGeneratedImage2d.webmDataUrl;
+    if (p2dDownloadWebmBtn) {
+        if (hasWebm) {
+            const webmUrl = currentGeneratedImage2d.webmDataUrl!;
+            p2dDownloadWebmBtn.href = webmUrl;
+            p2dDownloadWebmBtn.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}_motion.webm`;
+            p2dDownloadWebmBtn.classList.remove('hidden');
+        } else {
+            p2dDownloadWebmBtn.classList.add('hidden');
+            p2dDownloadWebmBtn.removeAttribute('href');
+        }
+    }
+
+    // WebP download button
+    const hasWebp = !!currentGeneratedImage2d.webpDataUrl;
+    if (p2dDownloadWebpBtn) {
+        if (hasWebp) {
+            const webpUrl = currentGeneratedImage2d.webpDataUrl!;
+            p2dDownloadWebpBtn.href = webpUrl;
+            p2dDownloadWebpBtn.download = `${currentGeneratedImage2d.subject.replace(/\s+/g, '_')}_motion.webp`;
+            p2dDownloadWebpBtn.classList.remove('hidden');
+        } else {
+            p2dDownloadWebpBtn.classList.add('hidden');
+            p2dDownloadWebpBtn.removeAttribute('href');
+        }
+    }
+
+    // Convert buttons in more menu
     if (p2dConvertToGifBtn) {
         if (hasVideo && !hasGif) {
             p2dConvertToGifBtn.classList.remove('hidden');
         } else {
             p2dConvertToGifBtn.classList.add('hidden');
+        }
+    }
+    if (p2dConvertToWebmBtn) {
+        if (hasVideo && !hasWebm) {
+            p2dConvertToWebmBtn.classList.remove('hidden');
+        } else {
+            p2dConvertToWebmBtn.classList.add('hidden');
+        }
+    }
+    if (p2dConvertToWebpBtn) {
+        if (hasVideo && !hasWebp) {
+            p2dConvertToWebpBtn.classList.remove('hidden');
+        } else {
+            p2dConvertToWebpBtn.classList.add('hidden');
         }
     }
 
@@ -5253,15 +5385,10 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
     updateButtonLoadingState(regenerateVideoBtn, true);
     isGeneratingVideo = true;
 
-    // Show modal and start messages
+    // Show modal
     if (videoGenerationLoaderModal && videoLoaderMessage) {
         videoGenerationLoaderModal.classList.remove('hidden');
-        let messageIndex = 0;
-        videoLoaderMessage.textContent = VIDEO_LOADER_MESSAGES[messageIndex];
-        videoMessageInterval = window.setInterval(() => {
-            messageIndex = (messageIndex + 1) % VIDEO_LOADER_MESSAGES.length;
-            videoLoaderMessage.textContent = VIDEO_LOADER_MESSAGES[messageIndex];
-        }, 3000);
+        videoLoaderMessage.textContent = 'Generating Video...';
     }
     
     try {
@@ -5376,15 +5503,10 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
     updateButtonLoadingState(regenerateVideoBtnStudio, true);
     isGeneratingVideo = true;
 
-    // Show modal and start messages
+    // Show modal
     if (videoGenerationLoaderModal && videoLoaderMessage) {
         videoGenerationLoaderModal.classList.remove('hidden');
-        let messageIndex = 0;
-        videoLoaderMessage.textContent = VIDEO_LOADER_MESSAGES[messageIndex];
-        videoMessageInterval = window.setInterval(() => {
-            messageIndex = (messageIndex + 1) % VIDEO_LOADER_MESSAGES.length;
-            videoLoaderMessage.textContent = VIDEO_LOADER_MESSAGES[messageIndex];
-        }, 3000);
+        videoLoaderMessage.textContent = 'Generating Video...';
     }
     
     try {
@@ -5713,6 +5835,353 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
     }
   };
 
+  const convertVideoToWebM = async (videoUrl: string, onProgress?: (message: string) => void) => {
+    let conversionTimeout: number | null = null;
+    
+    try {
+      console.log('[WebM Conversion] Starting...', videoUrl);
+      
+      conversionTimeout = window.setTimeout(() => {
+        console.error('[WebM Conversion] Timeout after 3 minutes');
+        showToast({
+          type: 'error',
+          title: 'Conversion Timeout',
+          body: 'WebM conversion is taking too long. Please try again or use a shorter video.',
+        });
+        throw new Error('Conversion timeout');
+      }, 3 * 60 * 1000);
+      
+      console.log('[WebM Conversion] Loading FFmpeg...');
+      const ffmpeg = await loadFFmpeg();
+      
+      let progressMessages: string[] = [];
+      let lastProgressTime = Date.now();
+      
+      const progressHandler = ({ message }: { message: string }) => {
+        console.log('[FFmpeg Progress]', message);
+        progressMessages.push(message);
+        lastProgressTime = Date.now();
+        
+        if (onProgress && progressMessages.length > 0) {
+          const lastMessage = progressMessages[progressMessages.length - 1];
+          if (lastMessage.includes('frame=') || lastMessage.includes('size=')) {
+            onProgress(`Converting to WebM... ${lastMessage}`);
+          } else {
+            onProgress('Converting to WebM... This may take a minute.');
+          }
+        }
+      };
+      ffmpeg.on('log', progressHandler);
+      
+      console.log('[WebM Conversion] Fetching video file...');
+      const videoData = await fetchFile(videoUrl);
+      const videoDataSize = videoData instanceof Uint8Array ? videoData.length : (videoData as any).byteLength || 0;
+      console.log('[WebM Conversion] Video data fetched, size:', videoDataSize);
+      
+      if (videoDataSize === 0) {
+        throw new Error('Video file is empty');
+      }
+      
+      console.log('[WebM Conversion] Writing input file...');
+      await ffmpeg.writeFile('input.mp4', videoData);
+      
+      console.log('[WebM Conversion] Converting to WebM...');
+      if (onProgress) {
+        onProgress('Converting to WebM... This may take a minute.');
+      }
+      
+      let progressCheckInterval: number | null = null;
+      progressCheckInterval = window.setInterval(() => {
+        const timeSinceLastProgress = Date.now() - lastProgressTime;
+        if (timeSinceLastProgress > 30000) {
+          console.warn('[WebM Conversion] No progress for 30 seconds, conversion may be stuck');
+          if (onProgress) {
+            onProgress('Conversion is taking longer than expected...');
+          }
+        }
+      }, 10000);
+      
+      try {
+        // Try with libvpx-vp9 first, fallback to libvpx if not available
+        try {
+          await ffmpeg.exec([
+            '-i', 'input.mp4',
+            '-c:v', 'libvpx-vp9',
+            '-crf', '30',
+            '-b:v', '0',
+            '-c:a', 'libopus',
+            '-b:a', '128k',
+            '-f', 'webm',
+            '-y', 'output.webm',
+          ]);
+          console.log('[WebM Conversion] FFmpeg exec completed with libvpx-vp9');
+        } catch (vp9Error) {
+          console.warn('[WebM Conversion] libvpx-vp9 failed, trying libvpx:', vp9Error);
+          // Fallback to libvpx (VP8)
+          await ffmpeg.exec([
+            '-i', 'input.mp4',
+            '-c:v', 'libvpx',
+            '-crf', '30',
+            '-b:v', '0',
+            '-c:a', 'libvorbis',
+            '-b:a', '128k',
+            '-f', 'webm',
+            '-y', 'output.webm',
+          ]);
+          console.log('[WebM Conversion] FFmpeg exec completed with libvpx (VP8)');
+        }
+      } catch (execError) {
+        console.error('[WebM Conversion] FFmpeg exec failed:', execError);
+        console.error('[WebM Conversion] Error details:', {
+          name: (execError as Error)?.name,
+          message: (execError as Error)?.message,
+          stack: (execError as Error)?.stack,
+        });
+        throw execError;
+      } finally {
+        if (progressCheckInterval) {
+          clearInterval(progressCheckInterval);
+        }
+        ffmpeg.off('log', progressHandler);
+      }
+      
+      console.log('[WebM Conversion] Reading output...');
+      const webmData = await ffmpeg.readFile('output.webm');
+      const webmDataSize = webmData instanceof Uint8Array ? webmData.length : (webmData as any).byteLength || 0;
+      console.log('[WebM Conversion] WebM data read, size:', webmDataSize);
+      
+      if (webmDataSize === 0) {
+        throw new Error('Generated WebM file is empty');
+      }
+      
+      let webmArray: Uint8Array;
+      if (webmData instanceof Uint8Array) {
+        webmArray = webmData;
+      } else {
+        const dataBuffer = (webmData as any).buffer || webmData;
+        webmArray = dataBuffer instanceof ArrayBuffer
+          ? new Uint8Array(dataBuffer)
+          : new Uint8Array(dataBuffer as ArrayBufferLike);
+      }
+      
+      const arrayBuffer = webmArray.buffer.slice(
+        webmArray.byteOffset,
+        webmArray.byteOffset + webmArray.byteLength
+      );
+      const webmBlob = new Blob([arrayBuffer], { type: 'video/webm' });
+      const webmUrl = URL.createObjectURL(webmBlob);
+      
+      if (conversionTimeout) {
+        clearTimeout(conversionTimeout);
+        conversionTimeout = null;
+      }
+      
+      console.log('[WebM Conversion] Complete!', webmUrl);
+      showToast({
+        type: 'success',
+        title: 'WebM Created!',
+        body: 'Your WebM video is ready.',
+      });
+      
+      return webmUrl;
+    } catch (error) {
+      console.error('[WebM Conversion] Failed:', error);
+      console.error('[WebM Conversion] Error details:', {
+        name: (error as Error)?.name,
+        message: (error as Error)?.message,
+        stack: (error as Error)?.stack,
+      });
+      
+      if (conversionTimeout) {
+        clearTimeout(conversionTimeout);
+      }
+      
+      showToast({
+        type: 'error',
+        title: 'WebM Conversion Failed',
+        body: (error as Error)?.message || 'Failed to convert video to WebM. Please try again.',
+      });
+      
+      throw error;
+    }
+  };
+
+  const convertVideoToWebP = async (videoUrl: string, onProgress?: (message: string) => void) => {
+    let conversionTimeout: number | null = null;
+    
+    try {
+      console.log('[WebP Conversion] Starting...', videoUrl);
+      console.log('[WebP Conversion] Video URL type:', typeof videoUrl);
+      console.log('[WebP Conversion] Video URL:', videoUrl);
+      
+      conversionTimeout = window.setTimeout(() => {
+        console.error('[WebP Conversion] Timeout after 3 minutes');
+        showToast({
+          type: 'error',
+          title: 'Conversion Timeout',
+          body: 'WebP conversion is taking too long. Please try again or use a shorter video.',
+        });
+        throw new Error('Conversion timeout');
+      }, 3 * 60 * 1000);
+      
+      console.log('[WebP Conversion] Loading FFmpeg...');
+      const ffmpeg = await loadFFmpeg();
+      
+      let progressMessages: string[] = [];
+      let lastProgressTime = Date.now();
+      
+      const progressHandler = ({ message }: { message: string }) => {
+        console.log('[FFmpeg Progress]', message);
+        progressMessages.push(message);
+        lastProgressTime = Date.now();
+        
+        if (onProgress && progressMessages.length > 0) {
+          const lastMessage = progressMessages[progressMessages.length - 1];
+          if (lastMessage.includes('frame=') || lastMessage.includes('size=')) {
+            onProgress(`Converting to WebP... ${lastMessage}`);
+          } else {
+            onProgress('Converting to WebP... This may take a minute.');
+          }
+        }
+      };
+      ffmpeg.on('log', progressHandler);
+      
+      console.log('[WebP Conversion] Fetching video file...');
+      const videoData = await fetchFile(videoUrl);
+      const videoDataSize = videoData instanceof Uint8Array ? videoData.length : (videoData as any).byteLength || 0;
+      console.log('[WebP Conversion] Video data fetched, size:', videoDataSize);
+      
+      if (videoDataSize === 0) {
+        throw new Error('Video file is empty');
+      }
+      
+      console.log('[WebP Conversion] Writing input file...');
+      await ffmpeg.writeFile('input.mp4', videoData);
+      
+      console.log('[WebP Conversion] Converting to WebP...');
+      if (onProgress) {
+        onProgress('Converting to WebP... This may take a minute.');
+      }
+      
+      let progressCheckInterval: number | null = null;
+      progressCheckInterval = window.setInterval(() => {
+        const timeSinceLastProgress = Date.now() - lastProgressTime;
+        if (timeSinceLastProgress > 30000) {
+          console.warn('[WebP Conversion] No progress for 30 seconds, conversion may be stuck');
+          if (onProgress) {
+            onProgress('Conversion is taking longer than expected...');
+          }
+        }
+      }, 10000);
+      
+      try {
+        // Try with libwebp first
+        try {
+          await ffmpeg.exec([
+            '-i', 'input.mp4',
+            '-vf', 'fps=10,scale=-1:720',
+            '-c:v', 'libwebp',
+            '-quality', '80',
+            '-loop', '0',
+            '-preset', 'default',
+            '-an',
+            '-y', 'output.webp',
+          ]);
+          console.log('[WebP Conversion] FFmpeg exec completed with libwebp');
+        } catch (webpError) {
+          console.warn('[WebP Conversion] libwebp failed, trying alternative method:', webpError);
+          // Fallback: Convert to GIF first, then use a different approach
+          // Since WebP animation might not be supported, we'll try a simpler approach
+          await ffmpeg.exec([
+            '-i', 'input.mp4',
+            '-vf', 'fps=10,scale=-1:720',
+            '-c:v', 'libwebp',
+            '-lossless', '0',
+            '-quality', '80',
+            '-loop', '0',
+            '-an',
+            '-y', 'output.webp',
+          ]);
+          console.log('[WebP Conversion] FFmpeg exec completed with alternative libwebp settings');
+        }
+      } catch (execError) {
+        console.error('[WebP Conversion] FFmpeg exec failed:', execError);
+        console.error('[WebP Conversion] Error details:', {
+          name: (execError as Error)?.name,
+          message: (execError as Error)?.message,
+          stack: (execError as Error)?.stack,
+        });
+        // Check if libwebp is available
+        console.error('[WebP Conversion] Note: libwebp codec might not be available in browser FFmpeg build');
+        throw execError;
+      } finally {
+        if (progressCheckInterval) {
+          clearInterval(progressCheckInterval);
+        }
+        ffmpeg.off('log', progressHandler);
+      }
+      
+      console.log('[WebP Conversion] Reading output...');
+      const webpData = await ffmpeg.readFile('output.webp');
+      const webpDataSize = webpData instanceof Uint8Array ? webpData.length : (webpData as any).byteLength || 0;
+      console.log('[WebP Conversion] WebP data read, size:', webpDataSize);
+      
+      if (webpDataSize === 0) {
+        throw new Error('Generated WebP file is empty');
+      }
+      
+      let webpArray: Uint8Array;
+      if (webpData instanceof Uint8Array) {
+        webpArray = webpData;
+      } else {
+        const dataBuffer = (webpData as any).buffer || webpData;
+        webpArray = dataBuffer instanceof ArrayBuffer
+          ? new Uint8Array(dataBuffer)
+          : new Uint8Array(dataBuffer as ArrayBufferLike);
+      }
+      
+      const arrayBuffer = webpArray.buffer.slice(
+        webpArray.byteOffset,
+        webpArray.byteOffset + webpArray.byteLength
+      );
+      const webpBlob = new Blob([arrayBuffer], { type: 'image/webp' });
+      const webpUrl = URL.createObjectURL(webpBlob);
+      
+      if (conversionTimeout) {
+        clearTimeout(conversionTimeout);
+        conversionTimeout = null;
+      }
+      
+      console.log('[WebP Conversion] Complete!', webpUrl);
+      showToast({
+        type: 'success',
+        title: 'WebP Created!',
+        body: 'Your animated WebP is ready.',
+      });
+      
+      return webpUrl;
+    } catch (error) {
+      console.error('[WebP Conversion] Failed:', error);
+      console.error('[WebP Conversion] Error details:', {
+        name: (error as Error)?.name,
+        message: (error as Error)?.message,
+        stack: (error as Error)?.stack,
+      });
+      
+      if (conversionTimeout) {
+        clearTimeout(conversionTimeout);
+      }
+      
+      showToast({
+        type: 'error',
+        title: 'WebP Conversion Failed',
+        body: (error as Error)?.message || 'Failed to convert video to WebP. Please try again.',
+      });
+      
+      throw error;
+    }
+  };
+
   const handleConvertToGif2d = async () => {
     if (!currentGeneratedImage2d || !currentGeneratedImage2d.videoDataUrl) {
       showToast({ type: 'error', title: 'No Video', body: 'Generate a video first.' });
@@ -5758,6 +6227,96 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
     }
   };
 
+  const handleConvertToWebm2d = async () => {
+    if (!currentGeneratedImage2d || !currentGeneratedImage2d.videoDataUrl) {
+      showToast({ type: 'error', title: 'No Video', body: 'Generate a video first.' });
+      return;
+    }
+    
+    console.log('[2D WebM] Starting conversion...', currentGeneratedImage2d.videoDataUrl);
+    
+    // Show loading modal
+    if (p2dLoaderModal && p2dLoaderMessage) {
+      p2dLoaderMessage.textContent = 'Converting to WebM...';
+      p2dLoaderModal.classList.remove('hidden');
+    }
+    
+    try {
+      const webmUrl = await convertVideoToWebM(
+        currentGeneratedImage2d.videoDataUrl,
+        (message) => {
+          if (p2dLoaderMessage) p2dLoaderMessage.textContent = message;
+        }
+      );
+      
+      console.log('[2D WebM] Conversion successful, updating state...');
+      currentGeneratedImage2d.webmDataUrl = webmUrl;
+      const historyItem = imageHistory2d.find(item => item.id === currentGeneratedImage2d!.id);
+      if (historyItem) {
+        historyItem.webmDataUrl = webmUrl;
+      }
+      
+      // Close more menu after conversion
+      p2dMotionMoreMenu?.classList.add('hidden');
+      
+      updateMotionUI2d();
+      console.log('[2D WebM] State updated successfully');
+    } catch (error) {
+      console.error('[2D WebM] Conversion failed:', error);
+      // Error toast is already shown in convertVideoToWebM
+    } finally {
+      // Hide loading modal
+      if (p2dLoaderModal) {
+        p2dLoaderModal.classList.add('hidden');
+      }
+    }
+  };
+
+  const handleConvertToWebp2d = async () => {
+    if (!currentGeneratedImage2d || !currentGeneratedImage2d.videoDataUrl) {
+      showToast({ type: 'error', title: 'No Video', body: 'Generate a video first.' });
+      return;
+    }
+    
+    console.log('[2D WebP] Starting conversion...', currentGeneratedImage2d.videoDataUrl);
+    
+    // Show loading modal
+    if (p2dLoaderModal && p2dLoaderMessage) {
+      p2dLoaderMessage.textContent = 'Converting to WebP...';
+      p2dLoaderModal.classList.remove('hidden');
+    }
+    
+    try {
+      const webpUrl = await convertVideoToWebP(
+        currentGeneratedImage2d.videoDataUrl,
+        (message) => {
+          if (p2dLoaderMessage) p2dLoaderMessage.textContent = message;
+        }
+      );
+      
+      console.log('[2D WebP] Conversion successful, updating state...');
+      currentGeneratedImage2d.webpDataUrl = webpUrl;
+      const historyItem = imageHistory2d.find(item => item.id === currentGeneratedImage2d!.id);
+      if (historyItem) {
+        historyItem.webpDataUrl = webpUrl;
+      }
+      
+      // Close more menu after conversion
+      p2dMotionMoreMenu?.classList.add('hidden');
+      
+      updateMotionUI2d();
+      console.log('[2D WebP] State updated successfully');
+    } catch (error) {
+      console.error('[2D WebP] Conversion failed:', error);
+      // Error toast is already shown in convertVideoToWebP
+    } finally {
+      // Hide loading modal
+      if (p2dLoaderModal) {
+        p2dLoaderModal.classList.add('hidden');
+      }
+    }
+  };
+
   const handleGenerateVideo2d = async () => {
     console.log('[2D Video] Starting video generation...');
     console.log('[2D Video] currentGeneratedImage2d:', currentGeneratedImage2d);
@@ -5776,12 +6335,7 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
 
     if (videoGenerationLoaderModal && videoLoaderMessage) {
         videoGenerationLoaderModal.classList.remove('hidden');
-        let messageIndex = 0;
-        videoLoaderMessage.textContent = VIDEO_LOADER_MESSAGES[messageIndex];
-        videoMessageInterval = window.setInterval(() => {
-            messageIndex = (messageIndex + 1) % VIDEO_LOADER_MESSAGES.length;
-            videoLoaderMessage.textContent = VIDEO_LOADER_MESSAGES[messageIndex];
-        }, 3000);
+        videoLoaderMessage.textContent = 'Generating Video...';
     }
 
     try {
@@ -5816,20 +6370,26 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
         // Wrap user's motion instruction with rigid transform constraints
         motionInstruction = `${motionInstruction}${scaleRange}. CRITICAL: Apply this motion as a pure geometric transform to the COMPLETE icon as a single rigid object. The icon shape, lines, and structure must remain 100% identical - only transform properties (scale/rotate/translate) can change.`;
 
-        const finalPrompt = `🚨🚨🚨 CRITICAL CONSTRAINT: This is a STATIC VECTOR ICON FILE (PNG/SVG format). The icon image file itself is PERMANENTLY FROZEN and CANNOT be modified.
+        const finalPrompt = `🚨🚨🚨🚨🚨 ULTRA-CRITICAL CONSTRAINT 🚨🚨🚨🚨🚨
 
-⚠️ MANDATORY: This is NOT an animated drawing. This is a STATIC IMAGE FILE being animated with transform properties ONLY (like CSS transform or After Effects transform).
+THIS IS A STATIC RASTER IMAGE FILE (PNG format). THE ICON IMAGE ITSELF IS PERMANENTLY FROZEN AND ABSOLUTELY CANNOT BE MODIFIED IN ANY WAY.
+
+⚠️⚠️⚠️ MANDATORY REQUIREMENT ⚠️⚠️⚠️
+This is NOT an animated drawing or illustration. This is a STATIC IMAGE FILE being animated with geometric transform properties ONLY (like CSS transform: scale/rotate/translate or After Effects transform controls).
+
+The source image is a FROZEN RASTER. Every single pixel must remain in the EXACT same position relative to the icon's coordinate system. The icon image file itself NEVER changes - it is a FIXED, UNCHANGEABLE static image.
 
 🎯 ANIMATION INSTRUCTION:
 ${motionInstruction}
 
-📐 ALLOWED TRANSFORMS ONLY (applied to the COMPLETE icon as one unit):
+📐 ALLOWED TRANSFORMS ONLY (applied to the COMPLETE icon as ONE RIGID UNIT):
 - Uniform scale: Scale the ENTIRE icon uniformly (like zooming a photo) - maximum 1.0 to 1.03
-- Rotation: Rotate the ENTIRE icon as one piece (like spinning a coin)
-- Translation: Move the ENTIRE icon vertically/horizontally (like moving a sticker)
-- These transforms apply to the COMPLETE icon simultaneously - NO independent part movement
+- Rotation: Rotate the ENTIRE icon as one piece (like spinning a coin on a table)
+- Translation: Move the ENTIRE icon vertically/horizontally (like moving a sticker on paper)
+- These transforms apply to the COMPLETE icon simultaneously as a SINGLE RIGID OBJECT
+- NO independent part movement, NO separate element animation, NO component-level changes
 
-🚫 ABSOLUTELY FORBIDDEN - THE ICON FILE CANNOT CHANGE:
+🚫🚫🚫 ABSOLUTELY FORBIDDEN - THE ICON FILE CANNOT CHANGE IN ANY WAY 🚫🚫🚫
 - ANY shape deformation, morphing, warping, bending, stretching, or distortion
 - ANY line thickness changes, wavy lines, curved lines becoming straight, or straight lines becoming curved
 - ANY flowing, dripping, melting, liquid-like, or water-like effects
@@ -5840,11 +6400,21 @@ ${motionInstruction}
 - ANY camera movement, zoom, perspective changes, or lens effects
 - ANY particle effects, trails, glows, shadows, or visual artifacts
 - DO NOT interpret motion words (swimming, flying, running, etc.) as shape changes - these are just transform descriptions
+- NO pixel-level changes, NO rasterization effects, NO anti-aliasing changes
+- NO edge smoothing, NO outline changes, NO fill pattern changes
+- NO vector path changes, NO bezier curve modifications, NO anchor point movement
+- NO texture changes, NO material changes, NO surface property changes
+- The icon must remain PIXEL-PERFECT IDENTICAL in every single frame
 
-🔒 TECHNICAL REQUIREMENT:
+🔒🔒🔒 TECHNICAL REQUIREMENT 🔒🔒🔒
 The icon must appear IDENTICAL in every single frame - as if you took a screenshot of the first frame and applied ONLY CSS transform properties (scale/rotate/translate) to it. The icon image file itself is a FIXED, UNCHANGEABLE static image.
 
-Think: PNG image file + CSS transform = The PNG file never changes, only its transform matrix changes. Motion words in the instruction describe HOW to transform the icon, NOT how to change the icon's shape.`;
+Think: PNG image file + CSS transform = The PNG file NEVER changes, only its transform matrix changes. Motion words in the instruction describe HOW to transform the icon, NOT how to change the icon's shape.
+
+IMAGINE: You have a PNG file on your computer. You open it in a video editor and apply ONLY transform controls (scale, rotation, position). The PNG file itself remains 100% unchanged - only its position, rotation, and scale in the video change. That is EXACTLY what you must do here.
+
+🚫 NEGATIVE PROMPT (MUST AVOID AT ALL COSTS):
+shape deformation, morphing, warping, distortion, line changes, thickness changes, pixel changes, rasterization, anti-aliasing changes, edge smoothing, outline changes, fill changes, color changes, opacity changes, independent part movement, camera movement, zoom, perspective, particle effects, trails, glows, shadows, visual artifacts, organic movement, fluid movement, elastic movement, rubber movement, material changes, texture changes, icon shape changes, vector changes, path changes, bezier curve changes, anchor point movement, component animation, separate element movement, part-by-part animation`;
 
         console.log('[2D Video] Final prompt:', finalPrompt);
 
@@ -5863,6 +6433,7 @@ Think: PNG image file + CSS transform = The PNG file never changes, only its tra
         const payload: any = {
             model: selectedModel,
             prompt: finalPrompt,
+            negativePrompt: 'shape deformation, morphing, warping, distortion, line changes, thickness changes, pixel changes, rasterization, anti-aliasing changes, edge smoothing, outline changes, fill changes, color changes, opacity changes, independent part movement, camera movement, zoom, perspective, particle effects, trails, glows, shadows, visual artifacts, organic movement, fluid movement, elastic movement, rubber movement, material changes, texture changes, icon shape changes, vector changes, path changes, bezier curve changes, anchor point movement, component animation, separate element movement, part-by-part animation, shape modification, geometry changes, structural changes',
             config,
         };
 
@@ -5897,8 +6468,19 @@ Think: PNG image file + CSS transform = The PNG file never changes, only its tra
         const downloadLink = extractVideoDownloadUrl(operation);
         if (!downloadLink) {
             console.error('[2D Video] Missing download link. Operation response:', JSON.stringify(operation, null, 2));
+            console.error('[2D Video] Operation keys:', Object.keys(operation));
+            if (operation.response) {
+                console.error('[2D Video] Response keys:', Object.keys(operation.response));
+            }
+            showToast({ 
+                type: 'error', 
+                title: 'Video Generation Issue', 
+                body: 'Video was generated but download link could not be found. Please check the console for details.' 
+            });
             throw new Error("Video generation succeeded but no download link was found.");
         }
+        
+        console.log('[2D Video] Download link found:', downloadLink);
 
         const videoResponse = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
         if (!videoResponse.ok) {
@@ -6381,19 +6963,84 @@ Return as JSON array with exactly 3 minimal suggestions.`;
 
         const jsonResponse = JSON.parse(response.text.trim());
         
-        // Trigger confetti, then open motion category modal
+        // Trigger confetti, then automatically apply the second (index 1) motion prompt
         if (imageGenerationLoaderModal) {
             // Trigger confetti immediately
             triggerConfetti(imageGenerationLoaderModal);
             
-            // Close loading modal immediately and open motion category modal
+            // Close loading modal immediately
             imageGenerationLoaderModal.classList.add('hidden');
-            motionCategoryModal?.classList.remove('hidden');
-            renderGeneratedMotionCategories2d(jsonResponse);
+            
+            // Automatically apply the second motion prompt (index 1)
+            if (jsonResponse && jsonResponse.length >= 2) {
+                const secondCategory = jsonResponse[1]; // Second item (index 1)
+                
+                if (!currentGeneratedImage2d) return;
+                
+                const sanitizedEnglish = sanitizeMotionPromptText(secondCategory.english || '');
+                const sanitizedCategory = { ...secondCategory, english: sanitizedEnglish };
+                const motionData = {
+                    json: sanitizedCategory,
+                    english: sanitizedEnglish,
+                    korean: secondCategory.korean
+                };
+                
+                currentGeneratedImage2d.motionPrompt = motionData;
+                
+                const historyItem = imageHistory2d.find(item => item.id === currentGeneratedImage2d!.id);
+                if (historyItem) {
+                    historyItem.motionPrompt = motionData;
+                }
+                
+                if (p2dMotionPromptFinalEnglish) {
+                    p2dMotionPromptFinalEnglish.value = sanitizedEnglish;
+                }
+                
+                motionPromptPlaceholder2d?.classList.add('hidden');
+                
+                setTimeout(() => {
+                    updateMotionUI2d();
+                }, 100);
+            } else {
+                // Fallback: open modal if less than 2 categories
+                motionCategoryModal?.classList.remove('hidden');
+                renderGeneratedMotionCategories2d(jsonResponse);
+            }
         } else {
-            // Fallback: open modal directly if loader modal not available
-            motionCategoryModal?.classList.remove('hidden');
-            renderGeneratedMotionCategories2d(jsonResponse);
+            // Fallback: automatically apply second prompt or open modal
+            if (jsonResponse && jsonResponse.length >= 2) {
+                const secondCategory = jsonResponse[1];
+                
+                if (!currentGeneratedImage2d) return;
+                
+                const sanitizedEnglish = sanitizeMotionPromptText(secondCategory.english || '');
+                const sanitizedCategory = { ...secondCategory, english: sanitizedEnglish };
+                const motionData = {
+                    json: sanitizedCategory,
+                    english: sanitizedEnglish,
+                    korean: secondCategory.korean
+                };
+                
+                currentGeneratedImage2d.motionPrompt = motionData;
+                
+                const historyItem = imageHistory2d.find(item => item.id === currentGeneratedImage2d!.id);
+                if (historyItem) {
+                    historyItem.motionPrompt = motionData;
+                }
+                
+                if (p2dMotionPromptFinalEnglish) {
+                    p2dMotionPromptFinalEnglish.value = sanitizedEnglish;
+                }
+                
+                motionPromptPlaceholder2d?.classList.add('hidden');
+                
+                setTimeout(() => {
+                    updateMotionUI2d();
+                }, 100);
+            } else {
+                motionCategoryModal?.classList.remove('hidden');
+                renderGeneratedMotionCategories2d(jsonResponse);
+            }
         }
 
     } catch (error) {
@@ -10250,6 +10897,12 @@ Apply the main color (${objectColor}) thoughtfully as the primary/accent color o
             if (imageTab) imageTab.classList.remove('active');
             if (videoTab) videoTab.classList.add('active');
             
+            // Ensure header is visible
+            const header3d = resultItemMain3d?.querySelector('.result-content-header');
+            if (header3d) {
+                header3d.classList.remove('hidden');
+            }
+            
             // Hide image and ensure it's not visible
             if (resultImage3d) {
                 resultImage3d.classList.add('hidden');
@@ -10264,7 +10917,14 @@ Apply the main color (${objectColor}) thoughtfully as the primary/accent color o
                 if (motionPromptPlaceholder3d) motionPromptPlaceholder3d.classList.add('hidden');
             } else {
                 if (resultVideo3d) resultVideo3d.classList.add('hidden');
-                if (motionPromptPlaceholder3d) motionPromptPlaceholder3d.classList.remove('hidden');
+                if (motionPromptPlaceholder3d) {
+                    motionPromptPlaceholder3d.classList.remove('hidden');
+                    // Ensure placeholder is visible and positioned correctly
+                    motionPromptPlaceholder3d.style.display = 'flex';
+                    motionPromptPlaceholder3d.style.position = 'absolute';
+                    motionPromptPlaceholder3d.style.inset = '0';
+                    motionPromptPlaceholder3d.style.zIndex = '2';
+                }
             }
             if (resultIdlePlaceholder3d) resultIdlePlaceholder3d.classList.add('hidden');
             
@@ -10350,13 +11010,14 @@ Apply the main color (${objectColor}) thoughtfully as the primary/accent color o
 
     const openMotionCategoryModal2d = () => {
         // Show loading modal first (240x160)
-        resetLoaderModal(imageGenerationLoaderModal);
-        if (imageGenerationLoaderText) {
-          imageGenerationLoaderText.textContent = 'Generating motion ideas...';
+        if (imageGenerationLoaderModal) {
+          imageGenerationLoaderModal.classList.remove('hidden');
         }
-        imageGenerationLoaderModal?.classList.remove('hidden');
+        if (imageGenerationLoaderText) {
+          imageGenerationLoaderText.textContent = 'Generating prompt';
+        }
         
-        // Generate motion categories
+        // Generate motion categories (will automatically apply the second one)
         generateAndDisplayMotionCategories2d();
         lastFocusedElement = document.activeElement as HTMLElement;
     };
@@ -10377,6 +11038,8 @@ Apply the main color (${objectColor}) thoughtfully as the primary/accent color o
     p2dGenerateVideoBtn?.addEventListener('click', handleGenerateVideo2d);
     p2dRegenerateVideoBtn?.addEventListener('click', handleGenerateVideo2d);
     p2dConvertToGifBtn?.addEventListener('click', handleConvertToGif2d);
+    p2dConvertToWebmBtn?.addEventListener('click', handleConvertToWebm2d);
+    p2dConvertToWebpBtn?.addEventListener('click', handleConvertToWebp2d);
     const closeMotionMoreMenu2d = () => p2dMotionMoreMenu?.classList.add('hidden');
     p2dMotionMoreMenuBtn?.addEventListener('click', (e) => {
         e.stopPropagation();

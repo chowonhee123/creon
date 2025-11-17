@@ -11,6 +11,8 @@ export interface GeneratedImageData {
   timestamp: number;
   videoDataUrl?: string;
   gifDataUrl?: string;
+  webmDataUrl?: string;
+  webpDataUrl?: string;
   motionPrompt?: { json: any; korean: string; english: string } | null;
   originalData?: string;
   originalMimeType?: string;
