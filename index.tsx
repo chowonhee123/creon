@@ -1057,9 +1057,12 @@ const p2dGenerateMotionFromPreviewBtn = $('#p2d-generate-motion-from-preview-btn
     const header = document.querySelector('.result-content-header-image');
     if (!container || !placeholder) return;
     
-    // Hide header when placeholder is shown
-    if (header) {
+    // Only hide header if there's no generated image
+    if (header && !currentGeneratedImageStudio) {
       (header as HTMLElement).classList.add('hidden');
+    } else if (header && currentGeneratedImageStudio) {
+      // Show header if image exists
+      (header as HTMLElement).classList.remove('hidden');
     }
     
     try {
@@ -2231,6 +2234,14 @@ const extractVideoDownloadUrl = (operation: any): string | null => {
     
     currentPage = pageId;
     updateHeaderTransparency();
+    
+    // Show header in Image Studio if image exists
+    if (pageId === 'page-image') {
+      const header = document.querySelector('.result-content-header-image');
+      if (header && currentGeneratedImageStudio) {
+        (header as HTMLElement).classList.remove('hidden');
+      }
+    }
   };
 
   const applyTheme = (theme: 'light' | 'dark') => {
@@ -6778,9 +6789,6 @@ shape deformation, morphing, warping, distortion, line changes, thickness change
 
             updateMotionUI();
             lastFocusedElement?.focus();
-            
-            // Trigger confetti when motion prompt is generated
-            setTimeout(() => triggerConfetti(motionCategoryModal), 100);
         });
         motionCategoryList.appendChild(item);
     });
@@ -6918,9 +6926,6 @@ Return the 5 suggestions as a JSON array.`;
             setTimeout(() => {
                 updateMotionUIStudio();
             }, 100);
-            
-            // Trigger confetti when motion prompt is generated
-            setTimeout(() => triggerConfetti(motionCategoryModal), 100);
         });
         motionCategoryList.appendChild(item);
     });

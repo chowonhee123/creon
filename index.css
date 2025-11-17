@@ -45,7 +45,7 @@
   --spacing-5: 24px;
   --spacing-6: 32px;
   --input-height: 40px;
-  --input-placeholder-color: rgba(15, 23, 42, 0.35);
+  --input-placeholder-color: rgba(15, 23, 42, 0.25);
   --header-height: 60px;
   --generate-box-offset: 12px;
   --generate-box-height: 60px;
@@ -2297,6 +2297,10 @@ a.secondary-btn[disabled] {
 
 #image-details-panel-image .details-tab-content[data-tab-content="detail"] {
     padding: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
 }
 
 #image-details-panel-image .details-tab-content[data-tab-content="motion"] {
@@ -2321,7 +2325,12 @@ a.secondary-btn[disabled] {
     align-items: center;
     gap: var(--spacing-2);
     margin-top: auto;
-    position: relative;
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    background: var(--surface-color);
+    border-top: 1px solid var(--border-color);
+    padding: var(--spacing-3);
 }
 
 .details-preview {
@@ -5125,6 +5134,7 @@ canvas[style*="position: fixed"] {
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-secondary);
+  opacity: 0.6;
   font-size: 16px;
   pointer-events: none;
   transition: opacity 0.3s ease;
