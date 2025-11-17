@@ -4200,26 +4200,53 @@ const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
 
     const lines: string[] = [];
 
-    lines.push(`Generate an isometric 3D icon of ${subject}.`);
+    // CRITICAL STYLE LOCK - Must match reference style exactly
+    lines.push(`🚨🚨🚨 CRITICAL STYLE REQUIREMENT 🚨🚨🚨`);
+    lines.push(`You MUST generate this icon in the EXACT same visual style as the reference Creon 3D icon sheet.`);
+    lines.push(`The style is NON-NEGOTIABLE and must be applied to ANY subject, regardless of what the subject is.`);
+    lines.push(`STYLE CHARACTERISTICS (MANDATORY FOR ALL ICONS):`);
+    lines.push(`- Smooth, glossy plastic material with high-gloss finish`);
+    lines.push(`- Isometric 3D perspective (35deg tilt, 35deg pan, orthographic lens)`);
+    lines.push(`- Soft, uniform lighting with no harsh shadows`);
+    lines.push(`- Color palette: Dominant blue (#2E6BFF), secondary blue (#4FC3F7), white (#FFFFFF), warm accent yellow (#FFD45A)`);
+    lines.push(`- Pillowy, inflated, soft-volume forms with rounded edges (85% fillet)`);
+    lines.push(`- Chibi/stylized proportions, simplified anatomy`);
+    lines.push(`- Floating subject with no ground contact`);
+    lines.push(`- Clean white background (#FFFFFF)`);
+    lines.push(`- Single hero subject, minimal composition`);
+    lines.push(`- No photographic realism, no textures, no noise, no grain`);
+    lines.push(`- Consistent rendering quality matching the reference sheet exactly`);
+    lines.push(``);
+    lines.push(`SUBJECT: Generate an isometric 3D icon of ${subject}.`);
     if (poseInstruction) {
       lines.push(`Pose / action: ${poseInstruction}.`);
     }
   if (userPrompt && userPrompt.trim()) {
-      lines.push(`${userPrompt.trim()}.`);
+      lines.push(`Additional instruction: ${userPrompt.trim()}.`);
+      lines.push(`⚠️ IMPORTANT: Apply the additional instruction while MAINTAINING the exact style described above. The style must NEVER change regardless of the subject or instruction.`);
     }
 
     // Aspect ratio and output requirements
     const aspectRatio = guidance.aspect_ratio || '16:9';
     if (aspectRatio === '16:9') {
-      lines.push('CRITICAL REQUIREMENT: Output must be exactly 1024x576 pixels (16:9 landscape). Never return a square or 1024x1024 image. Maintain landscape orientation with width greater than height.');
+      lines.push(`📐 OUTPUT REQUIREMENT: Output must be exactly 1024x576 pixels (16:9 landscape). Never return a square or 1024x1024 image. Maintain landscape orientation with width greater than height.`);
     } else {
-      lines.push(`CRITICAL REQUIREMENT: Output must follow ${aspectRatio} aspect ratio and provided width/height.`);
+      lines.push(`📐 OUTPUT REQUIREMENT: Output must follow ${aspectRatio} aspect ratio and provided width/height.`);
     }
+    
+    // Style consistency enforcement
+    lines.push(``);
+    lines.push(`🔒 STYLE CONSISTENCY ENFORCEMENT:`);
+    lines.push(`- The visual style described above is ABSOLUTE and must be applied to this specific subject.`);
+    lines.push(`- Do NOT adapt the style to the subject - adapt the subject to the style.`);
+    lines.push(`- Every icon must look like it came from the same design system, regardless of what it represents.`);
+    lines.push(`- Maintain the exact same material properties, lighting setup, color palette, and rendering quality.`);
 
     if (isFix) {
-      lines.push('CRITICAL: Maintain the existing model, proportions, silhouette, and camera. Only adjust colors as specified.');
+      lines.push('🔧 FIX MODE: Maintain the existing model, proportions, silhouette, and camera. Only adjust colors as specified.');
       lines.push(`Background color: ${backgroundColor}. Main palette: ${palette.dominant_blue || '#2E6BFF'} and ${palette.neutral_white || '#FFFFFF'}.`);
     } else {
+      lines.push(`🎨 COLOR SPECIFICATION:`);
       lines.push(`Background: solid ${backgroundColor}.`);
       const paletteParts: string[] = [];
       if (palette.dominant_blue) paletteParts.push(`dominant blue ${palette.dominant_blue}`);
@@ -4227,7 +4254,8 @@ const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
       if (palette.neutral_white) paletteParts.push(`neutral white ${palette.neutral_white}`);
       if (palette.warm_accent) paletteParts.push(`warm accent ${palette.warm_accent} used sparingly`);
       if (paletteParts.length) {
-        lines.push(`Color palette: ${paletteParts.join(', ')}.`);
+        lines.push(`Color palette (MUST USE): ${paletteParts.join(', ')}.`);
+        lines.push(`⚠️ Apply these colors while maintaining the exact style. The color palette is part of the style identity.`);
       }
       if (palette.inherent_colors) {
         lines.push(`Inherent colors: ${palette.inherent_colors}.`);
@@ -4240,7 +4268,8 @@ const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
     if (materials.accents) materialParts.push(`accents ${materials.accents}`);
     if (materials.surface_detail) materialParts.push(`surface detail ${materials.surface_detail}`);
     if (materialParts.length) {
-      lines.push(`Materials: ${materialParts.join(', ')}.`);
+      lines.push(`💎 MATERIALS (MANDATORY): ${materialParts.join(', ')}.`);
+      lines.push(`⚠️ These material properties are FIXED and must be applied to every icon regardless of subject.`);
     }
 
     const formParts: string[] = [];
@@ -4250,7 +4279,8 @@ const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
     if (form.deformation) formParts.push(form.deformation);
     if (form.surface_finish) formParts.push(form.surface_finish);
     if (formParts.length) {
-      lines.push(`Form: ${formParts.join(', ')}.`);
+      lines.push(`📦 FORM (MANDATORY): ${formParts.join(', ')}.`);
+      lines.push(`⚠️ These form characteristics define the visual identity and must be consistent across all icons.`);
     }
 
     const lightingParts: string[] = [];
@@ -4260,7 +4290,8 @@ const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
     if (lighting.shadows) lightingParts.push(`shadows ${lighting.shadows}`);
     if (lighting.exposure) lightingParts.push(`exposure ${lighting.exposure}`);
     if (lightingParts.length) {
-      lines.push(`Lighting: ${lightingParts.join(', ')}.`);
+      lines.push(`💡 LIGHTING (MANDATORY): ${lightingParts.join(', ')}.`);
+      lines.push(`⚠️ This lighting setup is FIXED and creates the signature look. Must be identical for all icons.`);
     }
 
     const cameraParts: string[] = [];
@@ -4272,7 +4303,8 @@ const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
     if (camera.focus) cameraParts.push(`focus ${camera.focus}`);
     if (camera.motion) cameraParts.push(`motion ${camera.motion}`);
     if (cameraParts.length) {
-      lines.push(`Camera: ${cameraParts.join(', ')}.`);
+      lines.push(`📷 CAMERA (MANDATORY): ${cameraParts.join(', ')}.`);
+      lines.push(`⚠️ This camera angle is FIXED and creates the isometric perspective. Must be identical for all icons.`);
     }
 
     const compositionParts: string[] = [];
@@ -4281,18 +4313,30 @@ const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
     if (composition.framing) compositionParts.push(composition.framing);
     if (composition.depth) compositionParts.push(composition.depth);
     if (compositionParts.length) {
-      lines.push(`Composition: ${compositionParts.join(', ')}.`);
+      lines.push(`🎯 COMPOSITION (MANDATORY): ${compositionParts.join(', ')}.`);
+      lines.push(`⚠️ This composition structure is FIXED and ensures visual consistency across all icons.`);
     }
 
     if (!isFix) {
-      lines.push('Ensure the subject remains centered, floating, and fully contained within the frame with clean margins.');
+      lines.push(`✅ LAYOUT REQUIREMENT: Ensure the subject remains centered, floating, and fully contained within the frame with clean margins.`);
     }
 
-    lines.push('Final reminder: maintain the specified aspect ratio and do not introduce additional objects, text, or background elements.');
+    lines.push(``);
+    lines.push(`🚫 FINAL STYLE ENFORCEMENT:`);
+    lines.push(`- Maintain the specified aspect ratio (1024x576 for 16:9).`);
+    lines.push(`- Do NOT introduce additional objects, text, watermarks, or background elements.`);
+    lines.push(`- The style must be IDENTICAL to the reference Creon 3D icon sheet.`);
+    lines.push(`- Every visual element (material, lighting, color, form, camera) must match the reference style exactly.`);
+    lines.push(`- The subject can change, but the style CANNOT change.`);
 
     if (negativePrompt) {
-      lines.push(`Negative prompt: ${negativePrompt}.`);
+      lines.push(``);
+      lines.push(`🚫 NEGATIVE PROMPT (MUST AVOID): ${negativePrompt}.`);
+      lines.push(`⚠️ These elements are FORBIDDEN and would break the style consistency.`);
     }
+    
+    lines.push(``);
+    lines.push(`🔒 REMINDER: This icon must look like it was created by the same artist, using the same tools, with the same style guide, as all other icons in the reference sheet. The visual language is FIXED and UNIVERSAL.`);
 
     return lines.join(' ');
   };
