@@ -9788,7 +9788,54 @@ regenerate3DBtn?.addEventListener('click', () => {
             
             // Use gemini-2.5-flash-image directly with current image as reference
             // Create prompt: Keep the image exactly the same, only change icon color
-            const colorChangePrompt = `Keep this icon image exactly the same in shape, composition, and all details. Keep the exact same resolution (width x height) as the original image; do not resize or change the canvas dimensions. Only change the icon color to ${iconColor}. Do not modify, transform, or change any other aspects of the image.`;
+            // Convert hex to RGB for better color specification
+            const hexToRgb = (hex: string) => {
+                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? {
+                    r: parseInt(result[1], 16),
+                    g: parseInt(result[2], 16),
+                    b: parseInt(result[3], 16)
+                } : null;
+            };
+            const rgb = hexToRgb(iconColor);
+            const rgbString = rgb ? `RGB(${rgb.r}, ${rgb.g}, ${rgb.b})` : iconColor;
+            
+            const colorChangePrompt = `🚨🚨🚨 CRITICAL COLOR CHANGE INSTRUCTION 🚨🚨🚨
+
+Keep this icon image EXACTLY the same in:
+- Shape and form (100% identical)
+- Composition and layout (100% identical)
+- All details and structure (100% identical)
+- Resolution and canvas dimensions (100% identical - do NOT resize)
+
+COLOR CHANGE REQUIREMENT (MANDATORY):
+- Change EVERY stroke, line, outline, and path to EXACTLY ${iconColor} (${rgbString})
+- Use the PURE, VIBRANT color ${iconColor} with MAXIMUM brightness and saturation
+- Do NOT darken, desaturate, or reduce the color intensity
+- The color must be BRIGHT, CLEAR, and VIBRANT - not dull or muted
+- Replace ALL colors in the icon with ${iconColor} at FULL intensity
+- The ENTIRE icon must be 100% ${iconColor} - no other colors allowed
+- Every pixel of the icon shape must be ${iconColor} with maximum brightness
+- Background must remain pure white (#FFFFFF)
+
+COLOR QUALITY REQUIREMENTS:
+- Use the EXACT color ${iconColor} without any darkening
+- Maintain FULL saturation (100% color intensity)
+- Maintain FULL brightness (no dimming or shadow effects)
+- The color must appear PURE and CLEAR, not washed out or faded
+- Do NOT apply any opacity, transparency, or color mixing
+
+FORBIDDEN:
+- Do NOT keep any original colors
+- Do NOT use gradients or color variations
+- Do NOT darken or desaturate the color
+- Do NOT reduce brightness or intensity
+- Do NOT use any color other than ${iconColor} for the icon
+- Do NOT modify shape, size, or structure
+- Do NOT change the background color
+- Do NOT apply shadows, glows, or effects that alter color brightness
+
+The result must be: IDENTICAL shape + PURE VIBRANT ${iconColor} color at MAXIMUM brightness and saturation + white background.`;
             
             const parts: any[] = [
                 { text: colorChangePrompt },
