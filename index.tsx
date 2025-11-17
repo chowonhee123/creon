@@ -667,7 +667,6 @@ const reorderExploreMediaByCategory = (items: any[]): any[] => {
   const body = document.body;
   const navItems = $$('.nav-item');
   const pageContainers = $$('.page-container');
-  const themeToggleButton = $('.theme-toggle-btn');
   const appHeader = $('.app-header');
   const iconGrid = $('#icon-grid');
   const iconGridPanel = $('.icon-grid-panel');
@@ -2239,10 +2238,6 @@ const extractVideoDownloadUrl = (operation: any): string | null => {
       
     document.body.dataset.theme = theme;
     localStorage.setItem('theme', theme);
-    const themeIcon = themeToggleButton?.querySelector('.material-symbols-outlined');
-    if (themeIcon) {
-        themeIcon.textContent = theme === 'light' ? 'light_mode' : 'dark_mode';
-    }
   };
 
 
@@ -9251,11 +9246,6 @@ const setupMotionDropZones2d = () => {
     });
   });
 
-  themeToggleButton?.addEventListener('click', () => {
-    const newTheme = body.dataset.theme === 'light' ? 'dark' : 'light';
-    applyTheme(newTheme);
-  });
-  
   navItems.forEach(item => {
     item.addEventListener('click', handleNavClick);
   });
