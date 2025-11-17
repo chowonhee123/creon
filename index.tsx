@@ -1727,7 +1727,7 @@ const extractVideoDownloadUrl = (operation: any): string | null => {
         
         // Special handling for 3D Studio: Sync preview tabs with details panel tabs
         if (container.id === 'image-details-panel') {
-          if (tabName === 'details') {
+          if (tabName === 'detail') {
             // Switch to Image tab in preview
             const resultItemMain3d = document.querySelector('#result-item-main');
             if (resultItemMain3d) {
@@ -1743,7 +1743,10 @@ const extractVideoDownloadUrl = (operation: any): string | null => {
                 const resultIdlePlaceholder3d = $('#result-idle-placeholder');
                 const motionPromptPlaceholder3d = $('#motion-prompt-placeholder');
                 
-                if (resultImage3d) resultImage3d.classList.remove('hidden');
+                if (resultImage3d) {
+                  resultImage3d.classList.remove('hidden');
+                  setTimeout(() => resultImage3d.classList.add('visible'), 50);
+                }
                 if (resultVideo3d) resultVideo3d.classList.add('hidden');
                 if (resultIdlePlaceholder3d) resultIdlePlaceholder3d.classList.add('hidden');
                 if (motionPromptPlaceholder3d) motionPromptPlaceholder3d.classList.add('hidden');
@@ -1771,7 +1774,10 @@ const extractVideoDownloadUrl = (operation: any): string | null => {
                 const resultIdlePlaceholder3d = $('#result-idle-placeholder');
                 const motionPromptPlaceholder3d = $('#motion-prompt-placeholder');
                 
-                if (resultImage3d) resultImage3d.classList.add('hidden');
+                if (resultImage3d) {
+                  resultImage3d.classList.add('hidden');
+                  resultImage3d.classList.remove('visible');
+                }
                 
                 if (currentGeneratedImage && currentGeneratedImage.videoDataUrl) {
                   if (resultVideo3d) {
@@ -10921,18 +10927,18 @@ Apply the main color (${objectColor}) thoughtfully as the primary/accent color o
             if (resultIdlePlaceholder3d) resultIdlePlaceholder3d.classList.add('hidden');
             if (motionPromptPlaceholder3d) motionPromptPlaceholder3d.classList.add('hidden');
             
-            // Switch details panel to details tab
+            // Switch details panel to detail tab
             if (detailsPanel) {
                 detailsPanel.classList.remove('hidden');
                 detailsPanel.classList.add('is-open');
-                const detailsDetailTabBtn = detailsPanel.querySelector<HTMLElement>('.tab-item[data-tab="details"]');
+                const detailsDetailTabBtn = detailsPanel.querySelector<HTMLElement>('.tab-item[data-tab="detail"]');
                 if (detailsDetailTabBtn) {
                     detailsPanel.querySelectorAll<HTMLElement>('.tab-item').forEach(btn => btn.classList.remove('active'));
                     detailsDetailTabBtn.classList.add('active');
                     detailsPanel.querySelectorAll<HTMLElement>('.details-tab-content').forEach(content => {
                         const contentName = content.dataset.tabContent || content.dataset.tab;
-                        content.classList.toggle('hidden', contentName !== 'details');
-                        content.classList.toggle('active', contentName === 'details');
+                        content.classList.toggle('hidden', contentName !== 'detail');
+                        content.classList.toggle('active', contentName === 'detail');
                     });
                 }
             }
