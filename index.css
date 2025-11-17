@@ -2028,6 +2028,8 @@ a.secondary-btn[disabled] {
   padding: var(--spacing-2) var(--spacing-4) 0;
   flex-shrink: 0;
   z-index: 2;
+  position: relative;
+  min-height: 48px;
 }
 
 .result-content-header-image {
@@ -2196,6 +2198,7 @@ a.secondary-btn[disabled] {
   width: calc(100% - 32px);
   height: calc(100% - 32px);
   object-fit: cover;
+  object-position: center;
   border-radius: 12px;
 }
 
@@ -3303,6 +3306,8 @@ a.secondary-btn[disabled] {
 .preview-switcher {
   display: flex;
   gap: var(--spacing-4);
+  position: relative;
+  z-index: 1;
 }
 
 .preview-tab-item {
@@ -3316,6 +3321,8 @@ a.secondary-btn[disabled] {
   color: var(--text-secondary);
   cursor: pointer;
   transition: color 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .preview-tab-item:hover {

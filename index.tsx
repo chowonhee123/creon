@@ -1349,6 +1349,28 @@ const extractVideoDownloadUrl = (operation: any): string | null => {
           console.log('[3D Studio] History count before init:', detailsPanelHistory3d.length);
           console.log('[3D Studio] History items:', detailsPanelHistory3d);
           
+          // Switch to Image tab in preview when History tab is clicked
+          const resultItemMain3d = document.querySelector('#result-item-main');
+          if (resultItemMain3d) {
+            const imageTab = resultItemMain3d.querySelector('.preview-tab-item[data-tab="image"]') as HTMLElement;
+            const videoTab = resultItemMain3d.querySelector('.preview-tab-item[data-tab="video"]') as HTMLElement;
+            if (imageTab) {
+              imageTab.classList.add('active');
+              if (videoTab) videoTab.classList.remove('active');
+              
+              // Update preview content
+              const resultImage3d = $('#result-image') as HTMLImageElement;
+              const resultVideo3d = $('#result-video') as HTMLVideoElement;
+              const resultIdlePlaceholder3d = $('#result-idle-placeholder');
+              const motionPromptPlaceholder3d = $('#motion-prompt-placeholder');
+              
+              if (resultImage3d) resultImage3d.classList.remove('hidden');
+              if (resultVideo3d) resultVideo3d.classList.add('hidden');
+              if (resultIdlePlaceholder3d) resultIdlePlaceholder3d.classList.add('hidden');
+              if (motionPromptPlaceholder3d) motionPromptPlaceholder3d.classList.add('hidden');
+            }
+          }
+          
           // If history is empty but we have a current image, initialize it
           if (detailsPanelHistory3d.length === 0 && currentGeneratedImage) {
             console.log('[3D Studio] History is empty, initializing with current image');
@@ -1381,12 +1403,84 @@ const extractVideoDownloadUrl = (operation: any): string | null => {
           }, 500);
         }
         
+        // Special handling for 3D Studio: Sync preview tabs with details panel tabs
+        if (container.id === 'image-details-panel') {
+          if (tabName === 'details') {
+            // Switch to Image tab in preview
+            const resultItemMain3d = document.querySelector('#result-item-main');
+            if (resultItemMain3d) {
+              const imageTab = resultItemMain3d.querySelector('.preview-tab-item[data-tab="image"]') as HTMLElement;
+              const videoTab = resultItemMain3d.querySelector('.preview-tab-item[data-tab="video"]') as HTMLElement;
+              if (imageTab) {
+                imageTab.classList.add('active');
+                if (videoTab) videoTab.classList.remove('active');
+                
+                // Update preview content
+                const resultImage3d = $('#result-image') as HTMLImageElement;
+                const resultVideo3d = $('#result-video') as HTMLVideoElement;
+                const resultIdlePlaceholder3d = $('#result-idle-placeholder');
+                const motionPromptPlaceholder3d = $('#motion-prompt-placeholder');
+                
+                if (resultImage3d) resultImage3d.classList.remove('hidden');
+                if (resultVideo3d) resultVideo3d.classList.add('hidden');
+                if (resultIdlePlaceholder3d) resultIdlePlaceholder3d.classList.add('hidden');
+                if (motionPromptPlaceholder3d) motionPromptPlaceholder3d.classList.add('hidden');
+              }
+            }
+          } else if (tabName === 'motion') {
+            // Switch to Motion/Video tab in preview
+            const resultItemMain3d = document.querySelector('#result-item-main');
+            if (resultItemMain3d) {
+              const imageTab = resultItemMain3d.querySelector('.preview-tab-item[data-tab="image"]') as HTMLElement;
+              const videoTab = resultItemMain3d.querySelector('.preview-tab-item[data-tab="video"]') as HTMLElement;
+              if (videoTab) {
+                videoTab.classList.add('active');
+                if (imageTab) imageTab.classList.remove('active');
+                
+                // Update preview content
+                const resultImage3d = $('#result-image') as HTMLImageElement;
+                const resultVideo3d = $('#result-video') as HTMLVideoElement;
+                const resultIdlePlaceholder3d = $('#result-idle-placeholder');
+                const motionPromptPlaceholder3d = $('#motion-prompt-placeholder');
+                
+                if (resultImage3d) resultImage3d.classList.add('hidden');
+                
+                if (currentGeneratedImage && currentGeneratedImage.videoDataUrl) {
+                  if (resultVideo3d) {
+                    resultVideo3d.src = currentGeneratedImage.videoDataUrl;
+                    resultVideo3d.classList.remove('hidden');
+                  }
+                  if (motionPromptPlaceholder3d) motionPromptPlaceholder3d.classList.add('hidden');
+                } else {
+                  if (resultVideo3d) resultVideo3d.classList.add('hidden');
+                  if (motionPromptPlaceholder3d) motionPromptPlaceholder3d.classList.remove('hidden');
+                }
+                if (resultIdlePlaceholder3d) resultIdlePlaceholder3d.classList.add('hidden');
+              }
+            }
+          }
+        }
+        
         // Special handling for 2D Studio history tab
         if (container.id === 'p2d-image-details-panel' && tabName === 'history') {
           console.log('[2D Studio] History tab clicked via setupTabs');
           console.log('[2D Studio] Current image:', currentGeneratedImage2d);
           console.log('[2D Studio] History count before init:', detailsPanelHistory2d.length);
           console.log('[2D Studio] History items:', detailsPanelHistory2d);
+          
+          // Switch to Image tab in preview when History tab is clicked
+          if (p2dPreviewSwitcherImageBtn && currentGeneratedImage2d) {
+            p2dPreviewSwitcherImageBtn.classList.add('active');
+            p2dPreviewSwitcherVideoBtn?.classList.remove('active');
+            
+            const resultImage2d = $('#p2d-result-image') as HTMLImageElement;
+            const resultVideo2d = $('#p2d-result-video') as HTMLVideoElement;
+            const motionPromptPlaceholder2d = $('#p2d-motion-prompt-placeholder');
+            
+            if (resultImage2d) resultImage2d.classList.remove('hidden');
+            if (resultVideo2d) resultVideo2d.classList.add('hidden');
+            if (motionPromptPlaceholder2d) motionPromptPlaceholder2d.classList.add('hidden');
+          }
           
           // If history is empty but we have a current image, initialize it
           if (detailsPanelHistory2d.length === 0 && currentGeneratedImage2d) {
@@ -1419,6 +1513,35 @@ const extractVideoDownloadUrl = (operation: any): string | null => {
             console.log('[2D Studio] Force update history (500ms)');
             updateDetailsPanelHistory2d();
           }, 500);
+        }
+        
+        // Special handling for Image Studio: Sync preview tabs with details panel tabs
+        if (container.id === 'image-details-panel-image') {
+          if (tabName === 'detail') {
+            // Switch to Image tab in preview
+            if (previewSwitcherImageBtnStudio && currentGeneratedImageStudio) {
+              previewSwitcherImageBtnStudio.click();
+            }
+          } else if (tabName === 'motion') {
+            // Switch to Motion tab in preview
+            if (previewSwitcherVideoBtnStudio && currentGeneratedImageStudio) {
+              previewSwitcherVideoBtnStudio.click();
+            }
+          } else if (tabName === 'history') {
+            // Switch to Image tab in preview when History tab is clicked
+            if (previewSwitcherImageBtnStudio && currentGeneratedImageStudio) {
+              previewSwitcherImageBtnStudio.classList.add('active');
+              previewSwitcherVideoBtnStudio?.classList.remove('active');
+              
+              const resultImageStudio = $('#result-image-image') as HTMLImageElement;
+              const resultVideoStudio = $('#result-video-image') as HTMLVideoElement;
+              const motionPromptPlaceholderStudio = $('#motion-prompt-placeholder-image');
+              
+              if (resultImageStudio) resultImageStudio.classList.remove('hidden');
+              if (resultVideoStudio) resultVideoStudio.classList.add('hidden');
+              if (motionPromptPlaceholderStudio) motionPromptPlaceholderStudio.classList.add('hidden');
+            }
+          }
         }
 
         if (container.id === 'p2d-image-details-panel') {
@@ -9611,46 +9734,96 @@ Apply the main color (${objectColor}) thoughtfully as the primary/accent color o
         if (!currentGeneratedImage) return;
         detailsPanel?.classList.remove('hidden');
         detailsPanel?.classList.add('is-open');
-        const detailsDetailTabBtn = detailsPanel?.querySelector<HTMLElement>('.tab-item[data-tab="detail"]');
+        const detailsDetailTabBtn = detailsPanel?.querySelector<HTMLElement>('.tab-item[data-tab="details"]');
         detailsDetailTabBtn?.click();
     });
-    previewSwitcherImageBtn?.addEventListener('click', () => {
+    // 3D Studio preview tab click handlers - attach directly to tabs
+    const sync3dPreviewToDetails = (tabName: 'image' | 'video') => {
         if (!currentGeneratedImage) return;
-        previewSwitcherImageBtn.classList.add('active');
-        previewSwitcherVideoBtn?.classList.remove('active');
-
-        resultImage?.classList.remove('hidden');
-        resultVideo?.classList.add('hidden');
-        resultIdlePlaceholder?.classList.add('hidden');
-        motionPromptPlaceholder?.classList.add('hidden');
         
-        detailsPanel?.classList.remove('hidden');
-        detailsPanel?.classList.add('is-open');
-        const detailsDetailTabBtn = detailsPanel?.querySelector<HTMLElement>('.tab-item[data-tab="detail"]');
-        detailsDetailTabBtn?.click();
-    });
-
-    previewSwitcherVideoBtn?.addEventListener('click', () => {
-        if (!currentGeneratedImage) return;
-        previewSwitcherVideoBtn.classList.add('active');
-        previewSwitcherImageBtn?.classList.remove('active');
+        const resultItemMain3d = document.querySelector('#result-item-main');
+        if (!resultItemMain3d) return;
         
-        resultImage?.classList.add('hidden');
-
-        if (currentGeneratedImage.videoDataUrl) {
-            resultVideo.src = currentGeneratedImage.videoDataUrl;
-            resultVideo.classList.remove('hidden');
-            motionPromptPlaceholder?.classList.add('hidden');
-        } else {
-            resultVideo?.classList.add('hidden');
-            motionPromptPlaceholder?.classList.remove('hidden');
+        const imageTab = resultItemMain3d.querySelector('.preview-tab-item[data-tab="image"]') as HTMLElement;
+        const videoTab = resultItemMain3d.querySelector('.preview-tab-item[data-tab="video"]') as HTMLElement;
+        
+        const resultImage3d = $('#result-image') as HTMLImageElement;
+        const resultVideo3d = $('#result-video') as HTMLVideoElement;
+        const resultIdlePlaceholder3d = $('#result-idle-placeholder');
+        const motionPromptPlaceholder3d = $('#motion-prompt-placeholder');
+        
+        if (tabName === 'image') {
+            // Switch to Image tab
+            if (imageTab) imageTab.classList.add('active');
+            if (videoTab) videoTab.classList.remove('active');
+            
+            if (resultImage3d) resultImage3d.classList.remove('hidden');
+            if (resultVideo3d) resultVideo3d.classList.add('hidden');
+            if (resultIdlePlaceholder3d) resultIdlePlaceholder3d.classList.add('hidden');
+            if (motionPromptPlaceholder3d) motionPromptPlaceholder3d.classList.add('hidden');
+            
+            // Switch details panel to details tab
+            if (detailsPanel) {
+                detailsPanel.classList.remove('hidden');
+                detailsPanel.classList.add('is-open');
+                const detailsDetailTabBtn = detailsPanel.querySelector<HTMLElement>('.tab-item[data-tab="details"]');
+                if (detailsDetailTabBtn) {
+                    detailsPanel.querySelectorAll<HTMLElement>('.tab-item').forEach(btn => btn.classList.remove('active'));
+                    detailsDetailTabBtn.classList.add('active');
+                    detailsPanel.querySelectorAll<HTMLElement>('.details-tab-content').forEach(content => {
+                        const contentName = content.dataset.tabContent || content.dataset.tab;
+                        content.classList.toggle('hidden', contentName !== 'details');
+                        content.classList.toggle('active', contentName === 'details');
+                    });
+                }
+            }
+        } else if (tabName === 'video') {
+            // Switch to Motion/Video tab
+            if (imageTab) imageTab.classList.remove('active');
+            if (videoTab) videoTab.classList.add('active');
+            
+            if (resultImage3d) resultImage3d.classList.add('hidden');
+            
+            if (currentGeneratedImage.videoDataUrl) {
+                if (resultVideo3d) {
+                    resultVideo3d.src = currentGeneratedImage.videoDataUrl;
+                    resultVideo3d.classList.remove('hidden');
+                }
+                if (motionPromptPlaceholder3d) motionPromptPlaceholder3d.classList.add('hidden');
+            } else {
+                if (resultVideo3d) resultVideo3d.classList.add('hidden');
+                if (motionPromptPlaceholder3d) motionPromptPlaceholder3d.classList.remove('hidden');
+            }
+            if (resultIdlePlaceholder3d) resultIdlePlaceholder3d.classList.add('hidden');
+            
+            // Switch details panel to motion tab
+            if (detailsPanel) {
+                detailsPanel.classList.remove('hidden');
+                detailsPanel.classList.add('is-open');
+                const detailsMotionTabBtn = detailsPanel.querySelector<HTMLElement>('.tab-item[data-tab="motion"]');
+                if (detailsMotionTabBtn) {
+                    detailsPanel.querySelectorAll<HTMLElement>('.tab-item').forEach(btn => btn.classList.remove('active'));
+                    detailsMotionTabBtn.classList.add('active');
+                    detailsPanel.querySelectorAll<HTMLElement>('.details-tab-content').forEach(content => {
+                        const contentName = content.dataset.tabContent || content.dataset.tab;
+                        content.classList.toggle('hidden', contentName !== 'motion');
+                        content.classList.toggle('active', contentName === 'motion');
+                    });
+                }
+            }
         }
-        resultIdlePlaceholder?.classList.add('hidden');
+    };
+    
+    // Attach event listeners to preview tabs using event delegation on document
+    document.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        const clickedTab = target.closest('#result-item-main .preview-tab-item') as HTMLElement;
+        if (!clickedTab || !currentGeneratedImage) return;
         
-        detailsPanel?.classList.remove('hidden');
-        detailsPanel?.classList.add('is-open');
-        const detailsMotionTabBtn = detailsPanel?.querySelector<HTMLElement>('.tab-item[data-tab="motion"]');
-        detailsMotionTabBtn?.click();
+        const tabName = clickedTab.dataset.tab;
+        if (tabName === 'image' || tabName === 'video') {
+            sync3dPreviewToDetails(tabName as 'image' | 'video');
+        }
     });
     
     const openMotionCategoryModal = () => {
@@ -9733,6 +9906,13 @@ Apply the main color (${objectColor}) thoughtfully as the primary/accent color o
         resultImage2d?.classList.remove('hidden');
         resultVideo2d?.classList.add('hidden');
         motionPromptPlaceholder2d?.classList.add('hidden');
+        
+        // Switch details panel to detail tab
+        const detailsPanel2d = $('#p2d-image-details-panel');
+        if (detailsPanel2d && !detailsPanel2d.classList.contains('hidden')) {
+            const detailsDetailTabBtn = detailsPanel2d.querySelector<HTMLElement>('.tab-item[data-tab="detail"]');
+            detailsDetailTabBtn?.click();
+        }
     });
     p2dPreviewSwitcherVideoBtn?.addEventListener('click', () => {
         if (!currentGeneratedImage2d) return;
@@ -9753,6 +9933,13 @@ Apply the main color (${objectColor}) thoughtfully as the primary/accent color o
         }
 
         resultImage2d?.classList.add('hidden');
+        
+        // Switch details panel to motion tab
+        const detailsPanel2d = $('#p2d-image-details-panel');
+        if (detailsPanel2d && !detailsPanel2d.classList.contains('hidden')) {
+            const detailsMotionTabBtn = detailsPanel2d.querySelector<HTMLElement>('.tab-item[data-tab="motion"]');
+            detailsMotionTabBtn?.click();
+        }
     });
 
     motionCategoryCloseBtn?.addEventListener('click', () => {
