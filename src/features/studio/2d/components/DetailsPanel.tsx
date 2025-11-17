@@ -11,6 +11,7 @@ interface DetailsPanelProps {
   onRegenerate: (color: string) => Promise<void>;
   onRemoveBackground: () => Promise<void>;
   onConvertToSVG: () => Promise<void>;
+  onConvertToGif?: () => Promise<void>;
   onCopy: () => void;
   onDelete: () => void;
   onDownload: () => void;
@@ -31,6 +32,7 @@ export const DetailsPanel: React.FC<DetailsPanelProps> = ({
   onRegenerate,
   onRemoveBackground,
   onConvertToSVG,
+  onConvertToGif,
   onCopy,
   onDelete,
   onDownload,
@@ -277,6 +279,38 @@ export const DetailsPanel: React.FC<DetailsPanelProps> = ({
                         Convert to SVG
                       </Button>
                     </div>
+
+                    {/* GIF Conversion - Show if video exists */}
+                    {image?.videoDataUrl && (
+                      <div style={{ marginTop: 'var(--spacing-2)' }}>
+                        {image.gifDataUrl ? (
+                          <a
+                            href={image.gifDataUrl}
+                            download={`${image.subject.replace(/\s+/g, '_')}_motion.gif`}
+                            style={{ textDecoration: 'none', display: 'block' }}
+                          >
+                            <Button
+                              variant="solid"
+                              fullWidth
+                              className="primary-btn"
+                            >
+                              <span className="material-symbols-outlined">download</span>
+                              Download GIF
+                            </Button>
+                          </a>
+                        ) : (
+                          <Button
+                            variant="solid"
+                            fullWidth
+                            onClick={onConvertToGif}
+                            className="primary-btn"
+                          >
+                            <span className="material-symbols-outlined">gif_box</span>
+                            Convert to GIF
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </Accordion.Content>
               </Accordion>

@@ -193,19 +193,10 @@ export const ExplorePage: React.FC = () => {
       <main className="explore-main" ref={exploreMainRef}>
         <div className="hero-content-wrapper">
           <div className="hero-section" style={{ textAlign: 'center', marginBottom: '60px' }}>
-            <h1 className="hero-title" style={{
-              fontSize: '48px',
-              fontWeight: 'bold',
-              marginBottom: '16px',
-              color: '#212121'
-            }}>
+            <h1 className="hero-title">
               Build what you imagine.<br />Create beyond boundaries.
             </h1>
-            <p className="hero-description" style={{
-              fontSize: '18px',
-              color: '#666',
-              marginBottom: '32px'
-            }}>
+            <p className="hero-description" style={{ fontSize: '18px', marginBottom: '32px' }}>
               From icons to 3D motion, all in one creative pipeline.
             </p>
 
@@ -228,7 +219,7 @@ export const ExplorePage: React.FC = () => {
             </div>
 
             {/* Upload hint */}
-            <p style={{ fontSize: '14px', color: '#999', marginTop: '16px' }}>
+            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '16px' }}>
               또는 이미지/비디오를 드래그하여 업로드하세요
             </p>
           </div>
@@ -337,7 +328,7 @@ export const ExplorePage: React.FC = () => {
                         height: 'auto',
                         minHeight: 0,
                         objectFit: 'contain',
-                        backgroundColor: '#FFFFFF',
+                        backgroundColor: 'var(--surface-color, #ffffff)',
                         aspectRatio: '4 / 3',
                       }}
                     />
@@ -355,7 +346,7 @@ export const ExplorePage: React.FC = () => {
                         height: 'auto',
                         minHeight: 0,
                         objectFit: 'contain',
-                        backgroundColor: '#FFFFFF',
+                        backgroundColor: 'var(--surface-color, #ffffff)',
                         aspectRatio: '4 / 3',
                       }}
                     />

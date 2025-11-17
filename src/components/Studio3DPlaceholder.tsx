@@ -13,7 +13,7 @@ export const Studio3DPlaceholder: React.FC<Studio3DPlaceholderProps> = ({
     justifyContent: 'center',
     alignItems: 'center',
     height: '100%',
-    background: 'linear-gradient(to bottom, #f9fafb, #e5e7eb)',
+    background: 'linear-gradient(to bottom, rgba(var(--surface-color-rgb, 255, 255, 255), 0.9), var(--surface-color, #e5e7eb))',
     position: 'relative',
     overflow: 'hidden',
   };
@@ -38,7 +38,7 @@ export const Studio3DPlaceholder: React.FC<Studio3DPlaceholderProps> = ({
   const textStyle: React.CSSProperties = {
     position: 'absolute',
     bottom: '40px',
-    color: '#9ca3af',
+    color: 'var(--text-secondary, #9ca3af)',
     fontSize: '14px',
     zIndex: 10,
   };

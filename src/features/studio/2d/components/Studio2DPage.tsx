@@ -17,6 +17,7 @@ import {
   blobToBase64DataUrl,
   normalizeHex
 } from '../utils/imageUtils';
+import { convertVideoToGif } from '../../../../utils/ffmpegUtils';
 
 /**
  * Main 2D Studio page component.
@@ -506,6 +507,72 @@ export const Studio2DPage: React.FC = () => {
     }
   }, [currentGeneratedImage2d, setDetailsPanelHistory2d, setDetailsPanelHistoryIndex2d]);
 
+  // Handle GIF conversion
+  const handleConvertToGif = useCallback(async () => {
+    if (!currentGeneratedImage2d || !currentGeneratedImage2d.videoDataUrl) {
+      showToast({
+        type: 'error',
+        title: 'No Video',
+        body: 'Please generate a video first.',
+      });
+      return;
+    }
+
+    setIsLoadingModalVisible(true);
+    setLoadingMessage('Loading video converter...');
+
+    try {
+      const gifUrl = await convertVideoToGif(
+        currentGeneratedImage2d.videoDataUrl,
+        (message) => setLoadingMessage(message)
+      );
+
+      // Update image with GIF URL
+      const updatedImage: GeneratedImageData = {
+        ...currentGeneratedImage2d,
+        gifDataUrl: gifUrl,
+        modificationType: currentGeneratedImage2d.modificationType || 'GIF',
+      };
+
+      setCurrentGeneratedImage2d(updatedImage);
+
+      // Update in history
+      setImageHistory2d((prev) =>
+        prev.map((item) =>
+          item.id === currentGeneratedImage2d.id ? updatedImage : item
+        )
+      );
+
+      // Add to details panel history
+      setDetailsPanelHistory2d((prev) => {
+        const newHistory = [...prev, updatedImage];
+        return newHistory;
+      });
+      setDetailsPanelHistoryIndex2d((prev) => prev + 1);
+
+      showToast({
+        type: 'success',
+        title: 'GIF Created! ✅',
+        body: 'Your animated GIF is ready.',
+      });
+    } catch (error) {
+      console.error('GIF conversion failed:', error);
+      showToast({
+        type: 'error',
+        title: 'Conversion Failed',
+        body: 'Failed to convert video to GIF. Please try again.',
+      });
+    } finally {
+      setIsLoadingModalVisible(false);
+    }
+  }, [
+    currentGeneratedImage2d,
+    setCurrentGeneratedImage2d,
+    setImageHistory2d,
+    setDetailsPanelHistory2d,
+    setDetailsPanelHistoryIndex2d,
+  ]);
+
   // Handle copy
   const handleCopy = useCallback(() => {
     if (!currentGeneratedImage2d) return;
@@ -718,6 +785,7 @@ export const Studio2DPage: React.FC = () => {
           onRegenerate={handleRegenerate}
           onRemoveBackground={handleRemoveBackground}
           onConvertToSVG={handleConvertToSVG}
+          onConvertToGif={handleConvertToGif}
           onCopy={handleCopy}
           onDelete={handleDelete}
           onDownload={handleDownload}

@@ -52,11 +52,17 @@ export const Toast: React.FC = () => {
           style={{
             marginBottom: '8px',
             padding: '12px 16px',
-            borderRadius: '8px',
-            backgroundColor: toast.type === 'success' ? '#4CAF50' : '#F44336',
-            color: 'white',
+            borderRadius: '12px',
+            backgroundColor: 'var(--surface-color, #1f1f1f)',
+            color: 'var(--text-primary, #ffffff)',
             minWidth: '300px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            boxShadow: '0 8px 20px rgba(15, 23, 42, 0.18)',
+            border: '1px solid var(--border-color, rgba(255,255,255,0.08))',
+            borderLeft: '4px solid',
+            borderLeftColor:
+              toast.type === 'success'
+                ? 'var(--accent-color, #4CAF50)'
+                : 'var(--danger-color, #F44336)',
           }}
         >
           <strong>{toast.title}</strong>

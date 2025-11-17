@@ -15,7 +15,6 @@ export const Header: React.FC = () => {
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
-    document.body.setAttribute('data-theme', newTheme);
   };
   
   return (
@@ -73,7 +72,13 @@ export const Header: React.FC = () => {
         <Button variant="ghost" size="small">
           <span className="material-symbols-outlined">storage</span>
         </Button>
-        <Button variant="ghost" size="small" onClick={toggleTheme}>
+        <Button
+          variant="ghost"
+          size="small"
+          onClick={toggleTheme}
+          aria-pressed={theme === 'dark'}
+          aria-label={theme === 'light' ? '다크 모드로 전환' : '라이트 모드로 전환'}
+        >
           <span className="material-symbols-outlined">
             {theme === 'light' ? 'light_mode' : 'dark_mode'}
           </span>

@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
+const THEME_STORAGE_KEY = 'cb-theme';
+
 export interface GeneratedImageData {
   id: string;
   data: string; // base64
@@ -8,6 +10,7 @@ export interface GeneratedImageData {
   styleConstraints: string;
   timestamp: number;
   videoDataUrl?: string;
+  gifDataUrl?: string;
   motionPrompt?: { json: any; korean: string; english: string } | null;
   originalData?: string;
   originalMimeType?: string;
@@ -88,7 +91,25 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
     return 'page-usages';
   });
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [themeState, setThemeState] = useState<'light' | 'dark'>(() => {
+    if (typeof window === 'undefined') {
+      return 'light';
+    }
+
+    const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+    const resolvedTheme =
+      storedTheme === 'light' || storedTheme === 'dark'
+        ? storedTheme
+        : window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light';
+
+    if (typeof document !== 'undefined') {
+      document.body.setAttribute('data-theme', resolvedTheme);
+    }
+
+    return resolvedTheme;
+  });
   
   // Icon Studio
   const [selectedIcon, setSelectedIcon] = useState<IconData | null>(null);
@@ -113,6 +134,41 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   // Explore
   const [exploreMedia, setExploreMedia] = useState<any[]>([]);
   
+  // Keep theme attribute and persistence in sync
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    document.body.setAttribute('data-theme', themeState);
+  }, [themeState]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handlePreferenceChange = (event: MediaQueryListEvent) => {
+      const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+      if (storedTheme === null) {
+        setThemeState(event.matches ? 'dark' : 'light');
+      }
+    };
+
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handlePreferenceChange);
+      return () => mediaQuery.removeEventListener('change', handlePreferenceChange);
+    }
+
+    if (mediaQuery.addListener) {
+      mediaQuery.addListener(handlePreferenceChange);
+      return () => mediaQuery.removeListener(handlePreferenceChange);
+    }
+  }, []);
+
+  const setTheme = (nextTheme: 'light' | 'dark') => {
+    setThemeState(nextTheme);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+    }
+  };
+
   // Save currentPage to localStorage when it changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -123,7 +179,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const value: AppState = {
     currentPage,
     setCurrentPage,
-    theme,
+    theme: themeState,
     setTheme,
     selectedIcon,
     setSelectedIcon,

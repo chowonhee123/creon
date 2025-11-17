@@ -4960,48 +4960,72 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
   };
 
   // FFmpeg initialization and GIF conversion functions
+  const FFMPEG_SOURCES = [
+    {
+      name: 'jsDelivr',
+      coreURL: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.js',
+      wasmURL: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm',
+    },
+    {
+      name: 'unpkg',
+      coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.js',
+      wasmURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm',
+    },
+  ] as const;
+
   const loadFFmpeg = async () => {
     if (isFFmpegLoaded && ffmpegInstance) {
       console.log('[FFmpeg] Using cached instance');
       return ffmpegInstance;
     }
-    
-    try {
-      console.log('[FFmpeg] Initializing FFmpeg...');
-      showToast({ type: 'success', title: 'Loading FFmpeg...', body: 'Initializing video converter. This may take a moment.' });
-      
-      ffmpegInstance = new FFmpeg();
-      
-      // Add progress logging
-      ffmpegInstance.on('log', ({ message }) => {
-        console.log('[FFmpeg]', message);
-      });
-      
-      console.log('[FFmpeg] Loading core...');
-      await ffmpegInstance.load({
-        coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.js',
-        wasmURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm',
-      });
-      
-      isFFmpegLoaded = true;
-      console.log('[FFmpeg] Loaded successfully');
-      return ffmpegInstance;
-    } catch (error) {
-      console.error('[FFmpeg] Failed to load:', error);
-      console.error('[FFmpeg] Error details:', {
-        name: error?.name,
-        message: error?.message,
-        stack: error?.stack
-      });
-      isFFmpegLoaded = false;
-      ffmpegInstance = null;
-      showToast({ 
-        type: 'error', 
-        title: 'FFmpeg Error', 
-        body: error?.message || 'Failed to load video converter. Please check your internet connection.' 
-      });
-      throw error;
+
+    let lastError: unknown = null;
+
+    for (const source of FFMPEG_SOURCES) {
+      try {
+        console.log(`[FFmpeg] Initializing FFmpeg via ${source.name}...`);
+        showToast({
+          type: 'success',
+          title: 'Loading Video Converter…',
+          body: `Preparing FFmpeg (${source.name}). This may take a moment.`,
+        });
+
+        const instance = new FFmpeg();
+        instance.on('log', ({ message }) => {
+          console.log('[FFmpeg]', message);
+        });
+
+        console.log(`[FFmpeg] Loading core from ${source.coreURL}`);
+        await instance.load({
+          coreURL: source.coreURL,
+          wasmURL: source.wasmURL,
+        });
+
+        ffmpegInstance = instance;
+        isFFmpegLoaded = true;
+        console.log('[FFmpeg] Loaded successfully');
+        return instance;
+      } catch (error) {
+        lastError = error;
+        console.error(`[FFmpeg] Failed to load from ${source.name}:`, error);
+        console.error('[FFmpeg] Error details:', {
+          name: (error as Error)?.name,
+          message: (error as Error)?.message,
+          stack: (error as Error)?.stack,
+        });
+        // Reset state before trying the next source
+        ffmpegInstance = null;
+        isFFmpegLoaded = false;
+      }
     }
+
+    showToast({
+      type: 'error',
+      title: 'FFmpeg Error',
+      body: 'Unable to load the video converter. Please check your network connection and try again.',
+    });
+
+    throw lastError || new Error('Failed to load FFmpeg from all sources');
   };
 
   const convertVideoToGif = async (videoUrl: string) => {
