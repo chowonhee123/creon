@@ -2220,6 +2220,9 @@ a.secondary-btn[disabled] {
 .result-image.visible {
   opacity: 1;
 }
+.result-image.hidden {
+  display: none !important;
+}
 
 .result-video {
   object-fit: contain;
@@ -3147,6 +3150,11 @@ a.secondary-btn[disabled] {
   transition: opacity 0.3s ease-in-out;
   backdrop-filter: blur(4px);
 }
+
+/* Confetti canvas should be above modals */
+canvas[style*="position: fixed"] {
+  z-index: 10000 !important;
+}
 .image-modal-overlay:not(.hidden) {
   opacity: 1;
   pointer-events: auto;
@@ -3162,6 +3170,16 @@ a.secondary-btn[disabled] {
   transform: translateY(30px);
   opacity: 0;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out;
+}
+
+/* Unified loader modal size */
+.loader-modal-content {
+  width: 240px !important;
+  height: 160px !important;
+  max-width: 240px !important;
+  max-height: 160px !important;
+  overflow: hidden;
+  padding: 0 !important;
 }
 .image-modal-overlay:not(.hidden) .image-modal-content {
   transform: translateY(0);
@@ -4046,6 +4064,8 @@ a.secondary-btn[disabled] {
 #motion-category-modal .image-modal-content {
   max-width: 520px;
   width: 90%;
+  max-height: 430px;
+  height: 430px;
   border-radius: 24px;
   padding: var(--spacing-5); /* 32px -> 24px */
 }
@@ -4193,19 +4213,23 @@ a.secondary-btn[disabled] {
     }
 }
 
-/* 3D Studio Placeholder Animation */
-@keyframes scrollLeft {
+/* 3D Studio Placeholder Animation - Fade in/out */
+@keyframes fadeInOut {
   0% {
-    transform: translateX(0%);
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
+  }
+  20% {
+    opacity: 1;
+  }
+  25% {
+    opacity: 0;
   }
   100% {
-    transform: translateX(-100%);
+    opacity: 0;
   }
-}
-
-/* Individual image scale animation - smaller when far, larger in center */
-.sample-preview-img {
-  transition: transform 0.5s ease-out, opacity 0.5s ease-out;
 }
 
 /* Center detection - images near center are larger */
@@ -4214,22 +4238,28 @@ a.secondary-btn[disabled] {
 }
 
 #animated-samples-container {
-  will-change: transform;
+  will-change: opacity;
 }
 
-/* Using CSS variable to control scale based on scroll position */
+/* Individual image styling - centered, fade animation */
 .sample-preview-img {
-  --scale-factor: 0.6;
-  transform: scale(var(--scale-factor));
-  opacity: calc(var(--scale-factor) * 0.5);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 480px;
+  height: 480px;
+  object-fit: contain;
+  border-radius: 16px;
+  filter: none;
+  background: transparent;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  /* Animation is set dynamically in JavaScript */
 }
 
 .sample-preview-img:hover {
-  filter: grayscale(0%) !important;
-  transform: scale(1.2) !important;
-  opacity: 0.7 !important;
-  z-index: 10;
-  position: relative;
+  opacity: 1 !important;
 }
 
 /* Motion Category Preview Animations */

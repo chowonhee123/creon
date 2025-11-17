@@ -726,72 +726,114 @@ const imagePromptDisplay = $('#image-prompt-display') as HTMLTextAreaElement;
       
       container.innerHTML = '';
       
-      // Use all images, repeating them 3 times for seamless loop
-      const imagesToShow = [...assetsImages, ...assetsImages, ...assetsImages];
+      // Clear existing dynamic animations
+      const existingStyleElement = document.getElementById('dynamic-placeholder-animations');
+      if (existingStyleElement) {
+        existingStyleElement.remove();
+      }
       
-      // Calculate duration based on number of images to maintain consistent scroll speed
-      // Base: 130s for 48 images (16 images * 3 repeats)
-      // Each image should take approximately 2.7s (130 / 48)
-      const imageCount = imagesToShow.length;
-      const baseImageCount = 48; // 16 images * 3 repeats
-      const baseDuration = 130; // seconds
-      const duration = Math.round((imageCount / baseImageCount) * baseDuration);
+      // Use all images once, each will fade in/out sequentially
+      // Skip 3rd image (index 2) if it exists
+      const imagesToShow = assetsImages.filter((_: any, idx: number) => idx !== 2);
+      const imageDisplayDuration = 1; // seconds each image is visible (fully opaque)
+      const fadeDuration = 1; // seconds for fade in (1s) and fade out (1s) = 2s total
+      const totalCycleDuration = imagesToShow.length * (imageDisplayDuration + fadeDuration * 2);
       
-      // Apply calculated duration to container
-      container.style.animation = `scrollLeft ${duration}s linear infinite`;
+      // Remove scroll animation
+      container.style.animation = '';
       
-      imagesToShow.forEach((asset: { url: string; name: string }, index: number) => {
-        const img = document.createElement('img');
-        img.src = asset.url;
-        img.alt = 'preview';
-        img.className = 'sample-preview-img';
-        img.style.cssText = 'width: 240px; height: 240px; object-fit: cover; border-radius: 16px; filter: grayscale(100%); background: #f3f4f6;';
-        img.style.setProperty('--img-index', index.toString());
-        img.onerror = () => {
-          console.warn(`Failed to load image: ${asset.url}`);
-          img.style.display = 'none';
-        };
-        container.appendChild(img);
-      });
-
-      // Update scale based on position relative to center
-      const updateImageScales = () => {
-        const placeholderRect = placeholder.getBoundingClientRect();
-        const centerX = placeholderRect.left + placeholderRect.width / 2;
-        const images = container.querySelectorAll('.sample-preview-img') as NodeListOf<HTMLElement>;
-        
-        images.forEach((img) => {
-          const imgRect = img.getBoundingClientRect();
-          const imgCenterX = imgRect.left + imgRect.width / 2;
-          const distanceFromCenter = Math.abs(centerX - imgCenterX);
-          const maxDistance = placeholderRect.width / 2;
-          const normalizedDistance = Math.min(distanceFromCenter / maxDistance, 1);
-          
-          // Scale: 0.6 (far) to 1.0 (center), opacity: 0.3 (far) to 0.5 (center)
-          const scale = 0.6 + (1 - normalizedDistance) * 0.4;
-          const opacity = 0.3 + (1 - normalizedDistance) * 0.2;
-          
-          img.style.setProperty('--scale-factor', scale.toString());
-          img.style.transform = `scale(${scale})`;
-          img.style.opacity = opacity.toString();
+      // Create style element for dynamic animations
+      const styleElement = document.createElement('style');
+      styleElement.id = 'dynamic-placeholder-animations';
+      document.head.appendChild(styleElement);
+      
+      // Load images and filter out failed ones
+      const loadImage = (url: string): Promise<HTMLImageElement> => {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = () => reject(new Error(`Failed to load: ${url}`));
+          img.src = url;
         });
       };
 
-      // Update scales on scroll/animation
-      let animationFrameId: number;
-      const animate = () => {
-        updateImageScales();
-        animationFrameId = requestAnimationFrame(animate);
-      };
-      animate();
+      const loadedImages: Array<{ img: HTMLImageElement; asset: { url: string; name: string }; index: number }> = [];
+      
+      // Try to load all images and collect successful ones
+      await Promise.allSettled(
+        imagesToShow.map(async (asset: { url: string; name: string }, index: number) => {
+          try {
+            const img = await loadImage(asset.url);
+            loadedImages.push({ img, asset, index });
+          } catch (error) {
+            console.warn(`Skipping image that failed to load: ${asset.url}`);
+          }
+        })
+      );
 
-      // Cleanup on page change
-      const observer = new MutationObserver(() => {
-        if (placeholder.classList.contains('hidden') || !placeholder.offsetParent) {
-          cancelAnimationFrame(animationFrameId);
-        }
+      // Recalculate total cycle duration based on successfully loaded images
+      const actualTotalCycleDuration = loadedImages.length * (imageDisplayDuration + fadeDuration * 2);
+
+      loadedImages.forEach(({ img, asset, index }, loadedIndex) => {
+        img.alt = 'preview';
+        img.className = 'sample-preview-img';
+        
+        // Calculate animation delay for sequential display
+        // Each image appears after the previous one completes (fade in + display + fade out)
+        const singleImageDuration = imageDisplayDuration + fadeDuration * 2; // 1s display + 1s fade in + 1s fade out = 3s total
+        const delay = loadedIndex * singleImageDuration;
+        
+        // Calculate keyframe percentages for this image
+        // Timeline: delay → fade in (1s) → display (1s) → fade out (1s)
+        // Opacity: 0 → 0.2 (fade in) → 0.2 (display) → 0 (fade out)
+        const startPercent = (delay / actualTotalCycleDuration) * 100;
+        const fadeInEndPercent = ((delay + fadeDuration) / actualTotalCycleDuration) * 100;
+        const fadeOutStartPercent = ((delay + fadeDuration + imageDisplayDuration) / actualTotalCycleDuration) * 100;
+        const endPercent = ((delay + fadeDuration + imageDisplayDuration + fadeDuration) / actualTotalCycleDuration) * 100;
+        
+        // Create unique animation for this image
+        const animationName = `fadeInOut-${index}`;
+        
+        // Add keyframes for this image
+        const keyframes = `
+          @keyframes ${animationName} {
+            0%, ${startPercent}% {
+              opacity: 0;
+              transform: translate(-50%, -50%) scale(0.8);
+            }
+            ${fadeInEndPercent}%, ${fadeOutStartPercent}% {
+              opacity: 0.2;
+              transform: translate(-50%, -50%) scale(1);
+            }
+            ${endPercent}%, 100% {
+              opacity: 0;
+              transform: translate(-50%, -50%) scale(0.8);
+            }
+          }
+        `;
+        styleElement.textContent += keyframes;
+        
+        img.style.cssText = `
+          width: 480px;
+          height: 480px;
+          object-fit: contain;
+          border-radius: 16px;
+          filter: none;
+          background: transparent;
+          opacity: 0;
+          animation: ${animationName} ${actualTotalCycleDuration}s ease-in-out infinite;
+        `;
+        
+        // Add hover event listeners for opacity change
+        img.addEventListener('mouseenter', () => {
+          img.style.opacity = '1';
+        });
+        img.addEventListener('mouseleave', () => {
+          img.style.opacity = '';
+        });
+        
+        container.appendChild(img);
       });
-      observer.observe(placeholder, { attributes: true, attributeFilter: ['class'] });
       
     } catch (error) {
       console.error('Failed to initialize placeholder images:', error);
@@ -889,76 +931,258 @@ const p2dGenerateMotionFromPreviewBtn = $('#p2d-generate-motion-from-preview-btn
       
       container.innerHTML = '';
       
-      // Use all images, repeating them 3 times for seamless loop
-      const imagesToShow = [...assetsImages, ...assetsImages, ...assetsImages];
+      // Clear existing dynamic animations
+      const existingStyleElement = document.getElementById('dynamic-placeholder-animations-2d');
+      if (existingStyleElement) {
+        existingStyleElement.remove();
+      }
       
-      // Calculate duration based on number of images to maintain consistent scroll speed
-      // Base: 130s for 48 images (16 images * 3 repeats)
-      // Each image should take approximately 2.7s (130 / 48)
-      const imageCount = imagesToShow.length;
-      const baseImageCount = 48; // 16 images * 3 repeats
-      const baseDuration = 130; // seconds
-      const duration = Math.round((imageCount / baseImageCount) * baseDuration);
+      // Use all images once, each will fade in/out sequentially
+      const imagesToShow = assetsImages;
+      const imageDisplayDuration = 1; // seconds each image is visible (fully opaque)
+      const fadeDuration = 1; // seconds for fade in (1s) and fade out (1s) = 2s total
+      const totalCycleDuration = imagesToShow.length * (imageDisplayDuration + fadeDuration * 2);
       
-      // Apply calculated duration to container
-      container.style.animation = `scrollLeft ${duration}s linear infinite`;
+      // Remove scroll animation
+      container.style.animation = '';
       
-      imagesToShow.forEach((asset: { url: string; name: string }, index: number) => {
-        const img = document.createElement('img');
-        img.src = asset.url;
-        img.alt = 'preview';
-        img.className = 'sample-preview-img';
-        img.style.cssText = 'width: 240px; height: 240px; object-fit: cover; border-radius: 16px; filter: grayscale(100%); background: #f3f4f6;';
-        img.style.setProperty('--img-index', index.toString());
-        img.onerror = () => {
-          console.warn(`Failed to load image: ${asset.url}`);
-          img.style.display = 'none';
-        };
-        container.appendChild(img);
-      });
-
-      // Update scale based on position relative to center
-      const updateImageScales = () => {
-        const placeholderRect = placeholder.getBoundingClientRect();
-        const centerX = placeholderRect.left + placeholderRect.width / 2;
-        const images = container.querySelectorAll('.sample-preview-img') as NodeListOf<HTMLElement>;
-        
-        images.forEach((img) => {
-          const imgRect = img.getBoundingClientRect();
-          const imgCenterX = imgRect.left + imgRect.width / 2;
-          const distanceFromCenter = Math.abs(centerX - imgCenterX);
-          const maxDistance = placeholderRect.width / 2;
-          const normalizedDistance = Math.min(distanceFromCenter / maxDistance, 1);
-          
-          // Scale: 0.6 (far) to 1.0 (center), opacity: 0.3 (far) to 0.5 (center)
-          const scale = 0.6 + (1 - normalizedDistance) * 0.4;
-          const opacity = 0.3 + (1 - normalizedDistance) * 0.2;
-          
-          img.style.setProperty('--scale-factor', scale.toString());
-          img.style.transform = `scale(${scale})`;
-          img.style.opacity = opacity.toString();
+      // Create style element for dynamic animations
+      const styleElement = document.createElement('style');
+      styleElement.id = 'dynamic-placeholder-animations-2d';
+      document.head.appendChild(styleElement);
+      
+      // Load images and filter out failed ones
+      const loadImage = (url: string): Promise<HTMLImageElement> => {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = () => reject(new Error(`Failed to load: ${url}`));
+          img.src = url;
         });
       };
 
-      // Update scales on scroll/animation
-      let animationFrameId: number;
-      const animate = () => {
-        updateImageScales();
-        animationFrameId = requestAnimationFrame(animate);
-      };
-      animate();
+      const loadedImages: Array<{ img: HTMLImageElement; asset: { url: string; name: string }; index: number }> = [];
+      
+      // Try to load all images and collect successful ones
+      await Promise.allSettled(
+        imagesToShow.map(async (asset: { url: string; name: string }, index: number) => {
+          try {
+            const img = await loadImage(asset.url);
+            loadedImages.push({ img, asset, index });
+          } catch (error) {
+            console.warn(`Skipping image that failed to load: ${asset.url}`);
+          }
+        })
+      );
 
-      // Cleanup on page change
-      const observer = new MutationObserver(() => {
-        if (placeholder.classList.contains('hidden') || !placeholder.offsetParent) {
-          cancelAnimationFrame(animationFrameId);
-        }
+      // Recalculate total cycle duration based on successfully loaded images
+      const actualTotalCycleDuration = loadedImages.length * (imageDisplayDuration + fadeDuration * 2);
+
+      loadedImages.forEach(({ img, asset, index }, loadedIndex) => {
+        img.alt = 'preview';
+        img.className = 'sample-preview-img';
+        
+        // Calculate animation delay for sequential display
+        // Each image appears after the previous one completes (fade in + display + fade out)
+        const singleImageDuration = imageDisplayDuration + fadeDuration * 2; // 1s display + 1s fade in + 1s fade out = 3s total
+        const delay = loadedIndex * singleImageDuration;
+        
+        // Calculate keyframe percentages for this image
+        // Timeline: delay → fade in (1s) → display (1s) → fade out (1s)
+        // Opacity: 0 → 0.2 (fade in) → 0.2 (display) → 0 (fade out)
+        const startPercent = (delay / actualTotalCycleDuration) * 100;
+        const fadeInEndPercent = ((delay + fadeDuration) / actualTotalCycleDuration) * 100;
+        const fadeOutStartPercent = ((delay + fadeDuration + imageDisplayDuration) / actualTotalCycleDuration) * 100;
+        const endPercent = ((delay + fadeDuration + imageDisplayDuration + fadeDuration) / actualTotalCycleDuration) * 100;
+        
+        // Create unique animation for this image
+        const animationName = `fadeInOut-2d-${index}`;
+        
+        // Add keyframes for this image
+        const keyframes = `
+          @keyframes ${animationName} {
+            0%, ${startPercent}% {
+              opacity: 0;
+              transform: translate(-50%, -50%) scale(0.8);
+            }
+            ${fadeInEndPercent}%, ${fadeOutStartPercent}% {
+              opacity: 0.2;
+              transform: translate(-50%, -50%) scale(1);
+            }
+            ${endPercent}%, 100% {
+              opacity: 0;
+              transform: translate(-50%, -50%) scale(0.8);
+            }
+          }
+        `;
+        styleElement.textContent += keyframes;
+        
+        img.style.cssText = `
+          width: 320px;
+          height: 320px;
+          object-fit: contain;
+          border-radius: 16px;
+          filter: none;
+          background: transparent;
+          opacity: 0;
+          animation: ${animationName} ${actualTotalCycleDuration}s ease-in-out infinite;
+        `;
+        
+        // Add hover event listeners for opacity change
+        img.addEventListener('mouseenter', () => {
+          img.style.opacity = '1';
+        });
+        img.addEventListener('mouseleave', () => {
+          img.style.opacity = '';
+        });
+        
+        container.appendChild(img);
       });
-      observer.observe(placeholder, { attributes: true, attributeFilter: ['class'] });
       
     } catch (error) {
       console.error('Failed to initialize 2D placeholder images:', error);
       // Fallback: hide container if JSON load fails
+      if (container) {
+        container.innerHTML = '';
+      }
+    }
+  };
+
+  // Initialize Image Studio placeholder images from assets/image folder
+  const initializeImageStudioPlaceholder = async () => {
+    const container = document.getElementById('animated-samples-container-image');
+    const placeholder = document.getElementById('result-idle-placeholder-image');
+    const header = document.querySelector('.result-content-header-image');
+    if (!container || !placeholder) return;
+    
+    // Hide header when placeholder is shown
+    if (header) {
+      (header as HTMLElement).classList.add('hidden');
+    }
+    
+    try {
+      // Load images from assets/image folder
+      const imageFiles = ['1.png', '2.png', '3.png'];
+      const imagesToShow = imageFiles.map((filename, idx) => ({
+        url: `/assets/image/${filename}`,
+        name: filename
+      }));
+      
+      if (imagesToShow.length === 0) {
+        console.warn('No image assets found');
+        return;
+      }
+      
+      container.innerHTML = '';
+      
+      // Clear existing dynamic animations
+      const existingStyleElement = document.getElementById('dynamic-placeholder-animations-image');
+      if (existingStyleElement) {
+        existingStyleElement.remove();
+      }
+      
+      const imageDisplayDuration = 1; // seconds each image is visible (fully opaque)
+      const fadeDuration = 1; // seconds for fade in (1s) and fade out (1s) = 2s total
+      const totalCycleDuration = imagesToShow.length * (imageDisplayDuration + fadeDuration * 2);
+      
+      // Remove scroll animation
+      container.style.animation = '';
+      
+      // Create style element for dynamic animations
+      const styleElement = document.createElement('style');
+      styleElement.id = 'dynamic-placeholder-animations-image';
+      document.head.appendChild(styleElement);
+      
+      // Load images and filter out failed ones
+      const loadImage = (url: string): Promise<HTMLImageElement> => {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = () => reject(new Error(`Failed to load: ${url}`));
+          img.src = url;
+        });
+      };
+
+      const loadedImages: Array<{ img: HTMLImageElement; asset: { url: string; name: string }; index: number }> = [];
+      
+      // Try to load all images and collect successful ones
+      await Promise.allSettled(
+        imagesToShow.map(async (asset: { url: string; name: string }, index: number) => {
+          try {
+            const img = await loadImage(asset.url);
+            loadedImages.push({ img, asset, index });
+          } catch (error) {
+            console.warn(`Skipping image that failed to load: ${asset.url}`);
+          }
+        })
+      );
+
+      // Recalculate total cycle duration based on successfully loaded images
+      const actualTotalCycleDuration = loadedImages.length * (imageDisplayDuration + fadeDuration * 2);
+
+      loadedImages.forEach(({ img, asset, index }, loadedIndex) => {
+        img.alt = 'preview';
+        img.className = 'sample-preview-img';
+        
+        // Calculate animation delay for sequential display
+        const singleImageDuration = imageDisplayDuration + fadeDuration * 2; // 1s display + 1s fade in + 1s fade out = 3s total
+        const delay = loadedIndex * singleImageDuration;
+        
+        // Calculate keyframe percentages for this image
+        // Timeline: delay → fade in (1s) → display (1s) → fade out (1s)
+        // Opacity: 0 → 0.2 (fade in) → 0.2 (display) → 0 (fade out)
+        const startPercent = (delay / actualTotalCycleDuration) * 100;
+        const fadeInEndPercent = ((delay + fadeDuration) / actualTotalCycleDuration) * 100;
+        const fadeOutStartPercent = ((delay + fadeDuration + imageDisplayDuration) / actualTotalCycleDuration) * 100;
+        const endPercent = ((delay + fadeDuration + imageDisplayDuration + fadeDuration) / actualTotalCycleDuration) * 100;
+        
+        // Create unique animation for this image
+        const animationName = `fadeInOut-image-${index}`;
+        
+        // Add keyframes for this image
+        const keyframes = `
+          @keyframes ${animationName} {
+            0%, ${startPercent}% {
+              opacity: 0;
+              transform: translate(-50%, -50%) scale(0.8);
+            }
+            ${fadeInEndPercent}%, ${fadeOutStartPercent}% {
+              opacity: 0.2;
+              transform: translate(-50%, -50%) scale(1);
+            }
+            ${endPercent}%, 100% {
+              opacity: 0;
+              transform: translate(-50%, -50%) scale(0.8);
+            }
+          }
+        `;
+        styleElement.textContent += keyframes;
+        
+        img.style.cssText = `
+          width: 320px;
+          height: 320px;
+          object-fit: contain;
+          border-radius: 16px;
+          filter: none;
+          background: transparent;
+          opacity: 0;
+          animation: ${animationName} ${actualTotalCycleDuration}s ease-in-out infinite;
+        `;
+        
+        // Add hover event listeners for opacity change
+        img.addEventListener('mouseenter', () => {
+          img.style.opacity = '1';
+        });
+        img.addEventListener('mouseleave', () => {
+          img.style.opacity = '';
+        });
+        
+        container.appendChild(img);
+      });
+      
+    } catch (error) {
+      console.error('Failed to initialize Image Studio placeholder images:', error);
+      // Fallback: hide container if load fails
       if (container) {
         container.innerHTML = '';
       }
@@ -983,6 +1207,27 @@ const p2dGenerateMotionFromPreviewBtn = $('#p2d-generate-motion-from-preview-btn
     // Also initialize immediately if page is already visible
     if (!pageId2d.classList.contains('hidden')) {
       setTimeout(initialize2DPlaceholder, 100);
+    }
+  }
+
+  // Initialize placeholder when Image Studio page is shown
+  const pageIdImage = $('#page-image');
+  if (pageIdImage) {
+    const observerImage = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          const target = mutation.target as HTMLElement;
+          if (!target.classList.contains('hidden')) {
+            initializeImageStudioPlaceholder();
+          }
+        }
+      });
+    });
+    observerImage.observe(pageIdImage, { attributes: true, attributeFilter: ['class'] });
+    
+    // Also initialize immediately if page is already visible
+    if (!pageIdImage.classList.contains('hidden')) {
+      setTimeout(initializeImageStudioPlaceholder, 100);
     }
   }
   
@@ -1574,64 +1819,170 @@ const extractVideoDownloadUrl = (operation: any): string | null => {
         clearTimeout(bannerToastTimer);
     }
 
+    // Don't trigger confetti for success toasts anymore (confetti is triggered when loading modal closes)
+    if (options.type === 'success') {
+        // Ensure toast is hidden
+        toast.classList.add('hidden');
+        return;
+    }
+    
+    // Show toast for non-success types
     toast.className = 'banner-toast'; // Reset classes
     toast.classList.add(options.type);
+    toast.classList.remove('hidden');
 
     icon.textContent = options.type === 'success' ? 'check_circle' : 'error';
     title.textContent = options.title;
     body.textContent = options.body;
 
-    toast.classList.remove('hidden');
-    
-    // Trigger confetti for success toasts
-    if (options.type === 'success') {
-        triggerConfetti();
-    }
-
     bannerToastTimer = window.setTimeout(() => {
         toast.classList.add('hidden');
     }, options.duration || 5000);
   };
-  const triggerConfetti = () => {
-    // Create confetti particles
-    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE'];
-    const confettiCount = 150;
+  const triggerConfetti = (modalElement?: HTMLElement | null) => {
+    // Use canvas-confetti library (most reliable and widely used)
+    const confetti = (window as any).confetti;
+    if (!confetti) {
+      console.warn('canvas-confetti not loaded');
+      return;
+    }
+
+    // Ensure confetti canvas is above modal (z-index: 10000)
+    const confettiCanvas = document.querySelector('canvas[style*="position: fixed"]') as HTMLCanvasElement;
+    if (confettiCanvas) {
+      confettiCanvas.style.zIndex = '10000';
+    }
+
+    // Calculate origin based on completion icon position in modal
+    let originX = 0.5; // Default to center
+    let originY = 0.5; // Default to center
+
+    if (modalElement) {
+      const rect = modalElement.getBoundingClientRect();
+      const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
+      
+      // Use loader container or modal center
+      const loaderContainer = modalElement.querySelector('.loader')?.parentElement;
+      
+      if (loaderContainer) {
+        const containerRect = (loaderContainer as HTMLElement).getBoundingClientRect();
+        // Calculate relative position (0-1) based on window size
+        originX = containerRect.left / windowWidth + (containerRect.width / 2) / windowWidth;
+        originY = containerRect.top / windowHeight + (containerRect.height / 2) / windowHeight;
+      } else {
+        // Fallback: use modal center
+        originX = rect.left / windowWidth + (rect.width / 2) / windowWidth;
+        originY = rect.top / windowHeight + (rect.height / 2) / windowHeight;
+      }
+    }
+
+    // Confetti bursting from completion icon position, falling down naturally
+    // Circle shapes to match loading animation style
+    // More particles, smaller size, tighter spread
+    const defaults = {
+      spread: 180, // Reduced from 360 to prevent spreading too far
+      ticks: 200,
+      gravity: 1,
+      decay: 0.94,
+      startVelocity: 30,
+      colors: ['#FFFFFF', '#2962FF'], // White and blue
+      origin: { x: originX, y: originY }, // Position based on completion icon
+      shapes: ['circle'], // Circle shape to match loading animation
+    };
+
+    // Multiple bursts with more particles and smaller size (denser and smaller)
+    confetti({
+      ...defaults,
+      particleCount: 250,
+      scalar: 0.6,
+    });
+
+    confetti({
+      ...defaults,
+      particleCount: 200,
+      scalar: 0.5,
+    });
+
+    confetti({
+      ...defaults,
+      particleCount: 150,
+      scalar: 0.4,
+    });
+
+    // Set z-index after confetti is created (in case canvas is created dynamically)
+    setTimeout(() => {
+      const canvas = document.querySelector('canvas[style*="position: fixed"]') as HTMLCanvasElement;
+      if (canvas) {
+        canvas.style.zIndex = '10000';
+      }
+    }, 10);
+  };
+
+  // Reset loader modal to initial state (remove completion icon, show loader)
+  const resetLoaderModal = (modalElement: HTMLElement | null) => {
+    if (!modalElement) return;
+
+    const loaderContainer = modalElement.querySelector('.loader')?.parentElement;
+    const loader = modalElement.querySelector('.loader');
     
-    for (let i = 0; i < confettiCount; i++) {
-      createConfettiParticle(colors[Math.floor(Math.random() * colors.length)]);
+    if (loaderContainer && loader) {
+      // Remove any existing completion icons
+      const existingCompletionIcons = loaderContainer.querySelectorAll('div[style*="border-radius: 50%"]');
+      existingCompletionIcons.forEach(icon => icon.remove());
+      
+      // Show loader and hide completion state
+      loader.classList.remove('hidden');
+      
+      // Reset text if needed
+      const textElement = modalElement.querySelector('p[id*="loader"], h3') as HTMLElement | null;
+      if (textElement) {
+        textElement.textContent = textElement.textContent?.replace('Complete', '') || '';
+        textElement.style.color = '';
+        textElement.style.fontWeight = '';
+      }
     }
   };
-  const createConfettiParticle = (color: string) => {
-    const confetti = document.createElement('div');
-    confetti.style.position = 'fixed';
-    confetti.style.width = Math.random() * 10 + 5 + 'px';
-    confetti.style.height = confetti.style.width;
-    confetti.style.backgroundColor = color;
-    confetti.style.left = Math.random() * 100 + '%';
-    confetti.style.top = '-10px';
-    confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
-    confetti.style.pointerEvents = 'none';
-    confetti.style.zIndex = '1000';
-    document.body.appendChild(confetti);
-    
-    const rotation = Math.random() * 360;
-    const horizontalMovement = (Math.random() - 0.5) * 200;
-    
-    const animation = confetti.animate([
-      { 
-        transform: `translate(0, 0) rotate(0deg)`,
-        opacity: 1 
-      },
-      { 
-        transform: `translate(${horizontalMovement}px, ${window.innerHeight + 200}px) rotate(${rotation}deg)`,
-        opacity: 0 
+
+  // Show completion state in loading modal
+  const showLoaderCompletion = (modalElement: HTMLElement | null, textElement: HTMLElement | null) => {
+    if (!modalElement) return;
+
+    // Find loader and text elements
+    const loaderContainer = modalElement.querySelector('.loader')?.parentElement;
+    const loader = modalElement.querySelector('.loader');
+    const textElementToUpdate = textElement || modalElement.querySelector('p[id*="loader"], h3');
+
+    if (loader && loaderContainer) {
+      // Remove existing completion icon if any (to prevent duplicates)
+      const existingCompletionIcons = loaderContainer.querySelectorAll('div[style*="border-radius: 50%"]');
+      existingCompletionIcons.forEach(icon => icon.remove());
+      
+      // Hide loader
+      loader.classList.add('hidden');
+      
+      // Show completion icon
+      const completionIcon = document.createElement('div');
+      completionIcon.style.cssText = `
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-color: var(--accent-color, #2962FF);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+      `;
+      completionIcon.innerHTML = '<span class="material-symbols-outlined" style="font-size: 20px; color: white;">check</span>';
+      loaderContainer.insertBefore(completionIcon, loader);
+
+      // Update text to "Complete"
+      if (textElementToUpdate) {
+        textElementToUpdate.textContent = 'Complete';
+        textElementToUpdate.style.color = 'var(--accent-color, #2962FF)';
+        textElementToUpdate.style.fontWeight = '600';
       }
-    ], {
-      duration: Math.random() * 2000 + 2000,
-      easing: 'cubic-bezier(0.5, 0, 0.5, 1)'
-    });
-    
-    animation.onfinish = () => confetti.remove();
+    }
   };
 
   const updateButtonLoadingState = (button: HTMLElement | null, isLoading: boolean) => {
@@ -2101,12 +2452,16 @@ const extractVideoDownloadUrl = (operation: any): string | null => {
     
     update2dPromptDisplay();
 
+    // Reset modal state before showing
+    resetLoaderModal(p2dLoaderModal);
+    
     // Show loading modal
     if (p2dLoaderModal && p2dLoaderMessage) {
-        p2dLoaderMessage.textContent = 'Generating your icon...';
+        p2dLoaderMessage.textContent = 'Generating icon';
         p2dLoaderModal.classList.remove('hidden');
     }
 
+    let imageData: { data: string; mimeType: string } | null = null;
     try {
     const fill = (document.querySelector('#p2d-fill-toggle') as HTMLInputElement).checked;
     const weightSlider = document.querySelector('#p2d-weight-slider') as HTMLInputElement | null;
@@ -2142,7 +2497,7 @@ const extractVideoDownloadUrl = (operation: any): string | null => {
 
     const finalReferenceImages = Array.from(selectedReferences);
 
-    const imageData = await generateImage(
+    imageData = await generateImage(
       imagePromptDisplay2d.value,
       resultImage2d,
       resultPlaceholder2d,
@@ -2193,12 +2548,19 @@ const extractVideoDownloadUrl = (operation: any): string | null => {
             if (historyTabContent && !historyTabContent.classList.contains('hidden')) {
                 updateDetailsPanelHistory2d();
             }
+        
+            // Trigger confetti and close modal immediately
+            if (p2dLoaderModal) {
+                // Trigger confetti immediately (pass modal element for positioning)
+                triggerConfetti(p2dLoaderModal);
+                
+                // Close modal immediately when confetti starts
+                p2dLoaderModal.classList.add('hidden');
+            }
         }
     } catch (error) {
         console.error('Error generating 2D image:', error);
         showToast({ type: 'error', title: 'Generation Failed', body: 'Failed to generate icon. Please try again.' });
-    } finally {
-        // Hide loading modal
         if (p2dLoaderModal) {
             p2dLoaderModal.classList.add('hidden');
         }
@@ -3810,18 +4172,22 @@ const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
         return;
     }
 
+    // Reset modal state before showing
+    resetLoaderModal(imageGenerationLoaderModal);
+    
     if (imageGenerationLoaderText) {
-        imageGenerationLoaderText.textContent = 'Generating your 3D image...';
+        imageGenerationLoaderText.textContent = 'Generating image';
     }
     imageGenerationLoaderModal?.classList.remove('hidden');
 
+    let imageData: { data: string; mimeType: string } | null = null;
     try {
         // Parse the template and create a natural language prompt
       const template = build3dPromptTemplate();
       const templateJson = JSON.stringify(template, null, 2);
       const imagePromptText = createImagePromptFromTemplate(template);
         
-        const imageData = await generateImage(
+        imageData = await generateImage(
             imagePromptText,
             resultImage,
             resultPlaceholder,
@@ -3871,9 +4237,22 @@ const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
             
             // Always update details panel history (will be shown when History tab is clicked)
             updateDetailsPanelHistory3d();
+            
+            // Trigger confetti and close modal immediately
+            if (imageGenerationLoaderModal) {
+                // Trigger confetti immediately (pass modal element for positioning)
+                triggerConfetti(imageGenerationLoaderModal);
+                
+                // Close modal immediately when confetti starts
+                imageGenerationLoaderModal.classList.add('hidden');
+            }
         }
-    } finally {
-        imageGenerationLoaderModal?.classList.add('hidden');
+    } catch (error) {
+        console.error('Error generating 3D image:', error);
+        showToast({ type: 'error', title: 'Generation Failed', body: 'Failed to generate image. Please try again.' });
+        if (imageGenerationLoaderModal) {
+            imageGenerationLoaderModal.classList.add('hidden');
+        }
     }
   };
 
@@ -3884,6 +4263,8 @@ const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
     const previewImg = subjectZone?.querySelector('.drop-zone-preview') as HTMLImageElement;
     const removeBtn = subjectZone?.querySelector('.remove-style-image-btn') as HTMLButtonElement;
 
+    // Reset modal state before showing
+    resetLoaderModal(loaderModal);
     loaderModal?.classList.remove('hidden');
 
     try {
@@ -3929,6 +4310,8 @@ const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
     const previewImg = sceneZone?.querySelector('.drop-zone-preview') as HTMLImageElement;
     const removeBtn = sceneZone?.querySelector('.remove-style-image-btn') as HTMLButtonElement;
 
+    // Reset modal state before showing
+    resetLoaderModal(loaderModal);
     loaderModal?.classList.remove('hidden');
 
     try {
@@ -3986,11 +4369,11 @@ const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
     // Set loading text based on studio type
     if (mainGenerationLoaderText) {
       if (selectedStudio === 'icon') {
-        mainGenerationLoaderText.textContent = 'Generating your icon...';
+        mainGenerationLoaderText.textContent = 'Generating icon';
       } else if (selectedStudio === '3d') {
-        mainGenerationLoaderText.textContent = 'Generating your 3D image...';
+        mainGenerationLoaderText.textContent = 'Generating image';
       } else {
-        mainGenerationLoaderText.textContent = 'Generating your image...';
+        mainGenerationLoaderText.textContent = 'Generating image';
       }
     }
     
@@ -4511,7 +4894,7 @@ const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
     const promptDisplay = $('#image-prompt-display-image') as HTMLTextAreaElement;
 
     if (imageGenerationLoaderText) {
-        imageGenerationLoaderText.textContent = 'Generating your image...';
+        imageGenerationLoaderText.textContent = 'Generating image';
     }
     loaderModal?.classList.remove('hidden');
     resultPlaceholder?.classList.add('hidden');
@@ -4589,7 +4972,21 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
           resultImage.classList.remove('hidden');
           resultIdlePlaceholder?.classList.add('hidden');
           resultPlaceholder?.classList.add('hidden');
-          loaderModal?.classList.add('hidden');
+          
+          // Show header when image is generated
+          const header = document.querySelector('.result-content-header-image');
+          if (header) {
+            (header as HTMLElement).classList.remove('hidden');
+          }
+          
+          // Trigger confetti and close modal immediately
+          if (loaderModal) {
+            // Trigger confetti immediately (pass modal element for positioning)
+            triggerConfetti(loaderModal);
+            
+            // Close modal immediately when confetti starts
+            loaderModal.classList.add('hidden');
+          }
           
           if (promptDisplay) promptDisplay.value = "Subject placed in scene";
           
@@ -4701,7 +5098,21 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
           resultImage.classList.remove('hidden');
           resultIdlePlaceholder?.classList.add('hidden');
           resultPlaceholder?.classList.add('hidden');
-          loaderModal?.classList.add('hidden');
+          
+          // Show header when image is generated
+          const header = document.querySelector('.result-content-header-image');
+          if (header) {
+            (header as HTMLElement).classList.remove('hidden');
+          }
+          
+          // Trigger confetti and close modal immediately
+          if (loaderModal) {
+            // Trigger confetti immediately (pass modal element for positioning)
+            triggerConfetti(loaderModal);
+            
+            // Close modal immediately when confetti starts
+            loaderModal.classList.add('hidden');
+          }
           
           if (promptDisplay) promptDisplay.value = promptText || 'Based on reference image';
           
@@ -5740,6 +6151,9 @@ Think: PNG image file + CSS transform = The PNG file never changes, only its tra
 
             updateMotionUI();
             lastFocusedElement?.focus();
+            
+            // Trigger confetti when motion prompt is generated
+            setTimeout(() => triggerConfetti(motionCategoryModal), 100);
         });
         motionCategoryList.appendChild(item);
     });
@@ -5747,8 +6161,6 @@ Think: PNG image file + CSS transform = The PNG file never changes, only its tra
   
   const generateAndDisplayMotionCategoriesStudio = async () => {
     if (!currentGeneratedImageStudio || !motionCategoryList) return;
-
-    motionCategoryList.innerHTML = getLoaderMarkup('Analyzing image and generating ideas...');
 
     try {
         const subject = currentGeneratedImageStudio.subject;
@@ -5801,11 +6213,28 @@ Return the 5 suggestions as a JSON array.`;
         });
 
         const jsonResponse = JSON.parse(response.text.trim());
-        renderGeneratedMotionCategoriesStudio(jsonResponse);
+        
+        // Trigger confetti, then open motion category modal
+        if (imageGenerationLoaderModal) {
+            // Trigger confetti immediately
+            triggerConfetti(imageGenerationLoaderModal);
+            
+            // Close loading modal immediately and open motion category modal
+            imageGenerationLoaderModal.classList.add('hidden');
+            motionCategoryModal?.classList.remove('hidden');
+            renderGeneratedMotionCategoriesStudio(jsonResponse);
+        } else {
+            // Fallback: open modal directly if loader modal not available
+            motionCategoryModal?.classList.remove('hidden');
+            renderGeneratedMotionCategoriesStudio(jsonResponse);
+        }
 
     } catch (error) {
         console.error("Failed to generate motion categories:", error);
         showToast({ type: 'error', title: 'Error', body: 'Could not generate motion ideas.' });
+        if (imageGenerationLoaderModal) {
+            imageGenerationLoaderModal.classList.add('hidden');
+        }
         if (motionCategoryList) {
             motionCategoryList.innerHTML = `<p style="text-align: center; color: var(--text-secondary); padding: var(--spacing-5);">An error occurred. Please close this and try again.</p>`;
         }
@@ -5862,6 +6291,9 @@ Return the 5 suggestions as a JSON array.`;
             setTimeout(() => {
                 updateMotionUIStudio();
             }, 100);
+            
+            // Trigger confetti when motion prompt is generated
+            setTimeout(() => triggerConfetti(motionCategoryModal), 100);
         });
         motionCategoryList.appendChild(item);
     });
@@ -5869,8 +6301,6 @@ Return the 5 suggestions as a JSON array.`;
   
   const generateAndDisplayMotionCategories2d = async () => {
     if (!currentGeneratedImage2d || !motionCategoryList) return;
-
-    motionCategoryList.innerHTML = getLoaderMarkup('Analyzing icon and generating motion ideas...');
 
     try {
         const subject = currentGeneratedImage2d.subject;
@@ -5950,11 +6380,28 @@ Return as JSON array with exactly 3 minimal suggestions.`;
         });
 
         const jsonResponse = JSON.parse(response.text.trim());
-        renderGeneratedMotionCategories2d(jsonResponse);
+        
+        // Trigger confetti, then open motion category modal
+        if (imageGenerationLoaderModal) {
+            // Trigger confetti immediately
+            triggerConfetti(imageGenerationLoaderModal);
+            
+            // Close loading modal immediately and open motion category modal
+            imageGenerationLoaderModal.classList.add('hidden');
+            motionCategoryModal?.classList.remove('hidden');
+            renderGeneratedMotionCategories2d(jsonResponse);
+        } else {
+            // Fallback: open modal directly if loader modal not available
+            motionCategoryModal?.classList.remove('hidden');
+            renderGeneratedMotionCategories2d(jsonResponse);
+        }
 
     } catch (error) {
         console.error("Failed to generate 2D motion categories:", error);
         showToast({ type: 'error', title: 'Error', body: 'Could not generate motion ideas.' });
+        if (imageGenerationLoaderModal) {
+            imageGenerationLoaderModal.classList.add('hidden');
+        }
         if (motionCategoryList) {
             motionCategoryList.innerHTML = `<p style="text-align: center; color: var(--text-secondary); padding: var(--spacing-5);">An error occurred. Please close this and try again.</p>`;
         }
@@ -6021,8 +6468,6 @@ Return as JSON array with exactly 3 minimal suggestions.`;
   const generateAndDisplayMotionCategories = async () => {
     if (!currentGeneratedImage || !motionCategoryList) return;
 
-    motionCategoryList.innerHTML = getLoaderMarkup('Analyzing image and generating ideas...');
-
     try {
         const subject = currentGeneratedImage.subject;
         const textPrompt = `Analyze the provided image of a '${subject}'. Based on its appearance, create 5 unique and creative motion style suggestions for a short, looping video.
@@ -6073,11 +6518,28 @@ Return the 5 suggestions as a JSON array.`;
         });
 
         const jsonResponse = JSON.parse(response.text.trim());
-        renderGeneratedMotionCategories(jsonResponse);
+        
+        // Trigger confetti, then open motion category modal
+        if (imageGenerationLoaderModal) {
+            // Trigger confetti immediately
+            triggerConfetti(imageGenerationLoaderModal);
+            
+            // Close loading modal immediately and open motion category modal
+            imageGenerationLoaderModal.classList.add('hidden');
+            motionCategoryModal?.classList.remove('hidden');
+            renderGeneratedMotionCategories(jsonResponse);
+        } else {
+            // Fallback: open modal directly if loader modal not available
+            motionCategoryModal?.classList.remove('hidden');
+            renderGeneratedMotionCategories(jsonResponse);
+        }
 
     } catch (error) {
         console.error("Failed to generate motion categories:", error);
         showToast({ type: 'error', title: 'Error', body: 'Could not generate motion ideas.' });
+        if (imageGenerationLoaderModal) {
+            imageGenerationLoaderModal.classList.add('hidden');
+        }
         if (motionCategoryList) {
             motionCategoryList.innerHTML = `<p style="text-align: center; color: var(--text-secondary); padding: var(--spacing-5);">An error occurred. Please close this and try again.</p>`;
         }
@@ -9757,8 +10219,14 @@ Apply the main color (${objectColor}) thoughtfully as the primary/accent color o
             if (imageTab) imageTab.classList.add('active');
             if (videoTab) videoTab.classList.remove('active');
             
-            if (resultImage3d) resultImage3d.classList.remove('hidden');
-            if (resultVideo3d) resultVideo3d.classList.add('hidden');
+            // Show image and hide video
+            if (resultImage3d) {
+                resultImage3d.classList.remove('hidden');
+                setTimeout(() => resultImage3d.classList.add('visible'), 50);
+            }
+            if (resultVideo3d) {
+                resultVideo3d.classList.add('hidden');
+            }
             if (resultIdlePlaceholder3d) resultIdlePlaceholder3d.classList.add('hidden');
             if (motionPromptPlaceholder3d) motionPromptPlaceholder3d.classList.add('hidden');
             
@@ -9782,7 +10250,11 @@ Apply the main color (${objectColor}) thoughtfully as the primary/accent color o
             if (imageTab) imageTab.classList.remove('active');
             if (videoTab) videoTab.classList.add('active');
             
-            if (resultImage3d) resultImage3d.classList.add('hidden');
+            // Hide image and ensure it's not visible
+            if (resultImage3d) {
+                resultImage3d.classList.add('hidden');
+                resultImage3d.classList.remove('visible');
+            }
             
             if (currentGeneratedImage.videoDataUrl) {
                 if (resultVideo3d) {
@@ -9827,7 +10299,14 @@ Apply the main color (${objectColor}) thoughtfully as the primary/accent color o
     });
     
     const openMotionCategoryModal = () => {
-      motionCategoryModal?.classList.remove('hidden');
+      // Show loading modal first (240x160)
+      resetLoaderModal(imageGenerationLoaderModal);
+      if (imageGenerationLoaderText) {
+        imageGenerationLoaderText.textContent = 'Generating prompt';
+      }
+      imageGenerationLoaderModal?.classList.remove('hidden');
+      
+      // Generate motion categories
       generateAndDisplayMotionCategories();
       lastFocusedElement = document.activeElement as HTMLElement;
     }
@@ -9839,7 +10318,14 @@ Apply the main color (${objectColor}) thoughtfully as the primary/accent color o
     
     // Image Studio motion handlers
     const openMotionCategoryModalStudio = () => {
-        motionCategoryModal?.classList.remove('hidden');
+        // Show loading modal first (240x160)
+        resetLoaderModal(imageGenerationLoaderModal);
+        if (imageGenerationLoaderText) {
+          imageGenerationLoaderText.textContent = 'Generating motion ideas...';
+        }
+        imageGenerationLoaderModal?.classList.remove('hidden');
+        
+        // Generate motion categories
         generateAndDisplayMotionCategoriesStudio();
         lastFocusedElement = document.activeElement as HTMLElement;
     };
@@ -9863,7 +10349,14 @@ Apply the main color (${objectColor}) thoughtfully as the primary/accent color o
     regenerateVideoBtnStudio?.addEventListener('click', handleGenerateVideoStudio);
 
     const openMotionCategoryModal2d = () => {
-        motionCategoryModal?.classList.remove('hidden');
+        // Show loading modal first (240x160)
+        resetLoaderModal(imageGenerationLoaderModal);
+        if (imageGenerationLoaderText) {
+          imageGenerationLoaderText.textContent = 'Generating motion ideas...';
+        }
+        imageGenerationLoaderModal?.classList.remove('hidden');
+        
+        // Generate motion categories
         generateAndDisplayMotionCategories2d();
         lastFocusedElement = document.activeElement as HTMLElement;
     };

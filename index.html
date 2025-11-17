@@ -16,6 +16,7 @@
       src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.mjs"
       type="module"
     ></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     <script type="importmap">
       {
         "imports": {
@@ -656,7 +657,7 @@
                             </div>
                             <div class="result-media-container" id="p2d-result-media-container">
                                 <div id="p2d-result-idle-placeholder" class="result-placeholder-content" style="display: flex; justify-content: center; align-items: center; height: 100%; background: #ffffff; position: relative; overflow: hidden;">
-                                    <div id="p2d-animated-samples-container" style="position: absolute; display: flex; flex-direction: row; gap: 48px; opacity: 0.3; animation: scrollLeft 130s linear infinite; align-items: center;">
+                                    <div id="p2d-animated-samples-container" style="position: absolute; display: flex; justify-content: center; align-items: center; width: 100%; height: 100%;">
                                         <!-- Images will be loaded dynamically from assets_2d_images.json -->
                                     </div>
                                 </div>
@@ -1070,7 +1071,7 @@
                             </div>
                             <div class="result-media-container" id="result-media-container-3d">
                                 <div id="result-idle-placeholder" class="result-placeholder-content" style="display: flex; justify-content: center; align-items: center; height: 100%; background: #ffffff; position: relative; overflow: hidden;">
-                                    <div id="animated-samples-container" style="position: absolute; display: flex; flex-direction: row; gap: 48px; opacity: 0.3; animation: scrollLeft 130s linear infinite; align-items: center;">
+                                    <div id="animated-samples-container" style="position: absolute; display: flex; justify-content: center; align-items: center; width: 100%; height: 100%;">
                                         <!-- Images will be loaded dynamically from assets_3d_images.json -->
                                     </div>
                                 </div>
@@ -1405,9 +1406,10 @@
                                 </div>
                             </div>
                             <div class="result-media-container">
-                                <div id="result-idle-placeholder-image" class="result-placeholder-content">
-                                    <span class="material-symbols-outlined">space_dashboard</span>
-                                    <p>Your generation will appear here</p>
+                                <div id="result-idle-placeholder-image" class="result-placeholder-content" style="display: flex; justify-content: center; align-items: center; height: 100%; background: #ffffff; position: relative; overflow: hidden;">
+                                    <div id="animated-samples-container-image" style="position: absolute; display: flex; justify-content: center; align-items: center; width: 100%; height: 100%;">
+                                        <!-- Images will be loaded dynamically from assets/image folder -->
+                                    </div>
                                 </div>
                                 <div class="result-placeholder hidden">
                                     <div class="result-loading">
@@ -1690,8 +1692,8 @@
 
       <!-- 3D Image Generation Loader Modal -->
       <div id="image-generation-loader-modal" class="image-modal-overlay hidden">
-        <div class="image-modal-content" style="max-width: 420px; text-align: center;">
-          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--spacing-4); padding: var(--spacing-5);">
+        <div class="image-modal-content loader-modal-content" style="width: 240px; height: 160px; text-align: center;">
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: var(--spacing-5); height: 100%;">
               <div class="loader">
                   <div class="particle"></div>
                   <div class="particle"></div>
@@ -1714,8 +1716,8 @@
       
       <!-- Main Page Generation Loader Modal -->
       <div id="main-generation-loader-modal" class="image-modal-overlay hidden">
-        <div class="image-modal-content" style="max-width: 420px; text-align: center;">
-          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--spacing-4); padding: var(--spacing-5);">
+        <div class="image-modal-content loader-modal-content" style="width: 240px; height: 160px; text-align: center;">
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: var(--spacing-5); height: 100%;">
               <div class="loader">
                   <div class="particle"></div>
                   <div class="particle"></div>
@@ -1755,8 +1757,8 @@
       
       <!-- Video Generation Loader Modal -->
       <div id="video-generation-loader-modal" class="image-modal-overlay hidden">
-        <div class="image-modal-content" style="max-width: 420px; text-align: center;">
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--spacing-4); padding: var(--spacing-5);">
+        <div class="image-modal-content loader-modal-content" style="width: 240px; height: 160px; text-align: center;">
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: var(--spacing-4); height: 100%;">
                 <div class="loader">
                     <div class="particle"></div>
                     <div class="particle"></div>
@@ -1772,17 +1774,17 @@
                     <div class="particle"></div>
                     <div class="particle"></div>
                 </div>
-                <h3 style="font-size: 18px; font-weight: 700; color: var(--text-primary);">Generating your video...</h3>
-                <p id="video-loader-message" style="color: var(--text-secondary); min-height: 40px;"></p>
-                <p style="font-size: 12px; color: var(--text-secondary); opacity: 0.8;">This may take a few minutes. Please don't close this window.</p>
+                <h3 style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin: 0;">Generating your video...</h3>
+                <p id="video-loader-message" style="color: var(--text-secondary); font-size: 12px; margin: 0; min-height: 20px;"></p>
+                <p style="font-size: 11px; color: var(--text-secondary); opacity: 0.8; margin: 0;">This may take a few minutes.</p>
             </div>
         </div>
       </div>
       
       <!-- 2D Studio Loader Modal -->
       <div id="p2d-loader-modal" class="image-modal-overlay hidden">
-        <div class="image-modal-content" style="max-width: 420px; text-align: center;">
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--spacing-4); padding: var(--spacing-5);">
+        <div class="image-modal-content loader-modal-content" style="width: 240px; height: 160px; text-align: center;">
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: var(--spacing-5); height: 100%;">
                 <div class="loader">
                     <div class="particle"></div>
                     <div class="particle"></div>
