@@ -11,6 +11,11 @@
       href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
       rel="stylesheet"
     />
+    <!-- Material Icons for compatibility -->
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="index.css" />
     <script
       src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.mjs"
@@ -70,12 +75,8 @@
             
             <div class="hero-content-wrapper">
               <!-- Changelog Section -->
-              <div class="changelog-section">
-                <div class="changelog-item">
-                  <div class="changelog-dot"></div>
-                  <span class="changelog-text">New Components: Field, Input Group, Item and more</span>
-                  <span class="changelog-arrow">→</span>
-                </div>
+              <div class="changelog-section" id="changelog-section">
+                <!-- Changelog items will be dynamically rendered here -->
               </div>
 
               <!-- Hero Section -->
@@ -1872,20 +1873,21 @@
             </header>
             <div style="position: relative; background: #f5f5f5; border-radius: var(--border-radius-md); overflow: hidden;">
                 <div style="position: relative; width: 100%; height: 500px;">
-                    <!-- Color Changed image as base layer (left side) -->
+                    <!-- After image as base layer (left side) -->
                     <div style="position: absolute; inset: 0; z-index: 1;">
-                        <label id="compare-left-label-3d" style="position: absolute; top: var(--spacing-2); left: var(--spacing-2); background: rgba(0,0,0,0.6); color: white; padding: var(--spacing-1) var(--spacing-2); border-radius: var(--border-radius-sm); font-size: 12px; z-index: 2; font-weight: 500;">Color Changed</label>
-                        <img id="compare-current-3d" src="" alt="Color Changed" style="width: 100%; height: 100%; object-fit: contain; display: block;">
+                        <label id="compare-left-label-3d" style="position: absolute; top: 50%; right: calc(50% + 32px); transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; padding: var(--spacing-2) var(--spacing-3); border-radius: 20px; font-size: 13px; z-index: 5; font-weight: 600; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">After</label>
+                        <img id="compare-current-3d" src="" alt="After" style="width: 100%; height: 100%; object-fit: contain; display: block;">
                     </div>
-                    <!-- Original image clipped by divider (right side) -->
+                    <!-- Before image clipped by divider (right side) -->
                     <div style="position: absolute; inset: 0; z-index: 2; overflow: hidden;">
-                        <label style="position: absolute; top: var(--spacing-2); right: var(--spacing-2); background: rgba(0,0,0,0.6); color: white; padding: var(--spacing-1) var(--spacing-2); border-radius: var(--border-radius-sm); font-size: 12px; z-index: 3; font-weight: 500;">Original</label>
-                        <img id="compare-original-3d" src="" alt="Original" style="width: 100%; height: 100%; object-fit: contain; display: block;">
+                        <label style="position: absolute; top: 50%; left: calc(50% + 32px); transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; padding: var(--spacing-2) var(--spacing-3); border-radius: 20px; font-size: 13px; z-index: 5; font-weight: 600; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">Before</label>
+                        <img id="compare-original-3d" src="" alt="Before" style="width: 100%; height: 100%; object-fit: contain; display: block;">
                     </div>
                     <!-- Draggable divider -->
-                    <div id="compare-divider-3d" style="position: absolute; top: 0; bottom: 0; left: 50%; width: 3px; background: #0070F3; cursor: ew-resize; z-index: 4; box-shadow: 0 0 8px rgba(0,112,243,0.5);">
-                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 32px; height: 32px; background: #0070F3; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
-                            <span class="material-symbols-outlined" style="font-size: 18px; color: white;">drag_indicator</span>
+                    <div id="compare-divider-3d" style="position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: white; cursor: ew-resize; z-index: 4; box-shadow: 0 0 4px rgba(0,0,0,0.2);">
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; gap: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.15); border: 1px solid rgba(0,0,0,0.1);">
+                            <span class="material-symbols-outlined" style="font-size: 16px; color: var(--text-primary); margin: 0 -2px;">chevron_left</span>
+                            <span class="material-symbols-outlined" style="font-size: 16px; color: var(--text-primary); margin: 0 -2px;">chevron_right</span>
                         </div>
                     </div>
                     <!-- Invisible slider for drag handle -->
@@ -1905,20 +1907,21 @@
             </header>
             <div style="position: relative; background: #f5f5f5; border-radius: var(--border-radius-md); overflow: hidden;">
                 <div style="position: relative; width: 100%; height: 500px;">
-                    <!-- Color Changed image as base layer (left side) -->
+                    <!-- After image as base layer (left side) -->
                     <div style="position: absolute; inset: 0; z-index: 1;">
-                        <label id="compare-left-label-2d" style="position: absolute; top: var(--spacing-2); left: var(--spacing-2); background: rgba(0,0,0,0.6); color: white; padding: var(--spacing-1) var(--spacing-2); border-radius: var(--border-radius-sm); font-size: 12px; z-index: 2; font-weight: 500;">Color Changed</label>
-                        <img id="p2d-compare-current" src="" alt="Color Changed" style="width: 100%; height: 100%; object-fit: contain; display: block;">
+                        <label id="compare-left-label-2d" style="position: absolute; top: 50%; right: calc(50% + 32px); transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; padding: var(--spacing-2) var(--spacing-3); border-radius: 20px; font-size: 13px; z-index: 5; font-weight: 600; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">After</label>
+                        <img id="p2d-compare-current" src="" alt="After" style="width: 100%; height: 100%; object-fit: contain; display: block;">
                     </div>
-                    <!-- Original image clipped by divider (right side) -->
+                    <!-- Before image clipped by divider (right side) -->
                     <div style="position: absolute; inset: 0; z-index: 2; overflow: hidden;">
-                        <label style="position: absolute; top: var(--spacing-2); right: var(--spacing-2); background: rgba(0,0,0,0.6); color: white; padding: var(--spacing-1) var(--spacing-2); border-radius: var(--border-radius-sm); font-size: 12px; z-index: 3; font-weight: 500;">Original</label>
-                        <img id="p2d-compare-original" src="" alt="Original" style="width: 100%; height: 100%; object-fit: contain; display: block;">
+                        <label style="position: absolute; top: 50%; left: calc(50% + 32px); transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; padding: var(--spacing-2) var(--spacing-3); border-radius: 20px; font-size: 13px; z-index: 5; font-weight: 600; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">Before</label>
+                        <img id="p2d-compare-original" src="" alt="Before" style="width: 100%; height: 100%; object-fit: contain; display: block;">
                     </div>
                     <!-- Draggable divider -->
-                    <div id="p2d-compare-divider" style="position: absolute; top: 0; bottom: 0; left: 50%; width: 3px; background: #0070F3; cursor: ew-resize; z-index: 4; box-shadow: 0 0 8px rgba(0,112,243,0.5);">
-                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 32px; height: 32px; background: #0070F3; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
-                            <span class="material-symbols-outlined" style="font-size: 18px; color: white;">drag_indicator</span>
+                    <div id="p2d-compare-divider" style="position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: white; cursor: ew-resize; z-index: 4; box-shadow: 0 0 4px rgba(0,0,0,0.2);">
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; gap: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.15); border: 1px solid rgba(0,0,0,0.1);">
+                            <span class="material-symbols-outlined" style="font-size: 16px; color: var(--text-primary); margin: 0 -2px;">chevron_left</span>
+                            <span class="material-symbols-outlined" style="font-size: 16px; color: var(--text-primary); margin: 0 -2px;">chevron_right</span>
                         </div>
                     </div>
                     <!-- Invisible slider for drag handle -->

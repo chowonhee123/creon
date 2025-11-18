@@ -15,6 +15,8 @@ import { fetchFile } from '@ffmpeg/util';
 interface IconData {
   name: string;
   tags: string[];
+  category?: string;
+  popularity?: number;
 }
 
 interface ToastOptions {
@@ -773,49 +775,109 @@ const imagePromptDisplay = $('#image-prompt-display') as HTMLTextAreaElement;
         })
       );
 
-      // Recalculate total cycle duration based on successfully loaded images
-      const actualTotalCycleDuration = loadedImages.length * (imageDisplayDuration + fadeDuration * 2);
+      // Add text messages between images
+      const textMessages = [
+        'Design without design tools.',
+        'Create 2D, 3D, and motion with one prompt.',
+        'AI that builds your visuals for you.',
+        'Create more. Think less'
+      ];
+      
+      // Tighter timing: text appears during image fade out, next image appears during text fade out
+      const textDisplayDuration = 1; // seconds each text is visible
+      const textFadeDuration = 0.8; // seconds for text fade in/out (slightly faster)
+      
+      // Calculate timing: image fade out overlaps with text fade in, next image appears in middle of text fade out
+      // Pattern: image (fade in + display + fade out) → text (fade in during image fade out + display + fade out) → next image (fade in in middle of text fade out)
+      const singleImageDuration = imageDisplayDuration + fadeDuration * 2; // 1s display + 1s fade in + 1s fade out = 3s
+      const singleTextDuration = textDisplayDuration + textFadeDuration * 2; // 1s display + 0.8s fade in + 0.8s fade out = 2.6s
+      // Text starts during image fade out, so: image delay + (fade in + display) = when text starts
+      // Next image starts in middle of text fade out for smooth continuity
+      const overlap = fadeDuration; // 1s overlap (image fade out = text fade in)
+      
+      // Calculate delays for all images first to determine total cycle duration
+      const imageDelays: number[] = [];
+      for (let i = 0; i < loadedImages.length; i++) {
+        if (i === 0) {
+          imageDelays.push(0);
+        } else {
+          const prevImageDelay = imageDelays[i - 1];
+          const prevTextDelay = prevImageDelay + fadeDuration + imageDisplayDuration;
+          const prevTextFadeOutMiddle = prevTextDelay + textFadeDuration + textDisplayDuration + (textFadeDuration / 2);
+          imageDelays.push(prevTextFadeOutMiddle);
+        }
+      }
+      
+      // Calculate total cycle duration: last image's text fully fades out
+      const lastImageDelay = imageDelays[imageDelays.length - 1];
+      const lastTextDelay = lastImageDelay + fadeDuration + imageDisplayDuration;
+      const actualTotalCycleDuration = lastTextDelay + singleTextDuration;
 
       loadedImages.forEach(({ img, asset, index }, loadedIndex) => {
         img.alt = 'preview';
         img.className = 'sample-preview-img';
         
-        // Calculate animation delay for sequential display
-        // Each image appears after the previous one completes (fade in + display + fade out)
-        const singleImageDuration = imageDisplayDuration + fadeDuration * 2; // 1s display + 1s fade in + 1s fade out = 3s total
-        const delay = loadedIndex * singleImageDuration;
+        // Use pre-calculated delay
+        const imageDelay = imageDelays[loadedIndex];
+        // Text starts when image starts fading out (after fade in + display)
+        const textDelay = imageDelay + fadeDuration + imageDisplayDuration; // Start during image fade out
         
-        // Calculate keyframe percentages for this image
-        // Timeline: delay → fade in (1s) → display (1s) → fade out (1s)
-        // Opacity: 0 → 0.2 (fade in) → 0.2 (display) → 0 (fade out)
-        const startPercent = (delay / actualTotalCycleDuration) * 100;
-        const fadeInEndPercent = ((delay + fadeDuration) / actualTotalCycleDuration) * 100;
-        const fadeOutStartPercent = ((delay + fadeDuration + imageDisplayDuration) / actualTotalCycleDuration) * 100;
-        const endPercent = ((delay + fadeDuration + imageDisplayDuration + fadeDuration) / actualTotalCycleDuration) * 100;
+        // Image keyframes
+        const imageStartPercent = (imageDelay / actualTotalCycleDuration) * 100;
+        const imageFadeInEndPercent = ((imageDelay + fadeDuration) / actualTotalCycleDuration) * 100;
+        const imageFadeOutStartPercent = ((imageDelay + fadeDuration + imageDisplayDuration) / actualTotalCycleDuration) * 100;
+        const imageEndPercent = ((imageDelay + fadeDuration + imageDisplayDuration + fadeDuration) / actualTotalCycleDuration) * 100;
+        
+        // Text keyframes (overlaps with image fade out)
+        const textStartPercent = (textDelay / actualTotalCycleDuration) * 100;
+        const textFadeInEndPercent = ((textDelay + textFadeDuration) / actualTotalCycleDuration) * 100;
+        const textFadeOutStartPercent = ((textDelay + textFadeDuration + textDisplayDuration) / actualTotalCycleDuration) * 100;
+        const textEndPercent = ((textDelay + textFadeDuration + textDisplayDuration + textFadeDuration) / actualTotalCycleDuration) * 100;
         
         // Create unique animation for this image
-        const animationName = `fadeInOut-${index}`;
+        const imageAnimationName = `fadeInOut-${index}`;
+        const textAnimationName = `fadeInOut-text-${index}`;
         
-        // Add keyframes for this image
-        const keyframes = `
-          @keyframes ${animationName} {
-            0%, ${startPercent}% {
+        // Add keyframes for image
+        const imageKeyframes = `
+          @keyframes ${imageAnimationName} {
+            0%, ${imageStartPercent}% {
               opacity: 0;
               transform: translate(-50%, -50%) scale(0.8);
             }
-            ${fadeInEndPercent}%, ${fadeOutStartPercent}% {
+            ${imageFadeInEndPercent}%, ${imageFadeOutStartPercent}% {
               opacity: 0.2;
               transform: translate(-50%, -50%) scale(1);
             }
-            ${endPercent}%, 100% {
+            ${imageEndPercent}%, 100% {
               opacity: 0;
               transform: translate(-50%, -50%) scale(0.8);
             }
           }
         `;
-        styleElement.textContent += keyframes;
+        
+        // Add keyframes for text
+        const textKeyframes = `
+          @keyframes ${textAnimationName} {
+            0%, ${textStartPercent}% {
+              opacity: 0;
+            }
+            ${textFadeInEndPercent}%, ${textFadeOutStartPercent}% {
+              opacity: 0.4;
+            }
+            ${textEndPercent}%, 100% {
+              opacity: 0;
+            }
+          }
+        `;
+        
+        styleElement.textContent += imageKeyframes + textKeyframes;
         
         img.style.cssText = `
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
           width: 480px;
           height: 480px;
           object-fit: contain;
@@ -823,7 +885,7 @@ const imagePromptDisplay = $('#image-prompt-display') as HTMLTextAreaElement;
           filter: none;
           background: transparent;
           opacity: 0;
-          animation: ${animationName} ${actualTotalCycleDuration}s ease-in-out infinite;
+          animation: ${imageAnimationName} ${actualTotalCycleDuration}s ease-in-out infinite;
         `;
         
         // Add hover event listeners for opacity change
@@ -834,7 +896,25 @@ const imagePromptDisplay = $('#image-prompt-display') as HTMLTextAreaElement;
           img.style.opacity = '';
         });
         
+        // Create text element
+        const textElement = document.createElement('div');
+        textElement.className = 'placeholder-text-message';
+        textElement.textContent = textMessages[loadedIndex % textMessages.length];
+        textElement.style.cssText = `
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          font-size: 18px;
+          font-weight: 600;
+          color: var(--text-secondary);
+          opacity: 0;
+          animation: ${textAnimationName} ${actualTotalCycleDuration}s ease-in-out infinite;
+          white-space: nowrap;
+        `;
+        
         container.appendChild(img);
+        container.appendChild(textElement);
       });
       
     } catch (error) {
@@ -977,49 +1057,109 @@ const p2dGenerateMotionFromPreviewBtn = $('#p2d-generate-motion-from-preview-btn
         })
       );
 
-      // Recalculate total cycle duration based on successfully loaded images
-      const actualTotalCycleDuration = loadedImages.length * (imageDisplayDuration + fadeDuration * 2);
+      // Add text messages between images
+      const textMessages = [
+        'Design without design tools.',
+        'Create 2D, 3D, and motion with one prompt.',
+        'AI that builds your visuals for you.',
+        'Create more. Think less'
+      ];
+      
+      // Tighter timing: text appears during image fade out, next image appears during text fade out
+      const textDisplayDuration = 1; // seconds each text is visible
+      const textFadeDuration = 0.8; // seconds for text fade in/out (slightly faster)
+      
+      // Calculate timing: image fade out overlaps with text fade in, next image appears in middle of text fade out
+      // Pattern: image (fade in + display + fade out) → text (fade in during image fade out + display + fade out) → next image (fade in in middle of text fade out)
+      const singleImageDuration = imageDisplayDuration + fadeDuration * 2; // 1s display + 1s fade in + 1s fade out = 3s
+      const singleTextDuration = textDisplayDuration + textFadeDuration * 2; // 1s display + 0.8s fade in + 0.8s fade out = 2.6s
+      // Text starts during image fade out, so: image delay + (fade in + display) = when text starts
+      // Next image starts in middle of text fade out for smooth continuity
+      const overlap = fadeDuration; // 1s overlap (image fade out = text fade in)
+      
+      // Calculate delays for all images first to determine total cycle duration
+      const imageDelays: number[] = [];
+      for (let i = 0; i < loadedImages.length; i++) {
+        if (i === 0) {
+          imageDelays.push(0);
+        } else {
+          const prevImageDelay = imageDelays[i - 1];
+          const prevTextDelay = prevImageDelay + fadeDuration + imageDisplayDuration;
+          const prevTextFadeOutMiddle = prevTextDelay + textFadeDuration + textDisplayDuration + (textFadeDuration / 2);
+          imageDelays.push(prevTextFadeOutMiddle);
+        }
+      }
+      
+      // Calculate total cycle duration: last image's text fully fades out
+      const lastImageDelay = imageDelays[imageDelays.length - 1];
+      const lastTextDelay = lastImageDelay + fadeDuration + imageDisplayDuration;
+      const actualTotalCycleDuration = lastTextDelay + singleTextDuration;
 
       loadedImages.forEach(({ img, asset, index }, loadedIndex) => {
         img.alt = 'preview';
         img.className = 'sample-preview-img';
         
-        // Calculate animation delay for sequential display
-        // Each image appears after the previous one completes (fade in + display + fade out)
-        const singleImageDuration = imageDisplayDuration + fadeDuration * 2; // 1s display + 1s fade in + 1s fade out = 3s total
-        const delay = loadedIndex * singleImageDuration;
+        // Use pre-calculated delay
+        const imageDelay = imageDelays[loadedIndex];
+        // Text starts when image starts fading out (after fade in + display)
+        const textDelay = imageDelay + fadeDuration + imageDisplayDuration; // Start during image fade out
         
-        // Calculate keyframe percentages for this image
-        // Timeline: delay → fade in (1s) → display (1s) → fade out (1s)
-        // Opacity: 0 → 0.2 (fade in) → 0.2 (display) → 0 (fade out)
-        const startPercent = (delay / actualTotalCycleDuration) * 100;
-        const fadeInEndPercent = ((delay + fadeDuration) / actualTotalCycleDuration) * 100;
-        const fadeOutStartPercent = ((delay + fadeDuration + imageDisplayDuration) / actualTotalCycleDuration) * 100;
-        const endPercent = ((delay + fadeDuration + imageDisplayDuration + fadeDuration) / actualTotalCycleDuration) * 100;
+        // Image keyframes
+        const imageStartPercent = (imageDelay / actualTotalCycleDuration) * 100;
+        const imageFadeInEndPercent = ((imageDelay + fadeDuration) / actualTotalCycleDuration) * 100;
+        const imageFadeOutStartPercent = ((imageDelay + fadeDuration + imageDisplayDuration) / actualTotalCycleDuration) * 100;
+        const imageEndPercent = ((imageDelay + fadeDuration + imageDisplayDuration + fadeDuration) / actualTotalCycleDuration) * 100;
+        
+        // Text keyframes (overlaps with image fade out)
+        const textStartPercent = (textDelay / actualTotalCycleDuration) * 100;
+        const textFadeInEndPercent = ((textDelay + textFadeDuration) / actualTotalCycleDuration) * 100;
+        const textFadeOutStartPercent = ((textDelay + textFadeDuration + textDisplayDuration) / actualTotalCycleDuration) * 100;
+        const textEndPercent = ((textDelay + textFadeDuration + textDisplayDuration + textFadeDuration) / actualTotalCycleDuration) * 100;
         
         // Create unique animation for this image
-        const animationName = `fadeInOut-2d-${index}`;
+        const imageAnimationName = `fadeInOut-2d-${index}`;
+        const textAnimationName = `fadeInOut-text-2d-${index}`;
         
-        // Add keyframes for this image
-        const keyframes = `
-          @keyframes ${animationName} {
-            0%, ${startPercent}% {
+        // Add keyframes for image
+        const imageKeyframes = `
+          @keyframes ${imageAnimationName} {
+            0%, ${imageStartPercent}% {
               opacity: 0;
               transform: translate(-50%, -50%) scale(0.8);
             }
-            ${fadeInEndPercent}%, ${fadeOutStartPercent}% {
+            ${imageFadeInEndPercent}%, ${imageFadeOutStartPercent}% {
               opacity: 0.2;
               transform: translate(-50%, -50%) scale(1);
             }
-            ${endPercent}%, 100% {
+            ${imageEndPercent}%, 100% {
               opacity: 0;
               transform: translate(-50%, -50%) scale(0.8);
             }
           }
         `;
-        styleElement.textContent += keyframes;
+        
+        // Add keyframes for text
+        const textKeyframes = `
+          @keyframes ${textAnimationName} {
+            0%, ${textStartPercent}% {
+              opacity: 0;
+            }
+            ${textFadeInEndPercent}%, ${textFadeOutStartPercent}% {
+              opacity: 0.4;
+            }
+            ${textEndPercent}%, 100% {
+              opacity: 0;
+            }
+          }
+        `;
+        
+        styleElement.textContent += imageKeyframes + textKeyframes;
         
         img.style.cssText = `
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
           width: 320px;
           height: 320px;
           object-fit: contain;
@@ -1027,7 +1167,7 @@ const p2dGenerateMotionFromPreviewBtn = $('#p2d-generate-motion-from-preview-btn
           filter: none;
           background: transparent;
           opacity: 0;
-          animation: ${animationName} ${actualTotalCycleDuration}s ease-in-out infinite;
+          animation: ${imageAnimationName} ${actualTotalCycleDuration}s ease-in-out infinite;
         `;
         
         // Add hover event listeners for opacity change
@@ -1038,7 +1178,25 @@ const p2dGenerateMotionFromPreviewBtn = $('#p2d-generate-motion-from-preview-btn
           img.style.opacity = '';
         });
         
+        // Create text element
+        const textElement = document.createElement('div');
+        textElement.className = 'placeholder-text-message';
+        textElement.textContent = textMessages[loadedIndex % textMessages.length];
+        textElement.style.cssText = `
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          font-size: 18px;
+          font-weight: 600;
+          color: var(--text-secondary);
+          opacity: 0;
+          animation: ${textAnimationName} ${actualTotalCycleDuration}s ease-in-out infinite;
+          white-space: nowrap;
+        `;
+        
         container.appendChild(img);
+        container.appendChild(textElement);
       });
       
     } catch (error) {
@@ -1122,48 +1280,91 @@ const p2dGenerateMotionFromPreviewBtn = $('#p2d-generate-motion-from-preview-btn
         })
       );
 
-      // Recalculate total cycle duration based on successfully loaded images
-      const actualTotalCycleDuration = loadedImages.length * (imageDisplayDuration + fadeDuration * 2);
+      // Add text messages between images
+      const textMessages = [
+        'Design without design tools.',
+        'Create 2D, 3D, and motion with one prompt.',
+        'AI that builds your visuals for you.',
+        'Create more. Think less'
+      ];
+      
+      // Tighter timing: text appears during image fade out, next image appears during text fade out
+      const textDisplayDuration = 1; // seconds each text is visible
+      const textFadeDuration = 0.8; // seconds for text fade in/out (slightly faster)
+      
+      // Calculate timing: image fade out overlaps with text fade in, text fade out overlaps with next image fade in
+      const singleImageDuration = imageDisplayDuration + fadeDuration * 2; // 1s display + 1s fade in + 1s fade out = 3s
+      const singleTextDuration = textDisplayDuration + textFadeDuration * 2; // 1s display + 0.8s fade in + 0.8s fade out = 2.6s
+      const overlap = fadeDuration; // 1s overlap (image fade out = text fade in)
+      const singlePairDuration = singleImageDuration + singleTextDuration - overlap; // 3 + 2.6 - 1 = 4.6s
+      const actualTotalCycleDuration = loadedImages.length * singlePairDuration;
 
       loadedImages.forEach(({ img, asset, index }, loadedIndex) => {
         img.alt = 'preview';
         img.className = 'sample-preview-img';
         
-        // Calculate animation delay for sequential display
-        const singleImageDuration = imageDisplayDuration + fadeDuration * 2; // 1s display + 1s fade in + 1s fade out = 3s total
-        const delay = loadedIndex * singleImageDuration;
+        // Calculate animation delay for sequential display with overlap
+        const pairIndex = loadedIndex;
+        const imageDelay = pairIndex * singlePairDuration;
+        // Text starts when image starts fading out (after fade in + display)
+        const textDelay = imageDelay + fadeDuration + imageDisplayDuration; // Start during image fade out
         
-        // Calculate keyframe percentages for this image
-        // Timeline: delay → fade in (1s) → display (1s) → fade out (1s)
-        // Opacity: 0 → 0.2 (fade in) → 0.2 (display) → 0 (fade out)
-        const startPercent = (delay / actualTotalCycleDuration) * 100;
-        const fadeInEndPercent = ((delay + fadeDuration) / actualTotalCycleDuration) * 100;
-        const fadeOutStartPercent = ((delay + fadeDuration + imageDisplayDuration) / actualTotalCycleDuration) * 100;
-        const endPercent = ((delay + fadeDuration + imageDisplayDuration + fadeDuration) / actualTotalCycleDuration) * 100;
+        // Image keyframes
+        const imageStartPercent = (imageDelay / actualTotalCycleDuration) * 100;
+        const imageFadeInEndPercent = ((imageDelay + fadeDuration) / actualTotalCycleDuration) * 100;
+        const imageFadeOutStartPercent = ((imageDelay + fadeDuration + imageDisplayDuration) / actualTotalCycleDuration) * 100;
+        const imageEndPercent = ((imageDelay + fadeDuration + imageDisplayDuration + fadeDuration) / actualTotalCycleDuration) * 100;
+        
+        // Text keyframes (overlaps with image fade out)
+        const textStartPercent = (textDelay / actualTotalCycleDuration) * 100;
+        const textFadeInEndPercent = ((textDelay + textFadeDuration) / actualTotalCycleDuration) * 100;
+        const textFadeOutStartPercent = ((textDelay + textFadeDuration + textDisplayDuration) / actualTotalCycleDuration) * 100;
+        const textEndPercent = ((textDelay + textFadeDuration + textDisplayDuration + textFadeDuration) / actualTotalCycleDuration) * 100;
         
         // Create unique animation for this image
-        const animationName = `fadeInOut-image-${index}`;
+        const imageAnimationName = `fadeInOut-image-${index}`;
+        const textAnimationName = `fadeInOut-text-image-${index}`;
         
-        // Add keyframes for this image
-        const keyframes = `
-          @keyframes ${animationName} {
-            0%, ${startPercent}% {
+        // Add keyframes for image
+        const imageKeyframes = `
+          @keyframes ${imageAnimationName} {
+            0%, ${imageStartPercent}% {
               opacity: 0;
               transform: translate(-50%, -50%) scale(0.8);
             }
-            ${fadeInEndPercent}%, ${fadeOutStartPercent}% {
+            ${imageFadeInEndPercent}%, ${imageFadeOutStartPercent}% {
               opacity: 0.2;
               transform: translate(-50%, -50%) scale(1);
             }
-            ${endPercent}%, 100% {
+            ${imageEndPercent}%, 100% {
               opacity: 0;
               transform: translate(-50%, -50%) scale(0.8);
             }
           }
         `;
-        styleElement.textContent += keyframes;
+        
+        // Add keyframes for text
+        const textKeyframes = `
+          @keyframes ${textAnimationName} {
+            0%, ${textStartPercent}% {
+              opacity: 0;
+            }
+            ${textFadeInEndPercent}%, ${textFadeOutStartPercent}% {
+              opacity: 0.4;
+            }
+            ${textEndPercent}%, 100% {
+              opacity: 0;
+            }
+          }
+        `;
+        
+        styleElement.textContent += imageKeyframes + textKeyframes;
         
         img.style.cssText = `
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
           width: 320px;
           height: 320px;
           object-fit: contain;
@@ -1171,7 +1372,7 @@ const p2dGenerateMotionFromPreviewBtn = $('#p2d-generate-motion-from-preview-btn
           filter: none;
           background: transparent;
           opacity: 0;
-          animation: ${animationName} ${actualTotalCycleDuration}s ease-in-out infinite;
+          animation: ${imageAnimationName} ${actualTotalCycleDuration}s ease-in-out infinite;
         `;
         
         // Add hover event listeners for opacity change
@@ -1182,7 +1383,25 @@ const p2dGenerateMotionFromPreviewBtn = $('#p2d-generate-motion-from-preview-btn
           img.style.opacity = '';
         });
         
+        // Create text element
+        const textElement = document.createElement('div');
+        textElement.className = 'placeholder-text-message';
+        textElement.textContent = textMessages[loadedIndex % textMessages.length];
+        textElement.style.cssText = `
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          font-size: 18px;
+          font-weight: 600;
+          color: var(--text-secondary);
+          opacity: 0;
+          animation: ${textAnimationName} ${actualTotalCycleDuration}s ease-in-out infinite;
+          white-space: nowrap;
+        `;
+        
         container.appendChild(img);
+        container.appendChild(textElement);
       });
       
     } catch (error) {
@@ -2251,6 +2470,76 @@ const extractVideoDownloadUrl = (operation: any): string | null => {
     localStorage.setItem('theme', theme);
   };
 
+  // Changelog management
+  interface ChangelogItem {
+    id: string;
+    text: string;
+    date: string;
+    active: boolean;
+  }
+
+  const renderChangelog = async () => {
+    const changelogSection = $('#changelog-section');
+    if (!changelogSection) return;
+
+    try {
+      const response = await fetch('/changelog.json');
+      if (!response.ok) {
+        console.warn('Changelog file not found, using default');
+        return;
+      }
+      
+      const changelogItems: ChangelogItem[] = await response.json();
+      const activeItems = changelogItems.filter(item => item.active);
+      
+      if (activeItems.length === 0) {
+        changelogSection.innerHTML = '';
+        return;
+      }
+
+      // Show only the most recent active item
+      const latestItem = activeItems[0];
+      
+      changelogSection.innerHTML = `
+        <div class="changelog-item">
+          <div class="changelog-dot"></div>
+          <span class="changelog-text">${latestItem.text}</span>
+          <span class="changelog-arrow">→</span>
+        </div>
+      `;
+    } catch (error) {
+      console.error('Failed to load changelog:', error);
+      changelogSection.innerHTML = '';
+    }
+  };
+
+  // Function to add new changelog item (for future use)
+  const addChangelogItem = async (text: string, date?: string) => {
+    try {
+      const response = await fetch('/changelog.json');
+      const changelogItems: ChangelogItem[] = await response.ok ? await response.json() : [];
+      
+      const newItem: ChangelogItem = {
+        id: `changelog_${Date.now()}`,
+        text: text,
+        date: date || new Date().toISOString().split('T')[0],
+        active: true
+      };
+      
+      // Add new item at the beginning
+      changelogItems.unshift(newItem);
+      
+      // Save to file (this would require a backend endpoint in production)
+      // For now, we'll just update the local state and re-render
+      await renderChangelog();
+      
+      console.log('Changelog item added:', newItem);
+      return newItem;
+    } catch (error) {
+      console.error('Failed to add changelog item:', error);
+    }
+  };
+
 
   // --- CORE LOGIC ---
   const updateWeightValue = () => {
@@ -2284,6 +2573,12 @@ const extractVideoDownloadUrl = (operation: any): string | null => {
       const iconsToStyle = $$('#icon-grid .icon-item > span:first-child, #settings-preview-icon, #motion-preview-icon');
       
       iconsToStyle.forEach(icon => {
+          // Don't modify Material Icons - they don't support style variations
+          if (icon.classList.contains('material-icons')) {
+              return; // Skip Material Icons
+          }
+          
+          // Only apply to Material Symbols
           icon.classList.remove('material-symbols-outlined', 'material-symbols-rounded', 'material-symbols-sharp');
           icon.classList.add(newStyleClass);
           icon.style.fontVariationSettings = fontVariationSettings;
@@ -3284,13 +3579,9 @@ const extractVideoDownloadUrl = (operation: any): string | null => {
                     return;
                 }
                 
-                // Update label based on modification type
+                // Update label to "After"
                 if (compareLeftLabel2d) {
-                    if (modificationType === 'BG Removed') {
-                        compareLeftLabel2d.textContent = 'Remove BG';
-                    } else {
-                        compareLeftLabel2d.textContent = 'Color Changed';
-                    }
+                    compareLeftLabel2d.textContent = 'After';
                 }
                 
                 // Set images
@@ -3329,12 +3620,22 @@ const extractVideoDownloadUrl = (operation: any): string | null => {
                     }
                 }
                 
+                // Get Before label (right side label)
+                const compareRightLabel2d = originalContainer?.querySelector('label') as HTMLElement;
+                
                 // Slider handler to reveal original image on the right side
                 const handleSliderChange = () => {
                     const value = compareSlider2d.valueAsNumber;
                     compareDivider2d.style.left = `${value}%`;
                     if (originalContainer) {
                         originalContainer.style.clipPath = `inset(0 0 0 ${value}%)`;
+                    }
+                    // Update label positions to follow the divider
+                    if (compareLeftLabel2d) {
+                        compareLeftLabel2d.style.right = `calc(${100 - value}% + 32px)`;
+                    }
+                    if (compareRightLabel2d) {
+                        compareRightLabel2d.style.left = `calc(${value}% + 32px)`;
                     }
                 };
                 
@@ -3728,13 +4029,9 @@ const extractVideoDownloadUrl = (operation: any): string | null => {
                     return;
                 }
                 
-                // Update label based on modification type
+                // Update label to "After"
                 if (compareLeftLabel3d) {
-                    if (modificationType === 'BG Removed') {
-                        compareLeftLabel3d.textContent = 'Remove BG';
-                    } else {
-                        compareLeftLabel3d.textContent = 'Color Changed';
-                    }
+                    compareLeftLabel3d.textContent = 'After';
                 }
                 
                 // Set images
@@ -3773,12 +4070,22 @@ const extractVideoDownloadUrl = (operation: any): string | null => {
                     }
                 }
                 
+                // Get Before label (right side label)
+                const compareRightLabel3d = originalContainer?.querySelector('label') as HTMLElement;
+                
                 // Slider handler to reveal original image on the right side
                 const handleSliderChange = () => {
                     const value = compareSlider3d.valueAsNumber;
                     compareDivider3d.style.left = `${value}%`;
                     if (originalContainer) {
                         originalContainer.style.clipPath = `inset(0 0 0 ${value}%)`;
+                    }
+                    // Update label positions to follow the divider
+                    if (compareLeftLabel3d) {
+                        compareLeftLabel3d.style.right = `calc(${100 - value}% + 32px)`;
+                    }
+                    if (compareRightLabel3d) {
+                        compareRightLabel3d.style.left = `calc(${value}% + 32px)`;
                     }
                 };
                 
@@ -6404,36 +6711,80 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
         
         // Convert organic/fluid terms to geometric transform equivalents (preserving intent)
         motionInstruction = motionInstruction
-            .replace(/breathing|breath/gi, 'uniform scale')
+            .replace(/breathing|breath|breathing-like/gi, 'uniform scale')
             .replace(/pulsing|pulse/gi, 'uniform scale')
             .replace(/expands?|contracts?|grows?|shrinks?/gi, 'uniform scale')
             .replace(/rotates?|spins?|turns?/gi, 'rotate')
             .replace(/floats?|rises?|falls?|bounces?/gi, 'vertical translate')
-            .replace(/sways?|moves? horizontally|shifts? left|shifts? right/gi, 'horizontal translate')
-            .replace(/gentle|smooth|subtle/gi, 'precise')
+            .replace(/sways?|moves? horizontally|shifts? left|shifts? right|horizontal displacement/gi, 'horizontal translate')
+            .replace(/gentle|smooth|subtle|minimal/gi, 'precise')
             .replace(/seamless/gi, 'continuous')
-            .replace(/effect/gi, 'transform');
+            .replace(/effect/gi, 'transform')
+            .replace(/centered in place|in place/gi, 'centered transform')
+            .replace(/maintain.*proportions|original proportions/gi, 'maintain exact pixel positions');
         
-        // Extract scale values if mentioned (e.g., "scale 1.0 to 1.03")
-        const scaleMatch = motionInstruction.match(/scale\s*([\d.]+)\s*to\s*([\d.]+)|scale\s*([\d.]+)/i);
+        // Extract scale values if mentioned (e.g., "scale 1.0 to 1.03" or "3%")
+        const scaleMatch = motionInstruction.match(/scale\s*([\d.]+)\s*to\s*([\d.]+)|scale\s*([\d.]+)|(\d+)%/i);
         let scaleRange = '';
         if (scaleMatch) {
-            const min = scaleMatch[1] || scaleMatch[3] || '1.0';
-            const max = scaleMatch[2] || '1.03';
-            scaleRange = ` (scale range: ${min} to ${max})`;
+            if (scaleMatch[4]) {
+                // Percentage match (e.g., "3%")
+                const percent = parseFloat(scaleMatch[4]);
+                const max = 1 + (percent / 100);
+                scaleRange = ` (scale range: 1.0 to ${max.toFixed(3)})`;
+            } else {
+                const min = scaleMatch[1] || scaleMatch[3] || '1.0';
+                const max = scaleMatch[2] || '1.03';
+                scaleRange = ` (scale range: ${min} to ${max})`;
+            }
         }
         
-        // Wrap user's motion instruction with rigid transform constraints
-        motionInstruction = `${motionInstruction}${scaleRange}. CRITICAL: Apply this motion as a pure geometric transform to the COMPLETE icon as a single rigid object. The icon shape, lines, and structure must remain 100% identical - only transform properties (scale/rotate/translate) can change.`;
+        // Wrap user's motion instruction with ultra-rigid transform constraints
+        motionInstruction = `${motionInstruction}${scaleRange}. 
 
-        const finalPrompt = `🚨🚨🚨🚨🚨 ULTRA-CRITICAL CONSTRAINT 🚨🚨🚨🚨🚨
+🚨🚨🚨 ABSOLUTE CRITICAL REQUIREMENT 🚨🚨🚨
+Apply this motion as a PURE MATHEMATICAL TRANSFORM to the COMPLETE icon as a SINGLE RIGID BODY. The icon is a FROZEN STATIC IMAGE - think of it as a PNG file in a video editor where ONLY the transform matrix (scale/rotate/translate) changes. The icon image itself is PERMANENTLY LOCKED and CANNOT be modified in ANY way.
+
+MANDATORY CONSTRAINTS:
+- The icon shape, lines, edges, curves, and ALL visual elements must remain 100% PIXEL-PERFECT IDENTICAL
+- Every pixel must stay in the EXACT same position relative to the icon's coordinate system
+- Only the ENTIRE icon's transform matrix can change (scale/rotate/translate applied to the whole icon as one unit)
+- NO shape deformation, NO line changes, NO pixel movement, NO structural modifications
+- The icon must look like a static image being zoomed/rotated/moved, NOT an animated drawing`;
+
+        const finalPrompt = `🚨🚨🚨🚨🚨🚨🚨🚨🚨 CRITICAL: NO LIQUID, NO FLOW, NO DEFORMATION 🚨🚨🚨🚨🚨🚨🚨🚨🚨
+
+⚠️⚠️⚠️ ABSOLUTE PROHIBITION ⚠️⚠️⚠️
+DO NOT create liquid, flowing, melting, or fluid-like motion. DO NOT deform, warp, or morph the icon shape. DO NOT change ANY lines, curves, edges, or shapes. The icon is a RIGID, SOLID object that can ONLY move as a whole unit.
 
 THIS IS A STATIC RASTER IMAGE FILE (PNG format). THE ICON IMAGE ITSELF IS PERMANENTLY FROZEN AND ABSOLUTELY CANNOT BE MODIFIED IN ANY WAY.
+
+🔴🔴🔴 LINE ART / VECTOR ICON PRESERVATION 🔴🔴🔴
+This is a LINE ART or VECTOR-STYLE icon. Every single line, curve, edge, corner, and detail is PERMANENTLY FIXED.
+- Lines must remain EXACTLY the same thickness, length, and curvature
+- Curves must remain EXACTLY the same shape and position
+- Edges must remain EXACTLY the same angle and sharpness
+- NO line deformation, NO curve modification, NO edge smoothing, NO corner rounding
+- The icon's line structure is ABSOLUTELY IMMUTABLE - like a printed sticker or a laser-cut shape
 
 ⚠️⚠️⚠️ MANDATORY REQUIREMENT ⚠️⚠️⚠️
 This is NOT an animated drawing or illustration. This is a STATIC IMAGE FILE being animated with geometric transform properties ONLY (like CSS transform: scale/rotate/translate or After Effects transform controls).
 
 The source image is a FROZEN RASTER. Every single pixel must remain in the EXACT same position relative to the icon's coordinate system. The icon image file itself NEVER changes - it is a FIXED, UNCHANGEABLE static image.
+
+🔴🔴🔴 LIQUID/FLUID MOTION IS COMPLETELY FORBIDDEN 🔴🔴🔴
+- NO liquid-like flow, NO dripping, NO melting, NO water-like movement
+- NO organic, fluid, or elastic motion that suggests the icon is made of liquid or flexible material
+- The icon is SOLID and RIGID - like a metal coin or a printed sticker
+- Motion must be MECHANICAL and RIGID, not organic or fluid
+
+🔒🔒🔒 SHAPE PRESERVATION IS ABSOLUTE AND NON-NEGOTIABLE 🔒🔒🔒
+- The icon's shape, form, silhouette, and ALL geometric properties are PERMANENTLY LOCKED
+- Every line, curve, edge, corner, and detail must remain 100% IDENTICAL in every frame
+- The icon must appear as if it's a photograph being zoomed/rotated/moved, NOT a drawing being animated
+- Think: Take a screenshot of frame 1, apply ONLY transform matrix changes (scale/rotate/translate), that's the ONLY difference between frames
+- If you compare frame 1 and frame N side-by-side, they should be IDENTICAL except for position/rotation/scale
+- The icon's visual appearance (lines, shapes, details) must be PIXEL-PERFECT IDENTICAL across ALL frames
 
 🎯 ANIMATION INSTRUCTION:
 ${motionInstruction}
@@ -6446,10 +6797,14 @@ ${motionInstruction}
 - NO independent part movement, NO separate element animation, NO component-level changes
 
 🚫🚫🚫 ABSOLUTELY FORBIDDEN - THE ICON FILE CANNOT CHANGE IN ANY WAY 🚫🚫🚫
-- ANY shape deformation, morphing, warping, bending, stretching, or distortion
-- ANY line thickness changes, wavy lines, curved lines becoming straight, or straight lines becoming curved
-- ANY flowing, dripping, melting, liquid-like, or water-like effects
-- ANY elastic, rubber-like, organic, or flexible material behavior
+- ANY shape deformation, morphing, warping, bending, stretching, or distortion (COMPLETELY FORBIDDEN)
+- ANY line thickness changes, wavy lines, curved lines becoming straight, or straight lines becoming curved (COMPLETELY FORBIDDEN)
+- ANY flowing, dripping, melting, liquid-like, water-like, or fluid-like effects (THIS IS THE #1 PRIORITY - COMPLETELY FORBIDDEN)
+- ANY elastic, rubber-like, organic, flexible, or soft material behavior (COMPLETELY FORBIDDEN)
+- ANY motion that suggests the icon is made of liquid, water, gel, or any fluid substance (COMPLETELY FORBIDDEN)
+- ANY wave-like, ripple-like, or undulating motion that deforms the shape (COMPLETELY FORBIDDEN)
+- ANY line movement, curve modification, edge deformation, or corner changes (COMPLETELY FORBIDDEN)
+- ANY part of the icon changing shape, size, or position relative to other parts (COMPLETELY FORBIDDEN)
 - ANY part of the icon moving independently from other parts
 - ANY color changes, fading, blending, or opacity changes
 - ANY new elements appearing or existing elements disappearing
@@ -6489,7 +6844,7 @@ shape deformation, morphing, warping, distortion, line changes, thickness change
         const payload: any = {
             model: selectedModel,
             prompt: finalPrompt,
-            negativePrompt: 'shape deformation, morphing, warping, distortion, line changes, thickness changes, pixel changes, rasterization, anti-aliasing changes, edge smoothing, outline changes, fill changes, color changes, opacity changes, independent part movement, camera movement, zoom, perspective, particle effects, trails, glows, shadows, visual artifacts, organic movement, fluid movement, elastic movement, rubber movement, material changes, texture changes, icon shape changes, vector changes, path changes, bezier curve changes, anchor point movement, component animation, separate element movement, part-by-part animation, shape modification, geometry changes, structural changes',
+            negativePrompt: 'liquid, fluid, flowing, dripping, melting, water-like, gel-like, liquid motion, fluid motion, wave motion, ripple effect, undulating, organic flow, liquid deformation, fluid deformation, shape deformation, morphing, warping, distortion, line changes, thickness changes, pixel changes, rasterization, anti-aliasing changes, edge smoothing, outline changes, fill changes, color changes, opacity changes, independent part movement, camera movement, zoom, perspective, particle effects, trails, glows, shadows, visual artifacts, organic movement, fluid movement, elastic movement, rubber movement, material changes, texture changes, icon shape changes, vector changes, path changes, bezier curve changes, anchor point movement, component animation, separate element movement, part-by-part animation, shape modification, geometry changes, structural changes, form changes, silhouette changes, edge deformation, curve modification, corner rounding, detail loss, pixel displacement, raster distortion, image warping, perspective distortion, lens distortion, barrel distortion, pincushion distortion, breathing effect distortion, pulsing shape change, organic scaling, non-uniform scaling, anisotropic scaling, shearing, skewing, stretching, compression, elongation, contraction, expansion, growth, shrinking, size variation, dimension changes, aspect ratio changes, proportional changes, liquid flow, fluid flow, water flow, gel flow, liquid animation, fluid animation, wave-like motion, ripple-like motion, undulating motion, organic deformation, fluid deformation, liquid-like behavior, fluid-like behavior',
             config,
         };
 
@@ -7519,27 +7874,254 @@ Return the 5 suggestions as a JSON array.`;
   
   // --- PAGE-SPECIFIC LOGIC: Icon Studio ---
   
-  const populateIconGrid = (filter = '') => {
-    if (!iconGrid) return;
-    iconGrid.innerHTML = '';
-    const query = filter.toLowerCase().trim();
-    const filteredIcons = ICON_DATA.filter(icon => 
-        icon.name.toLowerCase().includes(query) || 
-        icon.tags.some(tag => tag.toLowerCase().includes(query))
-    );
+  // Virtual scrolling state
+  let allIconsData: IconData[] = [];
+  let filteredIconsData: IconData[] = [];
+  let iconCurrentPage = 0;
+  const ITEMS_PER_PAGE = 100;
+  let isLoadingIcons = false;
 
-    filteredIcons.forEach(icon => {
-        const item = document.createElement('div');
-        item.className = 'icon-item';
-        item.dataset.iconName = icon.name;
-        item.innerHTML = `
-            <span class="material-symbols-outlined">${icon.name}</span>
-            <span>${icon.name.replace(/_/g, ' ')}</span>
-        `;
-        item.addEventListener('click', () => handleIconClick(icon));
-        iconGrid.appendChild(item);
+  // Load all Material Symbols icons with metadata (categories, popularity)
+  const loadAllMaterialIcons = async (): Promise<IconData[]> => {
+    if (allIconsData.length > 0) return allIconsData;
+
+    try {
+      // Load from JSON file (includes categories and popularity from metadata)
+      const response = await fetch('/material-icons-list.json');
+      if (response.ok) {
+        const data = await response.json();
+        allIconsData = data.icons || [];
+        
+        if (allIconsData.length > 0) {
+          // Sort by category, then by popularity (descending), then alphabetically
+          const categoryOrder = [
+            'action', 'alert', 'av', 'communication', 'content', 'device', 
+            'editor', 'file', 'hardware', 'image', 'maps', 'navigation', 
+            'notification', 'places', 'social', 'toggle', 'transport'
+          ];
+          
+          allIconsData.sort((a: any, b: any) => {
+            const aCategory = a.category || 'uncategorized';
+            const bCategory = b.category || 'uncategorized';
+            const aCatIndex = categoryOrder.indexOf(aCategory);
+            const bCatIndex = categoryOrder.indexOf(bCategory);
+            
+            // If both have known categories, sort by category order
+            if (aCatIndex !== -1 && bCatIndex !== -1) {
+              if (aCatIndex !== bCatIndex) {
+                return aCatIndex - bCatIndex;
+              }
+            } else if (aCatIndex !== -1) {
+              return -1; // a comes first
+            } else if (bCatIndex !== -1) {
+              return 1; // b comes first
+            } else if (aCategory !== bCategory) {
+              return aCategory.localeCompare(bCategory);
+            }
+            
+            // Within same category, sort by popularity (descending)
+            const aPop = a.popularity || 0;
+            const bPop = b.popularity || 0;
+            if (aPop !== bPop) {
+              return bPop - aPop;
+            }
+            
+            // Finally, sort alphabetically
+            return a.name.localeCompare(b.name);
+          });
+          
+          console.log(`✅ Loaded ${allIconsData.length} icons from JSON file`);
+          console.log(`📊 First 10 icons:`, allIconsData.slice(0, 10).map((i: any) => `${i.name} (${i.category || 'no-cat'}, pop: ${i.popularity || 0})`));
+          return allIconsData;
+        }
+      } else {
+        console.warn(`⚠️ JSON file not found (status: ${response.status}), trying GitHub API`);
+      }
+    } catch (error) {
+      console.warn('⚠️ Material icons JSON file not found, trying GitHub API:', error);
+    }
+
+    // Try to fetch from Material Icons GitHub repository
+    try {
+      // Material Icons codepoints file contains all icon names
+      const codepointsResponse = await fetch('https://raw.githubusercontent.com/google/material-design-icons/master/font/MaterialIcons-Regular.codepoints');
+      if (codepointsResponse.ok) {
+        const codepointsText = await codepointsResponse.text();
+        const lines = codepointsText.split('\n').filter(line => line.trim());
+        
+        allIconsData = lines.map(line => {
+          const [name] = line.split(' ');
+          // Generate tags from icon name (split by underscore and common patterns)
+          const nameParts = name.split('_').filter(part => part.length > 0);
+          const tags = [...nameParts, name];
+          
+          return { name, tags };
+        });
+        
+        console.log(`Loaded ${allIconsData.length} icons from Material Icons GitHub`);
+        return allIconsData;
+      }
+    } catch (error) {
+      console.log('Failed to load from GitHub, using fallback');
+    }
+
+    // Fallback: Use existing ICON_DATA
+    allIconsData = [...ICON_DATA];
+    console.log(`Using ${allIconsData.length} icons from ICON_DATA (fallback)`);
+    return allIconsData;
+  };
+
+  const populateIconGrid = async (filter = '', page = 0) => {
+    if (!iconGrid) return;
+    
+    // Load all icons on first call
+    if (allIconsData.length === 0 && !isLoadingIcons) {
+      isLoadingIcons = true;
+      console.log('🔄 Loading Material Icons...');
+      await loadAllMaterialIcons();
+      console.log(`✅ Total icons loaded: ${allIconsData.length}`);
+      isLoadingIcons = false;
+    }
+
+    const query = filter.toLowerCase().trim();
+    
+    // Filter icons based on search query
+    if (query) {
+      filteredIconsData = allIconsData.filter(icon => 
+        icon.name.toLowerCase().includes(query) || 
+        (icon.tags && icon.tags.some(tag => tag.toLowerCase().includes(query)))
+      );
+    } else {
+      filteredIconsData = [...allIconsData];
+    }
+    
+    console.log(`📊 Filtered icons: ${filteredIconsData.length} (query: "${query}")`);
+
+    // Virtual scrolling: only render items for current page
+    const startIndex = page * ITEMS_PER_PAGE;
+    const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, filteredIconsData.length);
+    const iconsToRender = filteredIconsData.slice(startIndex, endIndex);
+
+    // Clear and render
+    if (page === 0) {
+      iconGrid.innerHTML = '';
+    }
+
+    const validIcons: HTMLElement[] = [];
+    const invalidIcons: HTMLElement[] = [];
+
+    iconsToRender.forEach(icon => {
+      const item = document.createElement('div');
+      item.className = 'icon-item';
+      item.dataset.iconName = icon.name;
+      
+      // Use Material Symbols - it supports more icons
+      // Material Symbols is the newer version and supports most Material Icons names
+      const iconSpan = document.createElement('span');
+      iconSpan.className = 'material-symbols-outlined';
+      iconSpan.textContent = icon.name;
+      iconSpan.style.fontVariationSettings = "'FILL' 0, 'wght' 400, 'opsz' 24";
+      
+      // Create label span
+      const labelSpan = document.createElement('span');
+      labelSpan.textContent = icon.name.replace(/_/g, ' ');
+      
+      item.appendChild(iconSpan);
+      item.appendChild(labelSpan);
+      item.addEventListener('click', () => handleIconClick(icon));
+      
+      // Check if icon renders as text (invalid icon)
+      // We'll check this after appending to DOM
+      validIcons.push(item);
     });
+
+    // Append all items first
+    validIcons.forEach(item => iconGrid.appendChild(item));
+
     applyAllIconStyles();
+
+    // After styles are applied, check which icons are rendering as text
+    // Icons that render as text will have a much wider width than height
+    setTimeout(() => {
+      validIcons.forEach(item => {
+        const iconSpan = item.querySelector('span:first-child') as HTMLElement;
+        if (iconSpan) {
+          const computedStyle = window.getComputedStyle(iconSpan);
+          const fontFamily = computedStyle.fontFamily;
+          
+          // Check if font-family is correct (should contain 'Material Symbols')
+          const isCorrectFont = fontFamily.includes('Material Symbols');
+          
+          // Check dimensions - icons are usually square-ish, text is wide
+          const width = iconSpan.offsetWidth;
+          const height = iconSpan.offsetHeight;
+          const aspectRatio = width / height;
+          
+          // If font is wrong OR aspect ratio is too wide (text-like), it's invalid
+          const isInvalid = !isCorrectFont || (aspectRatio > 2 && width > 50);
+          
+          if (isInvalid) {
+            item.classList.add('icon-invalid');
+            invalidIcons.push(item);
+            console.log(`⚠️ Invalid icon detected: ${item.dataset.iconName} (font: ${fontFamily}, size: ${width}x${height})`);
+          }
+        }
+      });
+
+      // Move invalid icons to the bottom
+      if (invalidIcons.length > 0) {
+        invalidIcons.forEach(item => {
+          iconGrid.appendChild(item); // Move to end
+        });
+        console.log(`📊 Moved ${invalidIcons.length} invalid icons to bottom`);
+      }
+    }, 100);
+
+    // Show total count
+    const totalCount = filteredIconsData.length;
+    const showingCount = Math.min(endIndex, totalCount);
+    
+    // Add or update count display
+    let countDisplay = document.getElementById('icon-count-display');
+    if (!countDisplay) {
+      countDisplay = document.createElement('div');
+      countDisplay.id = 'icon-count-display';
+      countDisplay.style.cssText = 'padding: var(--spacing-2) var(--spacing-4); color: var(--text-secondary); font-size: 14px; text-align: center;';
+      iconGrid.parentElement?.appendChild(countDisplay);
+    }
+    countDisplay.textContent = `Showing ${showingCount} of ${totalCount} icons${query ? ` (filtered)` : ''}`;
+
+    // Setup infinite scroll
+    setupInfiniteScroll();
+  };
+
+  const setupInfiniteScroll = () => {
+    if (!iconGridPanel) return;
+
+    // Remove existing scroll listener
+    const existingHandler = (iconGridPanel as any).__scrollHandler;
+    if (existingHandler) {
+      iconGridPanel.removeEventListener('scroll', existingHandler);
+    }
+
+    // Add new scroll listener
+    const scrollHandler = () => {
+      const scrollTop = iconGridPanel.scrollTop;
+      const scrollHeight = iconGridPanel.scrollHeight;
+      const clientHeight = iconGridPanel.clientHeight;
+
+      // Load more when near bottom (within 200px)
+      if (scrollHeight - scrollTop - clientHeight < 200) {
+        const totalPages = Math.ceil(filteredIconsData.length / ITEMS_PER_PAGE);
+        if (iconCurrentPage + 1 < totalPages) {
+          iconCurrentPage++;
+          populateIconGrid(searchInput?.value || '', iconCurrentPage);
+        }
+      }
+    };
+
+    (iconGridPanel as any).__scrollHandler = scrollHandler;
+    iconGridPanel.addEventListener('scroll', scrollHandler);
   };
   
   const getSelectedIconStyles = () => {
@@ -9251,6 +9833,9 @@ const setupMotionDropZones2d = () => {
     });
   });
 
+  // Initialize changelog
+  renderChangelog();
+
   navItems.forEach(item => {
     item.addEventListener('click', handleNavClick);
   });
@@ -9280,7 +9865,241 @@ const setupMotionDropZones2d = () => {
       updateCodeSnippetDisplay();
   });
   motionPlayBtn?.addEventListener('click', handlePlayMotion);
-  searchInput?.addEventListener('input', () => populateIconGrid(searchInput.value));
+  
+  // Handle Lottie JSON download
+  const handleConvertToLottie = () => {
+    if (!motionPreviewIcon || !motionAnimationSelect || !motionRepeatSelect) {
+      showToast({ type: 'error', title: 'Error', body: 'Please select an icon and animation first.' });
+      return;
+    }
+
+    const iconName = motionPreviewIcon.textContent || 'icon';
+    const animationName = motionAnimationSelect.value;
+    const animation = ANIMATION_DETAILS[animationName];
+    if (!animation) {
+      showToast({ type: 'error', title: 'Error', body: 'Invalid animation selected.' });
+      return;
+    }
+
+    const repeatCount = motionRepeatSelect.value === 'infinite' ? -1 : 1;
+    const duration = parseFloat(animation.duration);
+    const fps = 60;
+    const totalFrames = Math.ceil(duration * fps);
+    const endFrame = repeatCount === -1 ? totalFrames : totalFrames * repeatCount;
+
+    // Get icon color from color picker
+    const colorPicker = $('#color-picker') as HTMLInputElement;
+    const iconColor = colorPicker?.value || '#0F172A';
+    
+    // Convert hex to RGB
+    const hexToRgb = (hex: string) => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? {
+        r: parseInt(result[1], 16) / 255,
+        g: parseInt(result[2], 16) / 255,
+        b: parseInt(result[3], 16) / 255
+      } : { r: 0.06, g: 0.09, b: 0.16 };
+    };
+    const rgb = hexToRgb(iconColor);
+
+    // Get icon size
+    const exportSizeInput = $('#export-size-input') as HTMLInputElement;
+    const iconSize = parseInt(exportSizeInput?.value || '48', 10);
+
+    // Create Lottie JSON structure
+    const lottieJson: any = {
+      v: '5.7.4',
+      fr: fps,
+      ip: 0,
+      op: endFrame,
+      w: iconSize,
+      h: iconSize,
+      nm: `${iconName}_${animationName}`,
+      ddd: 0,
+      assets: [],
+      layers: [
+        {
+          ddd: 0,
+          ind: 1,
+          ty: 4,
+          nm: iconName,
+          sr: 1,
+          ks: {
+            o: { a: 0, k: 100 },
+            r: { a: 0, k: 0 },
+            p: { a: 0, k: [iconSize / 2, iconSize / 2, 0] },
+            a: { a: 0, k: [0, 0, 0] },
+            s: { a: 0, k: [100, 100, 100] }
+          },
+          ao: 0,
+          shapes: [
+            {
+              ty: 'gr',
+              it: [
+                {
+                  d: 1,
+                  ty: 'el',
+                  s: { a: 0, k: [iconSize * 0.8, iconSize * 0.8] },
+                  p: { a: 0, k: [0, 0] },
+                  nm: 'Icon Shape',
+                  mn: 'ADBE Vector Shape - Ellipse',
+                  hd: false
+                },
+                {
+                  ty: 'fl',
+                  c: { a: 0, k: [rgb.r, rgb.g, rgb.b, 1] },
+                  o: { a: 0, k: 100 },
+                  r: 1,
+                  bm: 0,
+                  nm: 'Fill 1',
+                  mn: 'ADBE Vector Graphic - Fill',
+                  hd: false
+                }
+              ],
+              nm: 'Icon Group',
+              np: 2,
+              cix: 2,
+              bm: 0
+            }
+          ],
+          ip: 0,
+          op: endFrame,
+          st: 0,
+          bm: 0
+        }
+      ]
+    };
+
+    // Add animation based on type
+    const layer = lottieJson.layers[0];
+    const durationMs = duration * 1000;
+    
+    if (animationName === 'fade-in') {
+      layer.ks.o = {
+        a: 1,
+        k: [
+          { i: { x: [0.833], y: [0.833] }, o: { x: [0.167], y: [0.167] }, t: 0, s: [0] },
+          { t: totalFrames, s: [100] }
+        ]
+      };
+    } else if (animationName === 'fade-out') {
+      layer.ks.o = {
+        a: 1,
+        k: [
+          { i: { x: [0.833], y: [0.833] }, o: { x: [0.167], y: [0.167] }, t: 0, s: [100] },
+          { t: totalFrames, s: [0] }
+        ]
+      };
+    } else if (animationName === 'bounce') {
+      layer.ks.p = {
+        a: 1,
+        k: [
+          { i: { x: 0.833, y: 0.833 }, o: { x: 0.167, y: 0.167 }, t: 0, s: [iconSize / 2, iconSize / 2, 0] },
+          { i: { x: 0.833, y: 0.833 }, o: { x: 0.167, y: 0.167 }, t: totalFrames * 0.4, s: [iconSize / 2, iconSize / 2 - 30, 0] },
+          { i: { x: 0.833, y: 0.833 }, o: { x: 0.167, y: 0.167 }, t: totalFrames * 0.6, s: [iconSize / 2, iconSize / 2 - 15, 0] },
+          { i: { x: 0.833, y: 0.833 }, o: { x: 0.167, y: 0.167 }, t: totalFrames, s: [iconSize / 2, iconSize / 2, 0] }
+        ]
+      };
+    } else if (animationName === 'scale') {
+      layer.ks.s = {
+        a: 1,
+        k: [
+          { i: { x: [0.833], y: [0.833] }, o: { x: [0.167], y: [0.167] }, t: 0, s: [100, 100, 100] },
+          { i: { x: [0.833], y: [0.833] }, o: { x: [0.167], y: [0.167] }, t: totalFrames * 0.5, s: [120, 120, 100] },
+          { i: { x: [0.833], y: [0.833] }, o: { x: [0.167], y: [0.167] }, t: totalFrames, s: [100, 100, 100] }
+        ]
+      };
+    } else if (animationName === 'rotate') {
+      layer.ks.r = {
+        a: 1,
+        k: [
+          { i: { x: [0.833], y: [0.833] }, o: { x: [0.167], y: [0.167] }, t: 0, s: [0] },
+          { i: { x: [0.833], y: [0.833] }, o: { x: [0.167], y: [0.167] }, t: totalFrames, s: [360] }
+        ]
+      };
+    } else if (animationName === 'shake') {
+      const shakeFrames = [
+        { t: 0, s: [0] },
+        { t: totalFrames * 0.1, s: [-1] },
+        { t: totalFrames * 0.2, s: [-3] },
+        { t: totalFrames * 0.3, s: [3] },
+        { t: totalFrames * 0.4, s: [1] },
+        { t: totalFrames * 0.5, s: [-1] },
+        { t: totalFrames * 0.6, s: [-3] },
+        { t: totalFrames * 0.7, s: [3] },
+        { t: totalFrames * 0.8, s: [-1] },
+        { t: totalFrames * 0.9, s: [1] },
+        { t: totalFrames, s: [0] }
+      ];
+      layer.ks.r = {
+        a: 1,
+        k: shakeFrames.map((frame, i) => ({
+          i: { x: [0.833], y: [0.833] },
+          o: { x: [0.167], y: [0.167] },
+          t: frame.t,
+          s: [frame.s]
+        }))
+      };
+    } else if (animationName === 'pulse') {
+      layer.ks.s = {
+        a: 1,
+        k: [
+          { i: { x: [0.833], y: [0.833] }, o: { x: [0.167], y: [0.167] }, t: 0, s: [100, 100, 100] },
+          { i: { x: [0.833], y: [0.833] }, o: { x: [0.167], y: [0.167] }, t: totalFrames * 0.5, s: [110, 110, 100] },
+          { i: { x: [0.833], y: [0.833] }, o: { x: [0.167], y: [0.167] }, t: totalFrames, s: [100, 100, 100] }
+        ]
+      };
+    } else if (animationName === 'breathe') {
+      const breatheFrames = [
+        { t: 0, s: [90, 90, 100] },
+        { t: totalFrames * 0.25, s: [100, 100, 100] },
+        { t: totalFrames * 0.5, s: [90, 90, 100] },
+        { t: totalFrames * 0.75, s: [100, 100, 100] },
+        { t: totalFrames, s: [90, 90, 100] }
+      ];
+      layer.ks.s = {
+        a: 1,
+        k: breatheFrames.map(frame => ({
+          i: { x: [0.833], y: [0.833] },
+          o: { x: [0.167], y: [0.167] },
+          t: frame.t,
+          s: frame.s
+        }))
+      };
+    }
+
+    // Handle repeat
+    if (repeatCount === -1) {
+      // Loop animation by extending the keyframes
+      const originalKf = layer.ks;
+      Object.keys(originalKf).forEach(prop => {
+        if (originalKf[prop].a === 1 && originalKf[prop].k) {
+          // For infinite loop, we'll set it to loop
+          // The animation will naturally loop if op is set correctly
+        }
+      });
+    }
+
+    // Download JSON file
+    const jsonStr = JSON.stringify(lottieJson, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${iconName}_${animationName}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    showToast({ type: 'success', title: 'Downloaded', body: 'Lottie JSON file downloaded successfully.' });
+  };
+
+  convertToLottieBtn?.addEventListener('click', handleConvertToLottie);
+  searchInput?.addEventListener('input', () => {
+    iconCurrentPage = 0;
+    populateIconGrid(searchInput.value, 0);
+  });
   // Studio Selector - Custom dropdown (Toss Invest style)
   const studioSelector = $('#studio-selector') as HTMLSelectElement;
   const customDropdown = $('#custom-studio-selector');
@@ -9589,7 +10408,7 @@ regenerate3DBtn?.addEventListener('click', () => {
     await loadDefaultReferenceImages();
     
     loadImageLibrary();
-    populateIconGrid();
+    populateIconGrid('', 0);
     initializeColorInputs();
     updateCodeSnippetDisplay();
     updateWeightValue();
