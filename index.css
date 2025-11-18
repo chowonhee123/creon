@@ -837,14 +837,9 @@ input[type='range']::-moz-range-thumb {
   line-height: 1.3;
 }
 
-/* Invalid icons (rendering as text) - visually distinguish */
+/* Invalid icons (rendering as text) - hide completely */
 .icon-item.icon-invalid {
-  opacity: 0.5;
-}
-
-.icon-item.icon-invalid span:first-child {
-  color: var(--text-secondary);
-  font-size: 14px;
+  display: none !important;
 }
 
 /* Right Side Panel Base Styles (Icons, 3D, Explore) */

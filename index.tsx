@@ -8061,19 +8061,19 @@ Return the 5 suggestions as a JSON array.`;
           const isInvalid = !isCorrectFont || (aspectRatio > 2 && width > 50);
           
           if (isInvalid) {
-            item.classList.add('icon-invalid');
+            item.classList.add('icon-invalid', 'hidden'); // Hide invalid icons completely
             invalidIcons.push(item);
-            console.log(`⚠️ Invalid icon detected: ${item.dataset.iconName} (font: ${fontFamily}, size: ${width}x${height})`);
+            console.log(`⚠️ Invalid icon detected and hidden: ${item.dataset.iconName} (font: ${fontFamily}, size: ${width}x${height})`);
           }
         }
       });
 
-      // Move invalid icons to the bottom
+      // Remove invalid icons from DOM instead of moving to bottom
       if (invalidIcons.length > 0) {
         invalidIcons.forEach(item => {
-          iconGrid.appendChild(item); // Move to end
+          item.remove(); // Remove from DOM completely
         });
-        console.log(`📊 Moved ${invalidIcons.length} invalid icons to bottom`);
+        console.log(`📊 Removed ${invalidIcons.length} invalid icons from display`);
       }
     }, 100);
 
