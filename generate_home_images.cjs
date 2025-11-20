@@ -1,4 +1,4 @@
-// Auto-generate home_images.json from files in public/images/home/
+// Auto-generate home_images.json from files in public/images/home/ and subfolders (veo2, veo3)
 const fs = require('fs');
 const path = require('path');
 
@@ -14,11 +14,31 @@ const getMimeType = (filename) => {
   return 'image/png';
 };
 
+const getAllFiles = (dir, basePath = '') => {
+  let results = [];
+  const list = fs.readdirSync(dir);
+  
+  list.forEach(file => {
+    const filePath = path.join(dir, file);
+    const stat = fs.statSync(filePath);
+    const relativePath = basePath ? `${basePath}/${file}` : file;
+    
+    if (stat.isDirectory()) {
+      // Recursively scan subdirectories (veo2, veo3, etc.)
+      results = results.concat(getAllFiles(filePath, relativePath));
+    } else if (/\.(png|jpg|jpeg|webp|mp4|webm)$/i.test(file)) {
+      results.push(relativePath);
+    }
+  });
+  
+  return results;
+};
+
 try {
-  const files = fs.readdirSync(homeDir).filter(f => /\.(png|jpg|jpeg|webp|mp4|webm)$/i.test(f));
+  const allFiles = getAllFiles(homeDir);
   
   // Sort files: videos first, then images
-  const sortedFiles = files.sort((a, b) => {
+  const sortedFiles = allFiles.sort((a, b) => {
     const aIsVideo = /\.(mp4|webm)$/i.test(a);
     const bIsVideo = /\.(mp4|webm)$/i.test(b);
     
@@ -27,16 +47,18 @@ try {
     return a.localeCompare(b); // same type, sort alphabetically
   });
   
-  const homeImages = sortedFiles.map((filename, index) => ({
+  const homeImages = sortedFiles.map((filePath, index) => ({
     id: `home_${index + 1}`,
-    name: filename,
-    type: getMimeType(filename),
-    dataUrl: `/images/home/${filename}`,
+    name: path.basename(filePath),
+    type: getMimeType(filePath),
+    dataUrl: `/images/home/${filePath}`,
     timestamp: Date.now() - (index * 60000)
   }));
 
   fs.writeFileSync(outputFile, JSON.stringify(homeImages, null, 2));
-  console.log(`✅ Generated ${files.length} home images in ${outputFile}`);
+  console.log(`✅ Generated ${allFiles.length} home images in ${outputFile}`);
+  console.log(`   - Files from veo2/: ${allFiles.filter(f => f.includes('veo2/')).length}`);
+  console.log(`   - Files from veo3/: ${allFiles.filter(f => f.includes('veo3/')).length}`);
 } catch (error) {
   console.error('❌ Failed to generate home images:', error);
 }

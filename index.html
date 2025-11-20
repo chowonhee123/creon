@@ -35,7 +35,8 @@
     <div class="app-container">
       <header class="app-header">
         <div class="logo">
-          <h1>Creon</h1>
+          <img id="logo-image" src="/logo.png" alt="Creon" class="logo-img" onerror="this.style.display='none';" onload="this.style.display='block';">
+          <h1 class="logo-text">Creon</h1>
         </div>
         <nav class="main-nav">
           <a href="#" class="nav-item" data-page="page-icons">Icon Studio</a>
@@ -437,10 +438,6 @@
                   </div>
 
                   <div class="filter-group">
-                      <label for="icon-pose-input">Action(Optional)</label>
-                      <input type="text" id="icon-pose-input" placeholder="e.g., Sparring stance throwing a punch">
-                  </div>
-                  <div class="filter-group">
                       <label>Reference Images (Optional)</label>
                       <div id="reference-image-container-3d" class="reference-image-container">
                           <div class="image-drop-zone reference-drop-zone" data-index="0">
@@ -541,7 +538,7 @@
                         <div class="prompt-card-header">
                             <h3>Prompt</h3>
                         </div>
-                        <input type="text" id="p2d-image-prompt-subject-input" placeholder="e.g., A cute cat wearing a wizard hat">
+                        <input type="text" id="p2d-image-prompt-subject-input" placeholder="ex. 나무에 매달린 원숭이">
                         
                         <!-- Generate Button -->
                         <button id="p2d-image-generate-btn" class="primary-btn">
@@ -960,12 +957,8 @@
                         <div class="prompt-card-header">
                             <h3>Prompt</h3>
                         </div>
-                        <input type="text" id="image-prompt-subject-input" class="form-input-sm" placeholder="e.g., A cute cat wearing a wizard hat">
+                        <input type="text" id="image-prompt-subject-input" class="form-input-sm" placeholder="ex. 당근을 손에 들고있는 토끼">
 
-                        <div class="filter-group" style="margin-top: var(--spacing-3);">
-                          <label for="image-pose-input">Action(Optional)</label>
-                          <input type="text" id="image-pose-input" class="form-input-sm" placeholder="e.g., Sparring stance throwing a punch">
-                        </div>
 
                         <!-- Generate Button -->
                         <button id="image-generate-btn" class="primary-btn">
@@ -1299,20 +1292,22 @@
                                     <div class="btn-loader"></div>
                                 </button>
                                 <!-- Video generated state: More menu + Download -->
-                                <button id="motion-more-menu-btn" class="icon-button hidden" aria-label="More actions" title="More actions">
-                                    <span class="material-symbols-outlined">more_horiz</span>
-                                </button>
-                                <div id="motion-more-menu" class="kebab-menu hidden" style="position: absolute; left: 0; bottom: 56px; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); box-shadow: 0 8px 24px rgba(0,0,0,0.12); width: 200px; overflow: hidden; z-index: 20;">
-                                    <button id="motion-more-regenerate-prompt" class="secondary-btn" style="width: 100%; justify-content: flex-start; gap: var(--spacing-2); border: none; background: transparent;">
-                                        <span class="material-symbols-outlined">refresh</span> Recreate Motion Prompt
+                                <div id="motion-download-row" class="motion-download-row hidden">
+                                    <button id="motion-more-menu-btn" class="icon-button" aria-label="More actions" title="More actions">
+                                        <span class="material-symbols-outlined">more_horiz</span>
                                     </button>
-                                    <button id="motion-more-regenerate-video" class="secondary-btn" style="width: 100%; justify-content: flex-start; gap: var(--spacing-2); border: none; background: transparent;">
-                                        <span class="material-symbols-outlined">refresh</span> Recreate Video
-                                    </button>
+                                    <div id="motion-more-menu" class="kebab-menu hidden" style="position: absolute; left: 0; bottom: 56px; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); box-shadow: 0 8px 24px rgba(0,0,0,0.12); width: 200px; overflow: hidden; z-index: 20;">
+                                        <button id="motion-more-regenerate-prompt" class="secondary-btn" style="width: 100%; justify-content: flex-start; gap: var(--spacing-2); border: none; background: transparent;">
+                                            <span class="material-symbols-outlined">refresh</span> Recreate Motion Prompt
+                                        </button>
+                                        <button id="motion-more-regenerate-video" class="secondary-btn" style="width: 100%; justify-content: flex-start; gap: var(--spacing-2); border: none; background: transparent;">
+                                            <span class="material-symbols-outlined">refresh</span> Recreate Video
+                                        </button>
+                                    </div>
+                                    <a href="#" id="download-video-btn" class="secondary-btn" download>
+                                        <span class="material-symbols-outlined">download</span> Download Video
+                                    </a>
                                 </div>
-                                <a href="#" id="download-video-btn" class="secondary-btn hidden" download style="flex: 1;">
-                                    <span class="material-symbols-outlined">download</span> Download Video
-                                </a>
                             </div>
                         </div>
                         <div class="details-tab-content hidden" data-tab-content="history">
@@ -1357,7 +1352,7 @@
                         <div class="prompt-card-header">
                             <h3>Prompt</h3>
                         </div>
-                        <input type="text" id="image-prompt-subject-input-image" placeholder="e.g., A cute cat wearing a wizard hat">
+                        <input type="text" id="image-prompt-subject-input-image" placeholder="ex. 파스타 먹고 있는 캐릭터">
 
                         <!-- Generate Button -->
                         <button id="image-generate-btn-image" class="primary-btn">

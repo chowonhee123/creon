@@ -174,13 +174,13 @@ const reorderExploreMediaByCategory = (items: any[]): any[] => {
     "task": "generate isometric 3D icon",
     "style_lock": true,
     "subject": "{ICON_SUBJECT}",
-    "pose_instruction": "",
+    // "pose_instruction" removed - Action input no longer used
     "guidance": {
       "aspect_ratio": "1:1",
       "instruction_strength": "strict",
       "priority_order": [
         "subject",
-        "pose_instruction",
+        // "pose_instruction" removed
         "style_consistency",
         "color_palette",
         "material_spec"
@@ -258,13 +258,13 @@ const reorderExploreMediaByCategory = (items: any[]): any[] => {
     "task": "generate isometric 3D icon",
     "style_lock": true,
     "subject": "{ICON_SUBJECT|backpack}",
-    "pose_instruction": "",
+    // "pose_instruction" removed - Action input no longer used
     "guidance": {
       "aspect_ratio": "16:9",
       "instruction_strength": "strict",
       "priority_order": [
         "subject",
-        "pose_instruction",
+        // "pose_instruction" removed
         "style_consistency",
         "color_palette",
         "material_spec"
@@ -681,7 +681,7 @@ const reorderExploreMediaByCategory = (items: any[]): any[] => {
   const generatedImageIcon = $('#generated-image') as HTMLImageElement;
   const loader3d = $('#loader');
   const promptDisplay3d = $('#prompt-display-3d') as HTMLTextAreaElement;
-const iconPoseInput3d = $('#icon-pose-input') as HTMLInputElement;
+// iconPoseInput3d removed - Action input no longer used
   const placeholder3d = $('#id-3d-placeholder');
   const errorPlaceholder3d = $('#id-3d-error-placeholder');
   const download3DBtn = $('#download-3d-btn') as HTMLAnchorElement;
@@ -702,7 +702,7 @@ const iconPoseInput3d = $('#icon-pose-input') as HTMLInputElement;
   // Main 3D page elements
   const imageGenerateBtn = $('#image-generate-btn');
   const imagePromptSubjectInput = $('#image-prompt-subject-input') as HTMLInputElement;
-const imagePoseInput = $('#image-pose-input') as HTMLInputElement;
+// imagePoseInput removed - Action input no longer used
 const imagePromptDisplay = $('#image-prompt-display') as HTMLTextAreaElement;
   const resultIdlePlaceholder = $('#result-idle-placeholder');
   const resultPlaceholder = $('#page-id-3d .result-placeholder');
@@ -1513,6 +1513,7 @@ const motionTabContent = $('#image-details-panel .details-tab-content[data-tab-c
   const generateVideoBtn = $('#generate-video-btn');
   const regenerateVideoBtn = $('#regenerate-video-btn');
   const downloadVideoBtn = $('#download-video-btn') as HTMLAnchorElement;
+  const motionDownloadRow = $('#motion-download-row');
   
   // Motion More Menu
   const motionMoreMenuBtn = $('#motion-more-menu-btn');
@@ -2460,6 +2461,11 @@ const extractVideoDownloadUrl = (operation: any): string | null => {
       if (header && currentGeneratedImageStudio) {
         (header as HTMLElement).classList.remove('hidden');
       }
+    }
+    
+    // Update home page placeholder when navigating between studios
+    if (typeof (window as any).updateHomePlaceholders === 'function') {
+      (window as any).updateHomePlaceholders();
     }
   };
 
@@ -4450,9 +4456,7 @@ const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
       const subject = imagePromptSubjectInput.value || 'a friendly robot';
       template.subject = subject;
 
-      if (imagePoseInput) {
-        template.pose_instruction = imagePoseInput.value.trim();
-      }
+      // Action input removed - no longer used
 
       if (shadowToggle3d?.checked) {
           if (typeof template.negative_prompt === 'string') {
@@ -4506,7 +4510,7 @@ const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
   };
   const createImagePromptFromTemplate = (template: any, userPrompt: string = '', isFix: boolean = false): string => {
     const subject = template.subject || 'a friendly robot';
-  const poseInstruction = template.pose_instruction || '';
+    // poseInstruction removed - Action input no longer used
     const backgroundColor = template.background?.color || '#FFFFFF';
     const palette = template.colors || {};
     const materials = template.materials || {};
@@ -4537,10 +4541,8 @@ const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
     lines.push(`- Consistent rendering quality matching the reference sheet exactly`);
     lines.push(``);
     lines.push(`SUBJECT: Generate an isometric 3D icon of ${subject}.`);
-    if (poseInstruction) {
-      lines.push(`Pose / action: ${poseInstruction}.`);
-    }
-  if (userPrompt && userPrompt.trim()) {
+    // Pose/action instruction removed - Action input no longer used
+    if (userPrompt && userPrompt.trim()) {
       lines.push(`Additional instruction: ${userPrompt.trim()}.`);
       lines.push(`⚠️ IMPORTANT: Apply the additional instruction while MAINTAINING the exact style described above. The style must NEVER change regardless of the subject or instruction.`);
     }
@@ -7073,29 +7075,26 @@ shape deformation, morphing, warping, distortion, line changes, thickness change
 
     // Update action buttons visibility
     if (hasVideo) {
-        // Video has been generated: show more menu (left) and download (right)
+        // Video has been generated: show more menu (left) and download (right) in row layout
         generateMotionPromptBtn.classList.add('hidden');
         generateVideoBtn.classList.add('hidden');
         regenerateMotionPromptBtn.classList.add('hidden');
         regenerateVideoBtn.classList.add('hidden');
-        if (motionMoreMenuBtn) motionMoreMenuBtn.classList.remove('hidden');
-        downloadVideoBtn.classList.remove('hidden');
+        if (motionDownloadRow) motionDownloadRow.classList.remove('hidden');
     } else if (hasMotionPrompt) {
         // Prompt is ready, waiting to generate video
         generateMotionPromptBtn.classList.add('hidden');
         generateVideoBtn.classList.remove('hidden');
         regenerateMotionPromptBtn.classList.remove('hidden');
         regenerateVideoBtn.classList.add('hidden');
-        if (motionMoreMenuBtn) motionMoreMenuBtn.classList.add('hidden');
-        downloadVideoBtn.classList.add('hidden');
+        if (motionDownloadRow) motionDownloadRow.classList.add('hidden');
     } else {
         // Initial state, no prompt yet
         generateMotionPromptBtn.classList.remove('hidden');
         generateVideoBtn.classList.add('hidden');
         regenerateMotionPromptBtn.classList.add('hidden');
         regenerateVideoBtn.classList.add('hidden');
-        if (motionMoreMenuBtn) motionMoreMenuBtn.classList.add('hidden');
-        downloadVideoBtn.classList.add('hidden');
+        if (motionDownloadRow) motionDownloadRow.classList.add('hidden');
     }
   };
   const renderGeneratedMotionCategories = (categories: any[]) => {
@@ -8439,7 +8438,7 @@ Return the 5 suggestions as a JSON array.`;
     try {
         const promptObject = JSON.parse(ICON_STUDIO_3D_PROMPT_TEMPLATE);
         promptObject.subject = selectedIcon.name.replace(/_/g, ' ');
-        promptObject.pose_instruction = '';
+        // promptObject.pose_instruction removed - Action input no longer used
 
         if (shadowToggleIcons.checked) {
             if (typeof promptObject.negative_prompt === 'string') {
@@ -8670,19 +8669,53 @@ Return the 5 suggestions as a JSON array.`;
         return;
     }
 
+    // Sort media: veo3 > veo2 > image > others
+    const sortedMedia = [...exploreMedia].sort((a, b) => {
+      const getFolderPriority = (dataUrl: string) => {
+        if (dataUrl.includes('/veo3/')) return 1;
+        if (dataUrl.includes('/veo2/')) return 2;
+        if (dataUrl.includes('/image/')) return 3;
+        return 4;
+      };
+      
+      const priorityA = getFolderPriority(a.dataUrl);
+      const priorityB = getFolderPriority(b.dataUrl);
+      
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+      
+      // Same folder, maintain original order (videos first, then images)
+      const aIsVideo = a.type.startsWith('video/');
+      const bIsVideo = b.type.startsWith('video/');
+      if (aIsVideo && !bIsVideo) return -1;
+      if (!aIsVideo && bIsVideo) return 1;
+      return 0;
+    });
+
     exploreFeed.innerHTML = '';
-    exploreMedia.forEach(item => {
+    sortedMedia.forEach(item => {
         const card = document.createElement('div');
         card.className = 'feed-card';
         card.dataset.id = item.id;
         card.setAttribute('tabindex', '0');
         card.setAttribute('aria-label', `View details for ${item.name}`);
 
+        // Determine folder from dataUrl
+        let folderType = 'veo2'; // default
+        if (item.dataUrl.includes('/veo3/')) {
+            folderType = 'veo3';
+        } else if (item.dataUrl.includes('/image/')) {
+            folderType = 'image';
+        } else if (item.dataUrl.includes('/veo2/')) {
+            folderType = 'veo2';
+        }
+
         let mediaElement = '';
         if (item.type.startsWith('image/')) {
-            mediaElement = `<img src="${item.dataUrl}" class="feed-card-media" alt="${item.name}" loading="lazy">`;
+            mediaElement = `<img src="${item.dataUrl}" class="feed-card-media" data-folder="${folderType}" alt="${item.name}" loading="lazy">`;
         } else if (item.type.startsWith('video/')) {
-            mediaElement = `<video src="${item.dataUrl}" class="feed-card-media" autoplay muted loop playsinline></video>`;
+            mediaElement = `<video src="${item.dataUrl}" class="feed-card-media" data-folder="${folderType}" autoplay muted loop playsinline></video>`;
         }
         
         card.innerHTML = `
@@ -10263,8 +10296,133 @@ regenerate3DBtn?.addEventListener('click', () => {
     updateColorDisplay(objectColorPicker3d);
     sync3dTemplate();
   });
-  imagePoseInput?.addEventListener('input', sync3dTemplate);
+  // imagePoseInput removed - Action input no longer used
   
+  // Dynamic placeholder typing animation for prompt inputs (like home page)
+  const setupDynamicPlaceholders = () => {
+    // 2D Studio placeholders
+    const p2dPlaceholders = [
+      'ex. 나무에 매달린 원숭이',
+      'ex. 하늘을 나는 새',
+      'ex. 바다에서 헤엄치는 물고기',
+      'ex. 꽃밭에서 뛰어노는 강아지',
+      'ex. 책을 읽고 있는 고양이',
+      'ex. 자전거를 타는 펭귄'
+    ];
+    
+    // 3D Studio placeholders
+    const p3dPlaceholders = [
+      'ex. 당근을 손에 들고있는 토끼',
+      'ex. 별을 잡으려는 곰',
+      'ex. 우주선을 조종하는 로봇',
+      'ex. 마법 지팡이를 든 마법사',
+      'ex. 트로피를 들어올린 선수',
+      'ex. 케이크를 만드는 요리사'
+    ];
+    
+    // Image Studio placeholders
+    const imagePlaceholders = [
+      'ex. 파스타 먹고 있는 캐릭터',
+      'ex. 커피를 마시는 사람',
+      'ex. 그림을 그리는 아티스트',
+      'ex. 노트북으로 작업하는 학생',
+      'ex. 운동하는 사람',
+      'ex. 음악을 듣는 사람'
+    ];
+    
+    const setupTypingPlaceholder = (inputId: string, placeholders: string[]) => {
+      const input = $(inputId) as HTMLInputElement;
+      if (!input) return;
+      
+      const PREFIX = 'ex. ';
+      // Extract text after "ex. " from each placeholder
+      const texts = placeholders.map(p => p.replace(/^ex\.\s*/, ''));
+      
+      let currentIndex = 0;
+      let currentText = '';
+      let charIndex = 0;
+      let typingTimeout: ReturnType<typeof setTimeout> | null = null;
+      
+      const typeText = () => {
+        if (input.value !== '' || document.activeElement === input) {
+          return; // Stop if input has value or is focused
+        }
+        
+        if (charIndex < texts[currentIndex].length) {
+          currentText += texts[currentIndex].charAt(charIndex);
+          input.placeholder = PREFIX + currentText;
+          charIndex++;
+          typingTimeout = setTimeout(typeText, 50); // Typing speed
+        } else {
+          // Wait before erasing
+          typingTimeout = setTimeout(eraseText, 2000);
+        }
+      };
+      
+      const eraseText = () => {
+        if (input.value !== '' || document.activeElement === input) {
+          return; // Stop if input has value or is focused
+        }
+        
+        if (currentText.length > 0) {
+          currentText = currentText.slice(0, -1);
+          input.placeholder = PREFIX + currentText;
+          typingTimeout = setTimeout(eraseText, 30); // Erasing speed
+        } else {
+          // Move to next text
+          currentIndex = (currentIndex + 1) % texts.length;
+          charIndex = 0;
+          typingTimeout = setTimeout(typeText, 500); // Pause before next text
+        }
+      };
+      
+      // Start typing animation
+      typeText();
+      
+      // Stop animation when input is focused
+      input.addEventListener('focus', () => {
+        if (typingTimeout) {
+          clearTimeout(typingTimeout);
+          typingTimeout = null;
+        }
+        // Reset to first placeholder with prefix
+        if (input.value === '') {
+          input.placeholder = PREFIX + texts[0];
+          currentIndex = 0;
+          currentText = '';
+          charIndex = 0;
+        }
+      });
+      
+      // Resume animation when input is blurred and empty
+      input.addEventListener('blur', () => {
+        if (input.value === '') {
+          currentIndex = 0;
+          currentText = '';
+          charIndex = 0;
+          typeText();
+        }
+      });
+      
+      // Stop animation when user starts typing
+      input.addEventListener('input', () => {
+        if (input.value !== '') {
+          if (typingTimeout) {
+            clearTimeout(typingTimeout);
+            typingTimeout = null;
+          }
+        }
+      });
+    };
+    
+    setupTypingPlaceholder('#p2d-image-prompt-subject-input', p2dPlaceholders);
+    setupTypingPlaceholder('#image-prompt-subject-input', p3dPlaceholders);
+    setupTypingPlaceholder('#image-prompt-subject-input-image', imagePlaceholders);
+  };
+  
+  // Initialize dynamic placeholders
+  setupDynamicPlaceholders();
+
   // Image Studio Generate button
   $('#image-generate-btn-image')?.addEventListener('click', handleGenerateImageStudio);
   
@@ -12179,6 +12337,30 @@ Apply the main color (${objectColor}) thoughtfully as the primary/accent color o
       removeMainReferenceImage();
     });
 
+    // Logo image handling - show image if available, always show text
+    const logoImage = $('#logo-image') as HTMLImageElement;
+    const logoText = $('.logo-text');
+    
+    if (logoImage) {
+      // Check if image is already loaded
+      if (logoImage.complete && logoImage.naturalHeight !== 0) {
+        logoImage.style.display = 'block';
+      } else {
+        // Image not loaded yet, wait for load or error event
+        logoImage.addEventListener('load', () => {
+          logoImage.style.display = 'block';
+        });
+        logoImage.addEventListener('error', () => {
+          logoImage.style.display = 'none';
+        });
+      }
+    }
+    
+    // Always show text
+    if (logoText) {
+      logoText.style.display = 'block';
+    }
+
     // Logo click handler to navigate to home
     const logo = $('.logo');
     logo?.addEventListener('click', () => {
@@ -12199,64 +12381,112 @@ Apply the main color (${objectColor}) thoughtfully as the primary/accent color o
         homePage.classList.remove('hidden');
       }
     });
-    // Dynamic placeholder functionality
+    // Dynamic placeholder functionality for home page
     const dynamicPlaceholder = document.getElementById('dynamic-placeholder');
-    const placeholderTexts = [
-      'Creon create a stunning 3D logo animation...',
-      'Creon create a modern icon set for my app...',
-      'Creon create a cinematic video intro...',
-      'Creon create a futuristic UI mockup...',
-      'Creon create a minimalist brand identity...',
-      'Creon create a product showcase video...',
-      'Creon create a social media banner...',
-      'Creon create a mobile app interface...',
-      'Creon create a promotional animation...',
-      'Creon create a website hero section...'
-    ];
+    
+    // Get placeholder texts based on current page/studio
+    const getHomePlaceholderTexts = () => {
+      // 2D Studio (Icon Studio) placeholders - remove "ex. " prefix
+      const p2dPlaceholders = [
+        '나무에 매달린 원숭이',
+        '하늘을 나는 새',
+        '바다에서 헤엄치는 물고기',
+        '꽃밭에서 뛰어노는 강아지',
+        '책을 읽고 있는 고양이',
+        '자전거를 타는 펭귄'
+      ];
+      
+      // 3D Studio placeholders - remove "ex. " prefix
+      const p3dPlaceholders = [
+        '당근을 손에 들고있는 토끼',
+        '별을 잡으려는 곰',
+        '우주선을 조종하는 로봇',
+        '마법 지팡이를 든 마법사',
+        '트로피를 들어올린 선수',
+        '케이크를 만드는 요리사'
+      ];
+      
+      // Check which studio is active based on currentPage
+      if (currentPage === 'page-id-3d') {
+        return p3dPlaceholders;
+      } else if (currentPage === 'page-icons' || currentPage === 'page-id-2d') {
+        return p2dPlaceholders;
+      }
+      // Default to 2D placeholders for home page
+      return p2dPlaceholders;
+    };
 
+    let placeholderTexts = getHomePlaceholderTexts();
     let currentIndex = 0;
-    let isTyping = false;
     let currentText = '';
     let charIndex = 0;
+    let typingTimeout: ReturnType<typeof setTimeout> | null = null;
 
-    function typeText() {
+    const typeText = () => {
+      if (generateInput?.value !== '' || document.activeElement === generateInput) {
+        return; // Stop if input has value or is focused
+      }
+      
       if (charIndex < placeholderTexts[currentIndex].length) {
         currentText += placeholderTexts[currentIndex].charAt(charIndex);
         if (dynamicPlaceholder) {
           dynamicPlaceholder.textContent = currentText;
         }
         charIndex++;
-        setTimeout(typeText, 50); // Typing speed
+        typingTimeout = setTimeout(typeText, 50); // Typing speed
       } else {
         // Wait before erasing
-        setTimeout(eraseText, 2000);
+        typingTimeout = setTimeout(eraseText, 2000);
       }
-    }
+    };
 
-    function eraseText() {
+    const eraseText = () => {
+      if (generateInput?.value !== '' || document.activeElement === generateInput) {
+        return; // Stop if input has value or is focused
+      }
+      
       if (currentText.length > 0) {
         currentText = currentText.slice(0, -1);
         if (dynamicPlaceholder) {
           dynamicPlaceholder.textContent = currentText;
         }
-        setTimeout(eraseText, 30); // Erasing speed
+        typingTimeout = setTimeout(eraseText, 30); // Erasing speed
       } else {
         // Move to next text
         currentIndex = (currentIndex + 1) % placeholderTexts.length;
         charIndex = 0;
-        setTimeout(typeText, 500); // Pause before next text
+        typingTimeout = setTimeout(typeText, 500); // Pause before next text
       }
-    }
+    };
 
     // Start the dynamic placeholder
     if (dynamicPlaceholder) {
       typeText();
     }
 
+    // Update placeholders when page changes
+    const updateHomePlaceholders = () => {
+      placeholderTexts = getHomePlaceholderTexts();
+      if (typingTimeout) {
+        clearTimeout(typingTimeout);
+        typingTimeout = null;
+      }
+      currentIndex = 0;
+      currentText = '';
+      charIndex = 0;
+      if (generateInput?.value === '' && document.activeElement !== generateInput) {
+        typeText();
+      }
+    };
+
     // Hide placeholder when user starts typing
     generateInput?.addEventListener('input', () => {
       if (dynamicPlaceholder) {
         dynamicPlaceholder.classList.add('hidden');
+      }
+      if (typingTimeout) {
+        clearTimeout(typingTimeout);
+        typingTimeout = null;
       }
     });
 
@@ -12264,8 +12494,14 @@ Apply the main color (${objectColor}) thoughtfully as the primary/accent color o
     generateInput?.addEventListener('blur', () => {
       if (generateInput?.value === '' && dynamicPlaceholder) {
         dynamicPlaceholder.classList.remove('hidden');
+        // Update placeholders based on current page
+        updateHomePlaceholders();
       }
     });
+    
+    // Update placeholders when navigating between studios
+    // This will be called when page changes
+    (window as any).updateHomePlaceholders = updateHomePlaceholders;
   };
   
   // Setup 2D Studio accordions

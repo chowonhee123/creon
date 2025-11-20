@@ -227,13 +227,28 @@ input:where(:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
 .logo {
   display: flex;
   align-items: center;
-  gap: var(--spacing-2);
+  gap: var(--spacing-1);
   cursor: pointer;
   transition: opacity 0.2s ease;
 }
 
 .logo:hover {
   opacity: 0.8;
+}
+
+.logo-img {
+  height: 28px;
+  width: auto;
+  object-fit: contain;
+  display: none; /* Hidden by default, shown when image loads */
+}
+
+.logo-text {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: block; /* Always shown */
+  margin: 0; /* Remove default margin */
 }
 
 .logo h1 {
@@ -2103,6 +2118,12 @@ a.secondary-btn[disabled] {
   z-index: 1;
 }
 
+.result-image.hidden,
+.result-video.hidden {
+  z-index: -1;
+  pointer-events: none;
+}
+
 .result-placeholder-content {
   display: flex;
   flex-direction: column;
@@ -2113,6 +2134,11 @@ a.secondary-btn[disabled] {
   padding: var(--spacing-5);
   gap: var(--spacing-3);
   z-index: 1;
+}
+
+.result-placeholder-content.hidden {
+  z-index: -1;
+  pointer-events: none;
 }
 /* This selector is now more specific to avoid affecting icons in buttons */
 .result-placeholder-content > .material-symbols-outlined {
@@ -2244,6 +2270,10 @@ a.secondary-btn[disabled] {
 }
 .result-image.hidden {
   display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  z-index: -1 !important;
+  pointer-events: none !important;
 }
 
 .result-video {
@@ -2664,10 +2694,16 @@ a.secondary-btn[disabled] {
     gap: var(--spacing-3);
     width: 100%;
     align-items: center;
+    min-width: 0; /* Prevent overflow */
 }
 
 .motion-download-row .secondary-btn {
     height: 44px;
+    flex: 1;
+    min-width: 0; /* Allow button to shrink */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .motion-download-row .secondary-btn .material-symbols-outlined {
@@ -3688,6 +3724,26 @@ canvas[style*="position: fixed"] {
     aspect-ratio: 4 / 3;
 }
 
+/* veo2 영상은 카드 안에서 조금 더 작게 표시 */
+.feed-card-media[data-folder="veo2"] {
+    aspect-ratio: 4 / 3;
+    padding: 12%;
+    box-sizing: border-box;
+}
+
+/* veo3는 카드를 더 크게 채우도록 */
+.feed-card-media[data-folder="veo3"] {
+    aspect-ratio: 4 / 3; /* 카드 비율은 동일하게 4:3 */
+    object-fit: cover; /* 카드를 꽉 채우도록 */
+    object-position: center;
+}
+
+/* image 폴더는 카드 비율은 4:3 유지, 영상 내용만 16:9로 표시 */
+.feed-card-media[data-folder="image"] {
+    aspect-ratio: 4 / 3; /* 카드 비율은 동일하게 4:3 */
+    object-position: center;
+}
+
 .feed-card-info {
     position: absolute;
     bottom: 0;
@@ -4071,7 +4127,15 @@ canvas[style*="position: fixed"] {
 #motion-prompt-placeholder.result-placeholder-content {
     gap: var(--spacing-4);
     z-index: 2;
-    position: relative;
+    position: absolute;
+}
+
+#motion-prompt-placeholder.result-placeholder-content.hidden {
+    display: none !important;
+    visibility: hidden !important;
+    z-index: -1 !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
 }
 
 .motion-placeholder-icon {
