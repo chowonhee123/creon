@@ -388,17 +388,29 @@
                                 </select>
                             </div>
                         </div>
+                        <div class="motion-control-row">
+                            <div class="control-label">
+                                <span></span>
+                            </div>
+                            <div class="control-input-group">
+                                <button id="motion-play-btn" class="secondary-btn" style="width: 100%;">
+                                    <span class="material-symbols-outlined">play_arrow</span>
+                                    Play
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="tab-footer">
                   <div class="motion-actions">
-                      <button id="motion-play-btn" class="secondary-btn">
-                          <span class="material-symbols-outlined">play_arrow</span>
-                          Play
-                      </button>
-                      <button id="convert-to-lottie-btn" class="primary-btn">
+                      <button id="convert-to-lottie-btn" class="secondary-btn">
                           <span class="material-symbols-outlined">download</span>
                           <span class="btn-text">Lottie</span>
+                          <div class="btn-loader"></div>
+                      </button>
+                      <button id="convert-to-mp4-btn" class="primary-btn">
+                          <span class="material-symbols-outlined">movie</span>
+                          <span class="btn-text">MP4</span>
                           <div class="btn-loader"></div>
                       </button>
                   </div>

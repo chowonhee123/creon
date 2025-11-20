@@ -10129,6 +10129,230 @@ const setupMotionDropZones2d = () => {
   };
 
   convertToLottieBtn?.addEventListener('click', handleConvertToLottie);
+
+  // Handle MP4 conversion from CSS animation
+  const convertToMp4Btn = $('#convert-to-mp4-btn');
+  const handleConvertToMp4 = async () => {
+    if (!motionPreviewIcon || !motionAnimationSelect || !motionRepeatSelect) {
+      showToast({ type: 'error', title: 'Error', body: 'Please select an icon and animation first.' });
+      return;
+    }
+
+    const iconName = motionPreviewIcon.textContent || 'icon';
+    const animationName = motionAnimationSelect.value;
+    const animation = ANIMATION_DETAILS[animationName];
+    if (!animation) {
+      showToast({ type: 'error', title: 'Error', body: 'Invalid animation selected.' });
+      return;
+    }
+
+    // Show loading modal
+    resetLoaderModal(imageGenerationLoaderModal);
+    if (imageGenerationLoaderText) {
+      imageGenerationLoaderText.textContent = 'Generating MP4...';
+    }
+    imageGenerationLoaderModal?.classList.remove('hidden');
+
+    // Show loading state on button
+    const mp4Btn = convertToMp4Btn as HTMLButtonElement;
+    if (mp4Btn) {
+      mp4Btn.classList.add('loading');
+      mp4Btn.disabled = true;
+    }
+
+    try {
+      // Get icon properties
+      const exportSizeInput = $('#export-size-input') as HTMLInputElement;
+      const iconSize = parseInt(exportSizeInput?.value || '48', 10);
+      const repeatCount = motionRepeatSelect.value === 'infinite' ? -1 : 1;
+      const duration = parseFloat(animation.duration);
+      const fps = 30; // Use 30fps for MP4 to reduce file size
+      const totalFrames = Math.ceil(duration * fps);
+      const actualFrames = repeatCount === -1 ? totalFrames * 3 : totalFrames * repeatCount; // For infinite, create 3 loops
+
+      // CSS Animation → MP4: Render CSS animation frames to Canvas, then encode to MP4
+      // This approach calculates animation properties (opacity, scale, rotation, etc.) 
+      // based on the CSS keyframes and renders them frame-by-frame to Canvas
+      const canvas = document.createElement('canvas');
+      canvas.width = iconSize;
+      canvas.height = iconSize;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        throw new Error('Failed to get canvas context');
+      }
+
+      const colorPicker = $('#color-picker') as HTMLInputElement;
+      const iconColor = colorPicker?.value || '#0F172A';
+      
+      // Get icon character - use selectedIcon if available, otherwise use iconName
+      let iconChar = iconName;
+      if (selectedIcon && selectedIcon.name) {
+        iconChar = selectedIcon.name;
+      }
+
+      // Capture frames by calculating CSS animation properties for each frame
+      const frames: string[] = [];
+      const centerX = iconSize / 2;
+      const centerY = iconSize / 2;
+
+      for (let frame = 0; frame < actualFrames; frame++) {
+        const progress = repeatCount === -1 
+          ? (frame % totalFrames) / totalFrames 
+          : frame / (actualFrames - 1);
+        
+        // Clear canvas
+        ctx.clearRect(0, 0, iconSize, iconSize);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, iconSize, iconSize);
+
+        // Calculate CSS animation properties based on animation type
+        let opacity = 1;
+        let scale = 1;
+        let rotation = 0;
+        let translateY = 0;
+        let translateX = 0;
+
+        if (animationName === 'fade-in') {
+          opacity = progress;
+        } else if (animationName === 'fade-out') {
+          opacity = 1 - progress;
+        } else if (animationName === 'bounce') {
+          if (progress < 0.4) {
+            translateY = -30 * (progress / 0.4);
+          } else if (progress < 0.6) {
+            translateY = -30 + 15 * ((progress - 0.4) / 0.2);
+          } else {
+            translateY = -15 * ((1 - progress) / 0.4);
+          }
+        } else if (animationName === 'scale') {
+          scale = progress < 0.5 ? 1 + 0.2 * (progress / 0.5) : 1.2 - 0.2 * ((progress - 0.5) / 0.5);
+        } else if (animationName === 'rotate') {
+          rotation = progress * 360;
+        } else if (animationName === 'shake') {
+          const shakeAmount = Math.sin(progress * Math.PI * 10) * 3;
+          rotation = shakeAmount;
+        } else if (animationName === 'pulse') {
+          scale = progress < 0.5 ? 1 + 0.1 * (progress / 0.5) : 1.1 - 0.1 * ((progress - 0.5) / 0.5);
+        } else if (animationName === 'breathe') {
+          scale = 0.9 + 0.1 * Math.sin(progress * Math.PI * 2);
+        }
+
+        // Apply CSS animation transformations to Canvas
+        ctx.save();
+        ctx.globalAlpha = opacity;
+        ctx.translate(centerX + translateX, centerY + translateY);
+        ctx.rotate((rotation * Math.PI) / 180);
+        ctx.scale(scale, scale);
+        ctx.translate(-centerX, -centerY);
+
+        // Draw icon (using Material Symbols font)
+        ctx.fillStyle = iconColor;
+        ctx.font = `${iconSize * 0.8}px 'Material Symbols Outlined'`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(iconChar, centerX, centerY);
+
+        ctx.restore();
+
+        // Convert canvas frame to image data
+        const frameData = canvas.toDataURL('image/png');
+        frames.push(frameData);
+      }
+
+      // Load FFmpeg
+      const ffmpeg = await loadFFmpeg();
+      if (!ffmpeg) {
+        throw new Error('Failed to load FFmpeg');
+      }
+
+      // Write frames to FFmpeg
+      for (let i = 0; i < frames.length; i++) {
+        const frameData = frames[i];
+        const base64Data = frameData.split(',')[1];
+        const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+        await ffmpeg.writeFile(`frame_${String(i).padStart(6, '0')}.png`, binaryData);
+      }
+
+      // Update loading text
+      if (imageGenerationLoaderText) {
+        imageGenerationLoaderText.textContent = 'Encoding MP4...';
+      }
+
+      await ffmpeg.exec([
+        '-framerate', String(fps),
+        '-i', 'frame_%06d.png',
+        '-c:v', 'libx264',
+        '-pix_fmt', 'yuv420p',
+        '-crf', '23',
+        '-preset', 'medium',
+        '-y', 'output.mp4'
+      ]);
+
+      // Read output
+      const data = await ffmpeg.readFile('output.mp4');
+      // Handle both Uint8Array and string types
+      let blobData: Uint8Array;
+      if (data instanceof Uint8Array) {
+        blobData = data;
+      } else if (typeof data === 'string') {
+        blobData = new Uint8Array(atob(data).split('').map(c => c.charCodeAt(0)));
+      } else {
+        // Handle ArrayBuffer or other types
+        const buffer = (data as any).buffer || data;
+        blobData = buffer instanceof ArrayBuffer 
+          ? new Uint8Array(buffer)
+          : new Uint8Array(buffer as ArrayBufferLike);
+      }
+      // Use slice to ensure we have a proper ArrayBuffer
+      const arrayBuffer = blobData.buffer.slice(blobData.byteOffset, blobData.byteOffset + blobData.byteLength);
+      const blob = new Blob([arrayBuffer], { type: 'video/mp4' });
+      const url = URL.createObjectURL(blob);
+
+      // Download
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${iconName}_${animationName}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      // Cleanup
+      for (let i = 0; i < frames.length; i++) {
+        try {
+          await ffmpeg.deleteFile(`frame_${String(i).padStart(6, '0')}.png`);
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+      }
+      try {
+        await ffmpeg.deleteFile('output.mp4');
+      } catch (e) {
+        // Ignore cleanup errors
+      }
+
+      // Hide loading modal and show success
+      if (imageGenerationLoaderModal) {
+        triggerConfetti(imageGenerationLoaderModal);
+        imageGenerationLoaderModal.classList.add('hidden');
+      }
+      
+      showToast({ type: 'success', title: 'Downloaded', body: 'MP4 file downloaded successfully.' });
+    } catch (error) {
+      console.error('MP4 conversion failed:', error);
+      if (imageGenerationLoaderModal) {
+        imageGenerationLoaderModal.classList.add('hidden');
+      }
+      showToast({ type: 'error', title: 'Error', body: 'Failed to convert to MP4. Please try again.' });
+    } finally {
+      if (mp4Btn) {
+        mp4Btn.classList.remove('loading');
+        mp4Btn.disabled = false;
+      }
+    }
+  };
+
+  convertToMp4Btn?.addEventListener('click', handleConvertToMp4);
   searchInput?.addEventListener('input', () => {
     iconCurrentPage = 0;
     populateIconGrid(searchInput.value, 0);
