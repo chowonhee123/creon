@@ -1,9 +1,15 @@
 [
   {
+    "id": "2",
+    "text": "Updated to Gemini 3.0 Pro: Enhanced image generation and text processing with latest AI models",
+    "date": "2025-01-27",
+    "active": true
+  },
+  {
     "id": "1",
     "text": "New Components: Field, Input Group, Item and more",
     "date": "2024-01-01",
-    "active": true
+    "active": false
   }
 ]
 

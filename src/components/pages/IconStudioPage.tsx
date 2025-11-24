@@ -110,7 +110,7 @@ export const IconStudioPage: React.FC = () => {
                     transition: 'all 0.2s'
                   }}
                 >
-                  <span className="material-symbols-outlined" style={{ fontSize: '48px' }}>
+                  <span className="material-symbols-outlined material-symbols-rounded" style={{ fontSize: '48px' }}>
                     {icon.name}
                   </span>
                   <div style={{ fontSize: '12px', marginTop: '8px', textAlign: 'center' }}>

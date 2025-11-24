@@ -681,6 +681,7 @@ const reorderExploreMediaByCategory = (items: any[]): any[] => {
   const generatedImageIcon = $('#generated-image') as HTMLImageElement;
   const loader3d = $('#loader');
   const promptDisplay3d = $('#prompt-display-3d') as HTMLTextAreaElement;
+  const promptInput3d = $('#prompt-input-3d') as HTMLInputElement;
 // iconPoseInput3d removed - Action input no longer used
   const placeholder3d = $('#id-3d-placeholder');
   const errorPlaceholder3d = $('#id-3d-error-placeholder');
@@ -1614,12 +1615,12 @@ const extractVideoDownloadUrl = (operation: any): string | null => {
         videoEntry.downloadUrl,
         videoEntry.signedUri,
     ];
-    
+
     // Also check nested paths
     if (videoObj.uris && Array.isArray(videoObj.uris)) {
         candidates.push(...videoObj.uris);
     }
-    
+
     if (videoEntry.uris && Array.isArray(videoEntry.uris)) {
         candidates.push(...videoEntry.uris);
     }
@@ -1637,7 +1638,7 @@ const extractVideoDownloadUrl = (operation: any): string | null => {
     }
     
     console.log('[extractVideoDownloadUrl] Candidates:', candidates);
-    
+
     const firstValid = candidates.find((value) => typeof value === 'string' && value.length > 0);
     
     if (firstValid) {
@@ -2715,7 +2716,7 @@ const extractVideoDownloadUrl = (operation: any): string | null => {
       }
 
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
+        model: 'gemini-2.5-flash-image', // Note: Gemini 3.0 Pro Image Preview may not be available yet, using 2.5-flash-image
         contents: { parts },
         config,
       });
@@ -2857,7 +2858,7 @@ const extractVideoDownloadUrl = (operation: any): string | null => {
 
     // Reset modal state before showing
     resetLoaderModal(p2dLoaderModal);
-    
+
     // Show loading modal
     if (p2dLoaderModal && p2dLoaderMessage) {
         p2dLoaderMessage.textContent = 'Generating icon';
@@ -4542,7 +4543,7 @@ const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
     lines.push(``);
     lines.push(`SUBJECT: Generate an isometric 3D icon of ${subject}.`);
     // Pose/action instruction removed - Action input no longer used
-    if (userPrompt && userPrompt.trim()) {
+  if (userPrompt && userPrompt.trim()) {
       lines.push(`Additional instruction: ${userPrompt.trim()}.`);
       lines.push(`⚠️ IMPORTANT: Apply the additional instruction while MAINTAINING the exact style described above. The style must NEVER change regardless of the subject or instruction.`);
     }
@@ -4671,7 +4672,7 @@ const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
 
     // Reset modal state before showing
     resetLoaderModal(imageGenerationLoaderModal);
-    
+
     if (imageGenerationLoaderText) {
         imageGenerationLoaderText.textContent = 'Generating image';
     }
@@ -4767,7 +4768,7 @@ const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
     try {
       // Generate image from text using gemini-2.5-flash-image
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
+        model: 'gemini-2.5-flash-image', // Note: Gemini 3.0 Pro Image Preview may not be available yet, using 2.5-flash-image
         contents: [{ parts: [{ text: promptText }] }],
         config: {
           responseModalities: [Modality.IMAGE],
@@ -4814,7 +4815,7 @@ const setInitialMotionFrames2d = async (imageData: GeneratedImageData) => {
     try {
       // Generate image from text using gemini-2.5-flash-image
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
+        model: 'gemini-2.5-flash-image', // Note: Gemini 3.0 Pro Image Preview may not be available yet, using 2.5-flash-image
         contents: [{ parts: [{ text: promptText }] }],
         config: {
           responseModalities: [Modality.IMAGE],
@@ -5450,7 +5451,7 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
         console.log('[Image Studio] Sending request with', parts.length, 'parts');
         
         const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash-image',
+          model: 'gemini-2.5-flash-image', // Note: Gemini 3.0 Pro Image Preview may not be available yet, using 2.5-flash-image
           contents: { parts },
           config: {
             responseModalities: [Modality.IMAGE],
@@ -5578,7 +5579,7 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
         }
         
         const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash-image',
+          model: 'gemini-2.5-flash-image', // Note: Gemini 3.0 Pro Image Preview may not be available yet, using 2.5-flash-image
           contents: { parts },
           config: {
             responseModalities: [Modality.IMAGE],
@@ -6712,12 +6713,13 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
         let motionInstruction = userPrompt.trim();
         
         // Convert organic/fluid terms to geometric transform equivalents (preserving intent)
+        // NOTE: Vertical movement is FORBIDDEN - remove any vertical motion terms
         motionInstruction = motionInstruction
             .replace(/breathing|breath|breathing-like/gi, 'uniform scale')
             .replace(/pulsing|pulse/gi, 'uniform scale')
             .replace(/expands?|contracts?|grows?|shrinks?/gi, 'uniform scale')
             .replace(/rotates?|spins?|turns?/gi, 'rotate')
-            .replace(/floats?|rises?|falls?|bounces?/gi, 'vertical translate')
+            .replace(/floats?|rises?|falls?|bounces?|vertical|up|down|upward|downward/gi, '') // Remove vertical movement terms
             .replace(/sways?|moves? horizontally|shifts? left|shifts? right|horizontal displacement/gi, 'horizontal translate')
             .replace(/gentle|smooth|subtle|minimal/gi, 'precise')
             .replace(/seamless/gi, 'continuous')
@@ -6735,9 +6737,9 @@ Make sure the result is photorealistic and aesthetically pleasing.`;
                 const max = 1 + (percent / 100);
                 scaleRange = ` (scale range: 1.0 to ${max.toFixed(3)})`;
             } else {
-                const min = scaleMatch[1] || scaleMatch[3] || '1.0';
-                const max = scaleMatch[2] || '1.03';
-                scaleRange = ` (scale range: ${min} to ${max})`;
+            const min = scaleMatch[1] || scaleMatch[3] || '1.0';
+            const max = scaleMatch[2] || '1.03';
+            scaleRange = ` (scale range: ${min} to ${max})`;
             }
         }
         
@@ -6756,18 +6758,38 @@ MANDATORY CONSTRAINTS:
 
         const finalPrompt = `🚨🚨🚨🚨🚨🚨🚨🚨🚨 CRITICAL: NO LIQUID, NO FLOW, NO DEFORMATION 🚨🚨🚨🚨🚨🚨🚨🚨🚨
 
+🔴🔴🔴🔴🔴🔴🔴🔴🔴 ULTIMATE RULE - READ THIS FIRST 🔴🔴🔴🔴🔴🔴🔴🔴🔴
+• This is NOT a morph - ABSOLUTELY NO MORPHING ALLOWED
+• This is NOT a shape change - THE SHAPE CAN NEVER CHANGE
+• It is a simple position shift - ONLY MOVE THE ENTIRE ICON AS ONE UNIT
+• Use camera translation, not deformation - CAMERA MOVES, ICON STAYS IDENTICAL
+• ⚠️ NO VERTICAL MOVEMENT - ONLY horizontal movement allowed (NO up/down/floating/rising/falling/bouncing)
+• The icon is a FROZEN STATIC IMAGE - like a photograph or printed sticker
+• Only the camera/viewport moves horizontally - the icon itself NEVER changes
+• ⚠️ NO FLOWING EFFECTS: The icon must NEVER appear to flow, drip, melt, or deform like liquid
+• ⚠️ LINES ARE FROZEN: Every line, curve, and edge is PERMANENTLY LOCKED - they cannot bend, warp, or change shape
+• ⚠️ SHAPE IS ABSOLUTE: The icon's silhouette, outline, and internal structure are 100% FIXED - like a laser-cut stencil
+
 ⚠️⚠️⚠️ ABSOLUTE PROHIBITION ⚠️⚠️⚠️
 DO NOT create liquid, flowing, melting, or fluid-like motion. DO NOT deform, warp, or morph the icon shape. DO NOT change ANY lines, curves, edges, or shapes. The icon is a RIGID, SOLID object that can ONLY move as a whole unit.
 
 THIS IS A STATIC RASTER IMAGE FILE (PNG format). THE ICON IMAGE ITSELF IS PERMANENTLY FROZEN AND ABSOLUTELY CANNOT BE MODIFIED IN ANY WAY.
 
+🔴 CRITICAL CLARIFICATION - REPEATED FOR EMPHASIS 🔴
+• This is NOT a morph - NO MORPHING WHATSOEVER
+• This is NOT a shape change - SHAPE IS PERMANENTLY LOCKED
+• It is a simple position shift - ONLY TRANSLATION ALLOWED
+• Use camera translation, not deformation - CAMERA MOVES, ICON DOES NOT CHANGE
+
 🔴🔴🔴 LINE ART / VECTOR ICON PRESERVATION 🔴🔴🔴
 This is a LINE ART or VECTOR-STYLE icon. Every single line, curve, edge, corner, and detail is PERMANENTLY FIXED.
-- Lines must remain EXACTLY the same thickness, length, and curvature
-- Curves must remain EXACTLY the same shape and position
-- Edges must remain EXACTLY the same angle and sharpness
+- Lines must remain EXACTLY the same thickness, length, and curvature - they are FROZEN
+- Curves must remain EXACTLY the same shape and position - they cannot bend or warp
+- Edges must remain EXACTLY the same angle and sharpness - they are LOCKED
 - NO line deformation, NO curve modification, NO edge smoothing, NO corner rounding
+- NO flowing lines, NO wavy lines, NO liquid-like line movement
 - The icon's line structure is ABSOLUTELY IMMUTABLE - like a printed sticker or a laser-cut shape
+- Think of the icon as a RIGID STENCIL - the lines are carved in stone and CANNOT change
 
 ⚠️⚠️⚠️ MANDATORY REQUIREMENT ⚠️⚠️⚠️
 This is NOT an animated drawing or illustration. This is a STATIC IMAGE FILE being animated with geometric transform properties ONLY (like CSS transform: scale/rotate/translate or After Effects transform controls).
@@ -6777,8 +6799,11 @@ The source image is a FROZEN RASTER. Every single pixel must remain in the EXACT
 🔴🔴🔴 LIQUID/FLUID MOTION IS COMPLETELY FORBIDDEN 🔴🔴🔴
 - NO liquid-like flow, NO dripping, NO melting, NO water-like movement
 - NO organic, fluid, or elastic motion that suggests the icon is made of liquid or flexible material
-- The icon is SOLID and RIGID - like a metal coin or a printed sticker
+- NO flowing shapes, NO morphing lines, NO deforming edges
+- The icon is SOLID and RIGID - like a metal coin, printed sticker, or laser-cut acrylic
 - Motion must be MECHANICAL and RIGID, not organic or fluid
+- The icon must look like a SOLID OBJECT being moved, NOT a liquid being poured
+- Every pixel of the icon is FROZEN - like a photograph that can only be moved, rotated, or scaled
 
 🔒🔒🔒 SHAPE PRESERVATION IS ABSOLUTE AND NON-NEGOTIABLE 🔒🔒🔒
 - The icon's shape, form, silhouette, and ALL geometric properties are PERMANENTLY LOCKED
@@ -6791,17 +6816,24 @@ The source image is a FROZEN RASTER. Every single pixel must remain in the EXACT
 🎯 ANIMATION INSTRUCTION:
 ${motionInstruction}
 
+⚠️⚠️⚠️ REMEMBER: This is NOT a morph, NOT a shape change. It is ONLY a simple position shift using camera translation, NOT deformation. ⚠️⚠️⚠️
+
 📐 ALLOWED TRANSFORMS ONLY (applied to the COMPLETE icon as ONE RIGID UNIT):
 - Uniform scale: Scale the ENTIRE icon uniformly (like zooming a photo) - maximum 1.0 to 1.03
 - Rotation: Rotate the ENTIRE icon as one piece (like spinning a coin on a table)
-- Translation: Move the ENTIRE icon vertically/horizontally (like moving a sticker on paper)
+- Horizontal translation ONLY: Move the ENTIRE icon horizontally (left/right) - like moving a sticker on paper
+- ⚠️ VERTICAL MOVEMENT IS FORBIDDEN: NO up/down movement, NO floating, NO rising, NO falling, NO bouncing
 - These transforms apply to the COMPLETE icon simultaneously as a SINGLE RIGID OBJECT
 - NO independent part movement, NO separate element animation, NO component-level changes
 
 🚫🚫🚫 ABSOLUTELY FORBIDDEN - THE ICON FILE CANNOT CHANGE IN ANY WAY 🚫🚫🚫
+- ⚠️ VERTICAL MOVEMENT IS FORBIDDEN: NO up/down movement, NO floating, NO rising, NO falling, NO bouncing, NO vertical translation
+- ⚠️ FLOWING/DEFORMING IS FORBIDDEN: NO flowing shapes, NO deforming lines, NO morphing edges, NO liquid-like appearance
 - ANY shape deformation, morphing, warping, bending, stretching, or distortion (COMPLETELY FORBIDDEN)
 - ANY line thickness changes, wavy lines, curved lines becoming straight, or straight lines becoming curved (COMPLETELY FORBIDDEN)
 - ANY flowing, dripping, melting, liquid-like, water-like, or fluid-like effects (THIS IS THE #1 PRIORITY - COMPLETELY FORBIDDEN)
+- ANY appearance that the icon is "flowing", "melting", "deforming", or "changing shape" (COMPLETELY FORBIDDEN)
+- The icon must look EXACTLY like the source image in every frame - like a static PNG being moved
 - ANY elastic, rubber-like, organic, flexible, or soft material behavior (COMPLETELY FORBIDDEN)
 - ANY motion that suggests the icon is made of liquid, water, gel, or any fluid substance (COMPLETELY FORBIDDEN)
 - ANY wave-like, ripple-like, or undulating motion that deforms the shape (COMPLETELY FORBIDDEN)
@@ -6846,7 +6878,7 @@ shape deformation, morphing, warping, distortion, line changes, thickness change
         const payload: any = {
             model: selectedModel,
             prompt: finalPrompt,
-            negativePrompt: 'liquid, fluid, flowing, dripping, melting, water-like, gel-like, liquid motion, fluid motion, wave motion, ripple effect, undulating, organic flow, liquid deformation, fluid deformation, shape deformation, morphing, warping, distortion, line changes, thickness changes, pixel changes, rasterization, anti-aliasing changes, edge smoothing, outline changes, fill changes, color changes, opacity changes, independent part movement, camera movement, zoom, perspective, particle effects, trails, glows, shadows, visual artifacts, organic movement, fluid movement, elastic movement, rubber movement, material changes, texture changes, icon shape changes, vector changes, path changes, bezier curve changes, anchor point movement, component animation, separate element movement, part-by-part animation, shape modification, geometry changes, structural changes, form changes, silhouette changes, edge deformation, curve modification, corner rounding, detail loss, pixel displacement, raster distortion, image warping, perspective distortion, lens distortion, barrel distortion, pincushion distortion, breathing effect distortion, pulsing shape change, organic scaling, non-uniform scaling, anisotropic scaling, shearing, skewing, stretching, compression, elongation, contraction, expansion, growth, shrinking, size variation, dimension changes, aspect ratio changes, proportional changes, liquid flow, fluid flow, water flow, gel flow, liquid animation, fluid animation, wave-like motion, ripple-like motion, undulating motion, organic deformation, fluid deformation, liquid-like behavior, fluid-like behavior',
+            negativePrompt: 'vertical movement, up, down, upward, downward, floating, rising, falling, bouncing, vertical translation, vertical displacement, flowing, flowing shape, flowing lines, deforming, morphing, morph, shape change, shape deformation, liquid, fluid, dripping, melting, water-like, gel-like, liquid motion, fluid motion, wave motion, ripple effect, undulating, organic flow, liquid deformation, fluid deformation, shape deformation, morphing, warping, distortion, line changes, thickness changes, pixel changes, rasterization, anti-aliasing changes, edge smoothing, outline changes, fill changes, color changes, opacity changes, independent part movement, camera movement, zoom, perspective, particle effects, trails, glows, shadows, visual artifacts, organic movement, fluid movement, elastic movement, rubber movement, material changes, texture changes, icon shape changes, vector changes, path changes, bezier curve changes, anchor point movement, component animation, separate element movement, part-by-part animation, shape modification, geometry changes, structural changes, form changes, silhouette changes, edge deformation, curve modification, corner rounding, detail loss, pixel displacement, raster distortion, image warping, perspective distortion, lens distortion, barrel distortion, pincushion distortion, breathing effect distortion, pulsing shape change, organic scaling, non-uniform scaling, anisotropic scaling, shearing, skewing, stretching, compression, elongation, contraction, expansion, growth, shrinking, size variation, dimension changes, aspect ratio changes, proportional changes, liquid flow, fluid flow, water flow, gel flow, liquid animation, fluid animation, wave-like motion, ripple-like motion, undulating motion, organic deformation, fluid deformation, liquid-like behavior, fluid-like behavior, deformation, flowing appearance, melting appearance, deforming appearance, camera translation only, position shift only',
             config,
         };
 
@@ -7193,7 +7225,7 @@ Return the 5 suggestions as a JSON array.`;
         };
 
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-2.0-flash-exp', // Updated to Gemini 2.0 Flash Experimental
             contents: contents,
             config: {
                 responseMimeType: 'application/json',
@@ -7211,7 +7243,7 @@ Return the 5 suggestions as a JSON array.`;
             // Close loading modal immediately and open motion category modal
             imageGenerationLoaderModal.classList.add('hidden');
             motionCategoryModal?.classList.remove('hidden');
-            renderGeneratedMotionCategoriesStudio(jsonResponse);
+        renderGeneratedMotionCategoriesStudio(jsonResponse);
         } else {
             // Fallback: open modal directly if loader modal not available
             motionCategoryModal?.classList.remove('hidden');
@@ -7296,40 +7328,39 @@ CRITICAL CONSTRAINTS - 2D Icon Micro-Interactions:
 1. MINIMAL MOVEMENT ONLY:
    - Maximum 5% scale change (e.g., 1.0 to 1.05)
    - Maximum 10 degree rotation (for full icon rotation only)
-   - Maximum 3-5 pixels vertical shift ONLY (up/down)
-   - NO horizontal movement (left/right)
+   - ⚠️ NO VERTICAL MOVEMENT (NO up/down, NO floating, NO bobbing, NO bouncing)
+   - Horizontal movement ONLY (left/right, maximum 3-5 pixels)
    - NO large movements, NO position changes that alter composition
    
 2. PRESERVE EVERYTHING:
    - Original icon shape, design, and layout MUST stay 100% identical
    - NO camera movement, NO zoom, NO perspective change
-   - Icon must stay in the EXACT same position horizontally
+   - Icon must stay in the EXACT same position vertically (NO up/down movement)
    - Background color and transparency unchanged
    
 3. ALLOWED MICRO-INTERACTIONS ONLY:
    - Gentle breathing/pulsing (scale 1.0 ↔ 1.03) - expand and contract in place
-   - Tiny bounce at one spot (2-3 pixels up/down ONLY)
    - Subtle rotation in place (±5-10 degrees, full icon rotates around its center)
-   - Soft floating (3-5 pixels vertical shift ONLY)
-   - Gentle idle animation (vertical bobbing or subtle scale)
+   - Horizontal sway (3-5 pixels left/right ONLY, NO vertical movement)
+   - Gentle idle animation (horizontal oscillation or subtle scale, NO vertical bobbing)
    
 4. STRICTLY FORBIDDEN:
-   - NO horizontal movement (left-to-right, side-to-side sway)
-   - NO swaying, swinging, or pendulum motions
+   - ⚠️ NO VERTICAL MOVEMENT: NO up/down, NO floating, NO rising, NO falling, NO bouncing, NO vertical bobbing
+   - NO vertical shift, NO vertical translation, NO vertical displacement
+   - NO swaying, swinging, or pendulum motions (unless horizontal only)
    - NO new elements, particles, effects, glows
    - NO composition changes
    - NO dramatic movements
    - NO flying, jumping, or large animations
    - NO camera work or scene changes
-   - NO left-right oscillation or horizontal shifts
 
 For each micro-interaction:
-1. 'name': Korean title (예: '미세한 호흡', '부드러운 바운스', '제자리 회전')
+1. 'name': Korean title (예: '미세한 호흡', '수평 흔들림', '제자리 회전')
 2. 'description': Korean explanation with <b> tags
-3. 'english': English prompt emphasizing "subtle", "gentle", "minimal", "in place", "seamless loop", "vertical only" or "rotation only"
+3. 'english': English prompt emphasizing "subtle", "gentle", "minimal", "in place", "seamless loop", "horizontal only" or "rotation only", "NO vertical movement"
 4. 'korean': Korean description stating this is 매우 미세한 마이크로 인터랙션
 
-IMPORTANT: Focus on vertical movements (up/down), scale changes (breathing), or gentle rotation. Absolutely NO horizontal (left/right) movements.
+IMPORTANT: Focus on horizontal movements (left/right), scale changes (breathing), or gentle rotation. Absolutely NO vertical (up/down) movements. NO floating, NO bobbing, NO bouncing.
 
 Return as JSON array with exactly 3 minimal suggestions.`;
 
@@ -7357,7 +7388,7 @@ Return as JSON array with exactly 3 minimal suggestions.`;
         };
 
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-2.0-flash-exp', // Updated to Gemini 2.0 Flash Experimental
             contents: parts,
             config: {
                 responseMimeType: 'application/json',
@@ -7408,7 +7439,7 @@ Return as JSON array with exactly 3 minimal suggestions.`;
             } else {
                 // Fallback: open modal if less than 2 categories
                 motionCategoryModal?.classList.remove('hidden');
-                renderGeneratedMotionCategories2d(jsonResponse);
+        renderGeneratedMotionCategories2d(jsonResponse);
             }
         } else {
             // Fallback: automatically apply second prompt or open modal
@@ -7560,7 +7591,7 @@ Return the 5 suggestions as a JSON array.`;
         };
 
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-2.0-flash-exp', // Updated to Gemini 2.0 Flash Experimental
             contents: contents,
             config: {
                 responseMimeType: 'application/json',
@@ -7578,7 +7609,7 @@ Return the 5 suggestions as a JSON array.`;
             // Close loading modal immediately and open motion category modal
             imageGenerationLoaderModal.classList.add('hidden');
             motionCategoryModal?.classList.remove('hidden');
-            renderGeneratedMotionCategories(jsonResponse);
+        renderGeneratedMotionCategories(jsonResponse);
         } else {
             // Fallback: open modal directly if loader modal not available
             motionCategoryModal?.classList.remove('hidden');
@@ -8010,9 +8041,9 @@ Return the 5 suggestions as a JSON array.`;
     const invalidIcons: HTMLElement[] = [];
 
     iconsToRender.forEach(icon => {
-      const item = document.createElement('div');
-      item.className = 'icon-item';
-      item.dataset.iconName = icon.name;
+        const item = document.createElement('div');
+        item.className = 'icon-item';
+        item.dataset.iconName = icon.name;
       
       // Use Material Symbols - it supports more icons
       // Material Symbols is the newer version and supports most Material Icons names
@@ -8027,7 +8058,7 @@ Return the 5 suggestions as a JSON array.`;
       
       item.appendChild(iconSpan);
       item.appendChild(labelSpan);
-      item.addEventListener('click', () => handleIconClick(icon));
+        item.addEventListener('click', () => handleIconClick(icon));
       
       // Check if icon renders as text (invalid icon)
       // We'll check this after appending to DOM
@@ -8392,7 +8423,7 @@ Return the 5 suggestions as a JSON array.`;
           });
           
           const response = await ai.models.generateContent({
-              model: 'gemini-2.5-flash-image',
+              model: 'gemini-2.5-flash-image', // Note: Gemini 3.0 Pro Image Preview may not be available yet, using 2.5-flash-image
               contents: { parts },
               config: {
                   responseModalities: [Modality.IMAGE],
@@ -8437,7 +8468,9 @@ Return the 5 suggestions as a JSON array.`;
     if (!selectedIcon || !promptDisplay3d || !shadowToggleIcons) return;
     try {
         const promptObject = JSON.parse(ICON_STUDIO_3D_PROMPT_TEMPLATE);
-        promptObject.subject = selectedIcon.name.replace(/_/g, ' ');
+        // Use custom prompt if available, otherwise use icon name
+        const subject = (promptInput3d && promptInput3d.value) ? promptInput3d.value : selectedIcon.name.replace(/_/g, ' ');
+        promptObject.subject = subject;
         // promptObject.pose_instruction removed - Action input no longer used
 
         if (shadowToggleIcons.checked) {
@@ -8476,6 +8509,8 @@ Return the 5 suggestions as a JSON array.`;
     if (settingsPreviewIcon) settingsPreviewIcon.textContent = icon.name;
     if (motionPreviewIcon) motionPreviewIcon.textContent = icon.name;
     
+    if (promptInput3d) promptInput3d.value = icon.name.replace(/_/g, ' ');
+    
     updateIconStudio3dPrompt();
     
     (downloadSvgBtn as HTMLButtonElement).disabled = false;
@@ -8513,7 +8548,7 @@ Return the 5 suggestions as a JSON array.`;
         parts.push(...imageParts);
         
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image',
+            model: 'gemini-2.5-flash-image', // Note: Gemini 3.0 Pro Image Preview may not be available yet, using 2.5-flash-image
             contents: { parts },
             config: {
                 responseModalities: [Modality.IMAGE],
@@ -9219,7 +9254,7 @@ const setupMotionDropZones2d = () => {
               console.log('[Image Studio] Prompt:', promptText);
               
               const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash-image',
+                model: 'gemini-2.5-flash-image', // Note: Gemini 3.0 Pro Image Preview may not be available yet, using 2.5-flash-image
                 contents: [{ parts: [{ text: promptText }] }],
                 config: {
                   responseModalities: [Modality.IMAGE],
@@ -9411,7 +9446,7 @@ const setupMotionDropZones2d = () => {
       ];
       
       const upscaleResponse = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
+        model: 'gemini-2.5-flash-image', // Note: Gemini 3.0 Pro Image Preview may not be available yet, using 2.5-flash-image
         contents: { parts },
         config: {
           responseModalities: [Modality.IMAGE],
@@ -9592,7 +9627,7 @@ const setupMotionDropZones2d = () => {
       }
 
       const zoomOutResponse = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
+        model: 'gemini-2.5-flash-image', // Note: Gemini 3.0 Pro Image Preview may not be available yet, using 2.5-flash-image
         contents: { parts },
         config,
       });
@@ -9696,7 +9731,7 @@ const setupMotionDropZones2d = () => {
       ];
       
       const regenerateResponse = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
+        model: 'gemini-2.5-flash-image', // Note: Gemini 3.0 Pro Image Preview may not be available yet, using 2.5-flash-image
         contents: { parts },
         config: {
           responseModalities: [Modality.IMAGE],
@@ -9868,7 +9903,7 @@ const setupMotionDropZones2d = () => {
 
   // Initialize changelog
   renderChangelog();
-
+  
   navItems.forEach(item => {
     item.addEventListener('click', handleNavClick);
   });
@@ -10646,7 +10681,7 @@ regenerate3DBtn?.addEventListener('click', () => {
   
   // Initialize dynamic placeholders
   setupDynamicPlaceholders();
-
+  
   // Image Studio Generate button
   $('#image-generate-btn-image')?.addEventListener('click', handleGenerateImageStudio);
   
@@ -10853,6 +10888,7 @@ regenerate3DBtn?.addEventListener('click', () => {
     downloadSvgBtn?.addEventListener('click', handleDownloadSVG);
     downloadPngBtn?.addEventListener('click', handleDownloadPNG);
     shadowToggleIcons?.addEventListener('change', updateIconStudio3dPrompt);
+    promptInput3d?.addEventListener('input', updateIconStudio3dPrompt);
     
     copySnippetBtn?.addEventListener('click', () => {
       const activeTab = snippetTabsContainer?.querySelector('.snippet-tab-item.active');
@@ -11049,7 +11085,7 @@ The result must be: IDENTICAL shape + PURE VIBRANT ${iconColor} color at MAXIMUM
             ];
             
             const aiResponse = await ai.models.generateContent({
-                model: 'gemini-2.5-flash-image',
+                model: 'gemini-2.5-flash-image', // Note: Gemini 3.0 Pro Image Preview may not be available yet, using 2.5-flash-image
                 contents: { parts },
                 config: {
                     responseModalities: [Modality.IMAGE],
@@ -12025,7 +12061,7 @@ Apply the main color (${objectColor}) thoughtfully as the primary/accent color o
             ];
             
             const aiResponse = await ai.models.generateContent({
-                model: 'gemini-2.5-flash-image',
+                model: 'gemini-2.5-flash-image', // Note: Gemini 3.0 Pro Image Preview may not be available yet, using 2.5-flash-image
                 contents: { parts },
                 config: {
                     responseModalities: [Modality.IMAGE],
@@ -12201,14 +12237,14 @@ Apply the main color (${objectColor}) thoughtfully as the primary/accent color o
                 resultImage3d.classList.add('hidden');
                 resultImage3d.classList.remove('visible');
             }
-            
-            if (currentGeneratedImage.videoDataUrl) {
+
+        if (currentGeneratedImage.videoDataUrl) {
                 if (resultVideo3d) {
                     resultVideo3d.src = currentGeneratedImage.videoDataUrl;
                     resultVideo3d.classList.remove('hidden');
                 }
                 if (motionPromptPlaceholder3d) motionPromptPlaceholder3d.classList.add('hidden');
-            } else {
+        } else {
                 if (resultVideo3d) resultVideo3d.classList.add('hidden');
                 if (motionPromptPlaceholder3d) {
                     motionPromptPlaceholder3d.classList.remove('hidden');
@@ -12667,8 +12703,8 @@ Apply the main color (${objectColor}) thoughtfully as the primary/accent color o
     const eraseText = () => {
       if (generateInput?.value !== '' || document.activeElement === generateInput) {
         return; // Stop if input has value or is focused
-      }
-      
+    }
+
       if (currentText.length > 0) {
         currentText = currentText.slice(0, -1);
         if (dynamicPlaceholder) {

@@ -1,6 +1,36 @@
 {
   "icons": [
     {
+      "name": "book_2",
+      "tags": ["book", "read", "study", "book_2"],
+      "category": "action",
+      "popularity": 999999
+    },
+    {
+      "name": "book_3",
+      "tags": ["book", "read", "study", "book_3"],
+      "category": "action",
+      "popularity": 999999
+    },
+    {
+      "name": "book_4",
+      "tags": ["book", "read", "study", "book_4"],
+      "category": "action",
+      "popularity": 999999
+    },
+    {
+      "name": "book_5",
+      "tags": ["book", "read", "study", "book_5"],
+      "category": "action",
+      "popularity": 999999
+    },
+    {
+      "name": "book_6",
+      "tags": ["book", "read", "study", "book_6"],
+      "category": "action",
+      "popularity": 999999
+    },
+    {
       "name": "search",
       "tags": [
         "search",
